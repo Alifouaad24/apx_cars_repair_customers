@@ -30,10 +30,14 @@ class CustomerController extends GetxController {
   int? currentCustomerId;
   bool isEdit = false;
 
-  CustomerController(this.addCustomerUseCase, this.showCustomersUsecase, this.editCustomerUseCase);
+  CustomerController(
+    this.addCustomerUseCase,
+    this.showCustomersUsecase,
+    this.editCustomerUseCase,
+  );
 
   List<CustomerModel> customers = [];
-
+  List<CustomerModel> allCustomers = [];
   var isLoading = false;
 
   @override
@@ -54,18 +58,33 @@ class CustomerController extends GetxController {
       },
       (data) {
         customers = data;
+        allCustomers = data;
       },
     );
 
     isLoading = false;
     update();
   }
+
   bool isSaveLoading = false;
+
+  void filterCustomers(String query) {
+    if (query.isEmpty) {
+      customers = allCustomers;
+    } else {
+      customers = allCustomers.where((c) {
+        return c.customerName.toLowerCase().contains(query.toLowerCase()) ||
+            c.customerMobile.contains(query) ||
+            c.customerEmail.toLowerCase().contains(query.toLowerCase());
+      }).toList();
+    }
+
+    update();
+  }
 
   Future<void> addCustomer() async {
     isSaveLoading = true;
     update();
-
     Map<String, dynamic> customerData = {
       "customerName": firstNameController.text + " " + lastNameController.text,
       "customerMobile": phoneController.text,
@@ -102,7 +121,7 @@ class CustomerController extends GetxController {
     update();
   }
 
-   Future<void> editCustomer(int customerId) async {
+  Future<void> editCustomer(int customerId) async {
     isSaveLoading = true;
     update();
 
