@@ -1,4 +1,5 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -133,17 +134,19 @@ class _HomePageState extends State<HomePage> {
                     icon: Icons.person_add,
                     color: Colors.green,
                     onTap: () {
-                      Get.toNamed("/add-customer");
+                      Get.toNamed(AppRoutes.addCustomer);
                     },
                   ),
                 ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: _buildSmallCard(
-                    title: "Reports",
-                    icon: Icons.bar_chart,
+                    title: "Scan Chaseh",
+                    icon: Icons.qr_code_scanner_sharp,
                     color: Colors.orange,
-                    onTap: () {},
+                    onTap: () {
+                      Get.toNamed(AppRoutes.scanChaseh);
+                    },
                   ),
                 ),
               ],
