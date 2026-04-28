@@ -7,14 +7,12 @@ class CarInfoView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final dynamic args = Get.arguments;
-    final Map<String, dynamic> car =
-        args is Map<String, dynamic> ? args : <String, dynamic>{};
+    final Map<String, dynamic> car = args is Map<String, dynamic>
+        ? args
+        : <String, dynamic>{};
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("Car Information"),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text("Car Information"), centerTitle: true),
       body: car.isEmpty
           ? const Center(
               child: Text(
@@ -34,8 +32,11 @@ class CarInfoView extends StatelessWidget {
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Icon(Icons.directions_car,
-                          size: 50, color: Colors.blue),
+                      const Icon(
+                        Icons.directions_car,
+                        size: 50,
+                        color: Colors.blue,
+                      ),
                       const SizedBox(height: 10),
                       const Text(
                         "Car Information",
