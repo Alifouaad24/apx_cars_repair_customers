@@ -89,24 +89,25 @@ class _ShowCustomersState extends State<ShowCustomers> {
                         ),
                         const SizedBox(height: 24),
 
-                        if(controller.customers.length != controller.allCustomers.length)
-                        ElevatedButton.icon(
-                          onPressed: () {
-                            controller.customers = controller.allCustomers;
-                            controller.update();
-                          },
-                          icon: const Icon(Icons.list),
-                          label: const Text("Show All Customers"),
-                          style: ElevatedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 24,
-                              vertical: 14,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                        if (controller.customers.length !=
+                            controller.allCustomers.length)
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              controller.customers = controller.allCustomers;
+                              controller.update();
+                            },
+                            icon: const Icon(Icons.list),
+                            label: const Text("Show All Customers"),
+                            style: ElevatedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 24,
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
                             ),
                           ),
-                        ),
                       ],
                     ),
                   ),
@@ -114,53 +115,62 @@ class _ShowCustomersState extends State<ShowCustomers> {
               : Column(
                   children: [
                     Padding(
-  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-  child: Container(
-    decoration: BoxDecoration(
-      color: Colors.grey.shade100,
-      borderRadius: BorderRadius.circular(16),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withOpacity(0.05),
-          blurRadius: 10,
-          offset: Offset(0, 4),
-        ),
-      ],
-    ),
-    child: TextField(
-      onChanged: (value) {
-        controller.filterCustomers(value);
-      },
-      decoration: InputDecoration(
-        hintText: "Search customers...",
-        hintStyle: TextStyle(color: Colors.grey.shade500),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 10,
+                      ),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(16),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: TextField(
+                          onChanged: (value) {
+                            controller.filterCustomers(value);
+                          },
+                          decoration: InputDecoration(
+                            hintText: "Search customers...",
+                            hintStyle: TextStyle(color: Colors.grey.shade500),
 
-        /// 🔍 أيقونة البحث
-        prefixIcon: Icon(Icons.search, color: Colors.blueAccent),
+                            /// 🔍 أيقونة البحث
+                            prefixIcon: Icon(
+                              Icons.search,
+                              color: Colors.blueAccent,
+                            ),
 
-        /// ❌ زر مسح النص
-        suffixIcon: IconButton(
-          icon: Icon(Icons.close, color: Colors.grey),
-          onPressed: () {
-            controller.filterCustomers("");
-          },
-        ),
+                            /// ❌ زر مسح النص
+                            suffixIcon: IconButton(
+                              icon: Icon(Icons.close, color: Colors.grey),
+                              onPressed: () {
+                                controller.filterCustomers("");
+                              },
+                            ),
 
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide.none,
-        ),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide.none,
+                            ),
 
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.blueAccent, width: 1.5),
-        ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                              borderSide: BorderSide(
+                                color: Colors.blueAccent,
+                                width: 1.5,
+                              ),
+                            ),
 
-        contentPadding: EdgeInsets.symmetric(vertical: 14),
-      ),
-    ),
-  ),
-),
+                            contentPadding: EdgeInsets.symmetric(vertical: 14),
+                          ),
+                        ),
+                      ),
+                    ),
                     Expanded(
                       child: ListView.builder(
                         padding: const EdgeInsets.all(12),
@@ -276,10 +286,17 @@ class _ShowCustomersState extends State<ShowCustomers> {
                   final addressText =
                       "${address?.line1 ?? ""}, ${address?.line2 ?? ""}, ${address?.usCity ?? ""}, ${address?.postCode ?? ""}, USA";
 
-                  final url =
-                      "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(addressText)}";
+                  final uri = Uri.parse(
+                    "google.navigation:q=${Uri.encodeComponent(addressText)}",
+                  );
 
-                  await launchUrl(Uri.parse(url));
+                  if (await canLaunchUrl(uri)) {
+                    await launchUrl(uri);
+                  } else {
+                    final webUrl =
+                        "https://www.google.com/maps/search/?api=1&query=${Uri.encodeComponent(addressText)}";
+                    await launchUrl(Uri.parse(webUrl));
+                  }
                 },
                 icon: const Icon(Icons.map, color: Colors.blue),
               ),
