@@ -19,12 +19,13 @@ class _CameraScanViewState extends State<CameraScanView> {
   final TextRecognizer _textRecognizer = TextRecognizer();
   final MobileScannerController _barcodeController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
+    autoStart: false,
   );
   late final ScanChasehController _scanController;
 
   CameraController? _cameraController;
   bool _isCameraReady = false;
-  bool _isBarcodeMode = true;
+  bool _isBarcodeMode = false;
   bool _isProcessing = false;
 
   String _result = '';
@@ -33,35 +34,64 @@ class _CameraScanViewState extends State<CameraScanView> {
   void initState() {
     super.initState();
     _scanController = Get.find<ScanChasehController>();
-    // Don't init camera on startup — only init when OCR mode is selected
+    // Initialize camera on startup (start in OCR mode)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && !_isBarcodeMode) {
+        _initCamera();
+      }
+    });
   }
 
   Future<void> _initCamera() async {
     if (_cameraController != null) return; // Already initialized
 
-    final permission = await Permission.camera.request();
-    if (!permission.isGranted) return;
+    try {
+      final permission = await Permission.camera.request();
+      if (!permission.isGranted) {
+        debugPrint('Camera permission denied');
+        return;
+      }
 
-    final cameras = await availableCameras();
-    final back = cameras.firstWhere(
-      (c) => c.lensDirection == CameraLensDirection.back,
-    );
+      final cameras = await availableCameras();
+      if (cameras.isEmpty) {
+        debugPrint('No cameras available');
+        return;
+      }
 
-    final controller = CameraController(
-      back,
-      ResolutionPreset.medium, // Use medium — high is too heavy
-      enableAudio: false,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
+      final back = cameras.firstWhere(
+        (c) => c.lensDirection == CameraLensDirection.back,
+        orElse: () => cameras.first,
+      );
 
-    await controller.initialize();
+      final controller = CameraController(
+        back,
+        ResolutionPreset.medium, // Use medium — high is too heavy
+        enableAudio: false,
+        imageFormatGroup: ImageFormatGroup.jpeg,
+      );
 
-    if (!mounted) return;
+      await controller.initialize();
 
-    setState(() {
-      _cameraController = controller;
-      _isCameraReady = true;
-    });
+      if (!mounted) {
+        await controller.dispose();
+        return;
+      }
+
+      setState(() {
+        _cameraController = controller;
+        _isCameraReady = true;
+      });
+    } catch (e) {
+      debugPrint('Camera initialization error: $e');
+      if (mounted) {
+        Get.snackbar(
+          'Camera Error',
+          'Failed to initialize camera: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.7),
+        );
+      }
+    }
   }
 
   Future<void> _disposeCameraController() async {
@@ -116,7 +146,7 @@ class _CameraScanViewState extends State<CameraScanView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text("Detected: $type"),
-        content: SingleChildScrollView(child: SelectableText(text)),
+        content: SingleChildScrollView(child: TextField(controller: TextEditingController(text: text), maxLines: null)),
         actions: [
           TextButton(
             onPressed: () {
@@ -198,23 +228,42 @@ class _CameraScanViewState extends State<CameraScanView> {
     }
   }
 
-  void _switchMode(bool barcode) async {
+  Future<void> _switchMode(bool barcode) async {
     if (_isBarcodeMode == barcode) return; // No change
 
-    setState(() {
-      _isBarcodeMode = barcode;
-      _result = '';
-      _isCameraReady = false;
-    });
+    try {
+      setState(() {
+        _isBarcodeMode = barcode;
+        _result = '';
+        _isCameraReady = false;
+      });
 
-    if (barcode) {
-      // Switching to barcode: release camera, start barcode scanner
-      await _disposeCameraController();
-      _barcodeController.start();
-    } else {
-      // Switching to OCR: stop barcode scanner, init camera
-      _barcodeController.stop();
-      await _initCamera();
+      if (barcode) {
+        // Switching to barcode: release camera, start barcode scanner
+        await _disposeCameraController();
+        if (mounted) {
+          await _barcodeController.start();
+        }
+      } else {
+        // Switching to OCR: stop barcode scanner, init camera
+        await _barcodeController.stop();
+        if (mounted) {
+          await _initCamera();
+        }
+      }
+    } catch (e) {
+      debugPrint('Mode switch error: $e');
+      if (mounted) {
+        Get.snackbar(
+          'Mode Switch Error',
+          'Failed to switch mode: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.7),
+        );
+        setState(() {
+          _isBarcodeMode = !barcode; // Revert on error
+        });
+      }
     }
   }
 
@@ -388,7 +437,7 @@ class _CameraScanViewState extends State<CameraScanView> {
                       child: !_isBarcodeMode
                           ? GestureDetector(
                               key: const ValueKey('captureBtn'),
-                              onTap: _isProcessing ? null : _scanText,
+                              onTap: (_isProcessing || !_isCameraReady) ? null : _scanText,
                               child: Container(
                                 width: 70,
                                 height: 70,
@@ -406,7 +455,7 @@ class _CameraScanViewState extends State<CameraScanView> {
                                     ),
                                   ],
                                 ),
-                                child: _isProcessing
+                                    child: _isProcessing
                                     ? const Padding(
                                         padding: EdgeInsets.all(18),
                                         child: CircularProgressIndicator(
@@ -414,9 +463,9 @@ class _CameraScanViewState extends State<CameraScanView> {
                                           color: Color(0xFF6C63FF),
                                         ),
                                       )
-                                    : const Icon(
+                                    : Icon(
                                         Icons.document_scanner_rounded,
-                                        color: Color(0xFF6C63FF),
+                                        color: !_isCameraReady ? Colors.grey : const Color(0xFF6C63FF),
                                         size: 32,
                                       ),
                               ),
