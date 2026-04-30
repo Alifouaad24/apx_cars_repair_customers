@@ -29,8 +29,8 @@ class _CameraScanViewState extends State<CameraScanView> {
   bool _isBarcodeMode = false;
   bool _isProcessing = false;
   bool _isListening = false;
+  bool _hasFinalResult = false;
   String _text = 'اضغط وابدأ التحدث';
-
 
   String _result = '';
 
@@ -50,78 +50,116 @@ class _CameraScanViewState extends State<CameraScanView> {
     bool available = await _speech.initialize(
       onStatus: (status) {
         debugPrint("Status: $status");
+        // Use 'done' as fallback only if no final result was received yet
+        if (status == 'done' && _isListening && !_hasFinalResult) {
+          _processFinalSpeech();
+        }
       },
       onError: (error) {
         debugPrint("Error: $error");
+        if (_isListening) {
+          _processFinalSpeech();
+        }
       },
     );
 
     if (available) {
-      setState(() => _isListening = true);
+      setState(() {
+        _isListening = true;
+        _hasFinalResult = false;
+        _text = '';
+      });
 
       _speech.listen(
-        localeId: "en-US", // English (change as needed)
+        localeId: "en-US",
+        listenFor: const Duration(seconds: 60),
+        pauseFor: const Duration(seconds: 3),
+        partialResults: true,
         onResult: (result) {
           setState(() {
             _text = result.recognizedWords;
-            _showResultDialog(convertSpeechToCode(_text), "From Speech");
+            debugPrint("Recognized (final=${result.finalResult}): $_text");
           });
+          // Process immediately when final result arrives
+          if (result.finalResult && _isListening) {
+            _hasFinalResult = true;
+            _processFinalSpeech();
+          }
         },
       );
     }
   }
 
+  void _processFinalSpeech() {
+    if (!mounted) return;
+    setState(() {
+      _isListening = false;
+      final converted = convertSpeechToCode(_text);
+      _text = converted;
+    });
+    _showResultDialog(_text, "From Speech");
+  }
+
   String convertSpeechToCode(String input) {
-  final map = {
-    "zero": "0",
-    "one": "1",
-    "two": "2",
-    "three": "3",
-    "four": "4",
-    "five": "5",
-    "six": "6",
-    "seven": "7",
-    "eight": "8",
-    "nine": "9",
+    final map = <String, String>{
+      "zero": "0",
+      "one": "1",
+      "won": "1",
+      "two": "2",
+      "three": "3",
+      "four": "4",
+      "five": "5",
+      "six": "6",
+      "seven": "7",
+      "eight": "8",
+      "nine": "9",
 
-    // حروف
-    "a": "a",
-    "b": "b",
-    "c": "c",
-    "d": "d",
-    "e": "e",
-    "f": "f",
-    "g": "g",
-    "h": "h",
-    "i": "i",
-    "j": "j",
-    "k": "k",
-    "l": "l",
-    "m": "m",
-    "n": "n",
-    "o": "o",
-    "p": "p",
-    "q": "q",
-    "r": "r",
-    "s": "s",
-    "t": "t",
-    "u": "u",
-    "v": "v",
-    "w": "w",
-    "x": "x",
-    "y": "y",
-    "z": "z",
-  };
+      "a": "a",
+      "b": "b",
+      "c": "c",
+      "d": "d",
+      "e": "e",
+      "f": "f",
+      "g": "g",
+      "h": "h",
+      "i": "i",
+      "j": "j",
+      "k": "k",
+      "l": "l",
+      "m": "m",
+      "n": "n",
+      "o": "o",
+      "p": "p",
+      "q": "q",
+      "r": "r",
+      "s": "s",
+      "t": "t",
+      "u": "u",
+      "v": "v",
+      "w": "w",
+      "x": "x",
+      "y": "y",
+      "z": "z",
+    };
 
-  final words = input.toLowerCase().split(' ');
-  final result = words.map((w) => map[w] ?? '').join();
+    final cleaned = input
+        .toLowerCase()
+        .replaceAll(RegExp(r'[^a-z0-9 ]'), ' ')
+        .split(RegExp(r'\s+'))
+        .where((e) => e.isNotEmpty);
 
-  return result;
-}
+    final buffer = StringBuffer();
+
+    for (final word in cleaned) {
+      buffer.write(map[word] ?? word);
+    }
+
+    return buffer.toString();
+  }
 
   void _stopListening() {
     _speech.stop();
-    setState(() => _isListening = false);
+    // onStatus callback will handle processing when speech engine is done
   }
 
   Future<void> _initCamera() async {
@@ -228,9 +266,7 @@ class _CameraScanViewState extends State<CameraScanView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text("Detected: $type"),
-        content: SingleChildScrollView(
-          child: SelectableText(text),
-        ),
+        content: SingleChildScrollView(child: TextField(controller: TextEditingController(text: text))),
         actions: [
           TextButton(
             onPressed: () {
@@ -514,7 +550,9 @@ class _CameraScanViewState extends State<CameraScanView> {
                             icon: Icons.mic_rounded,
                             selected: _isListening,
                             activeColor: const Color(0xFF00A86B),
-                            onTap: () => _isListening ? _stopListening() : _startListening(),
+                            onTap: () => _isListening
+                                ? _stopListening()
+                                : _startListening(),
                           ),
                         ],
                       ),
