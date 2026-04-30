@@ -7,6 +7,7 @@ import 'package:get/get.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 class CameraScanView extends StatefulWidget {
   const CameraScanView({super.key});
@@ -22,11 +23,14 @@ class _CameraScanViewState extends State<CameraScanView> {
     autoStart: false,
   );
   late final ScanChasehController _scanController;
-
+  final SpeechToText _speech = SpeechToText();
   CameraController? _cameraController;
   bool _isCameraReady = false;
   bool _isBarcodeMode = false;
   bool _isProcessing = false;
+  bool _isListening = false;
+  String _text = 'اضغط وابدأ التحدث';
+
 
   String _result = '';
 
@@ -40,6 +44,84 @@ class _CameraScanViewState extends State<CameraScanView> {
         _initCamera();
       }
     });
+  }
+
+  Future<void> _startListening() async {
+    bool available = await _speech.initialize(
+      onStatus: (status) {
+        debugPrint("Status: $status");
+      },
+      onError: (error) {
+        debugPrint("Error: $error");
+      },
+    );
+
+    if (available) {
+      setState(() => _isListening = true);
+
+      _speech.listen(
+        localeId: "en-US", // English (change as needed)
+        onResult: (result) {
+          setState(() {
+            _text = result.recognizedWords;
+            _showResultDialog(convertSpeechToCode(_text), "From Speech");
+          });
+        },
+      );
+    }
+  }
+
+  String convertSpeechToCode(String input) {
+  final map = {
+    "zero": "0",
+    "one": "1",
+    "two": "2",
+    "three": "3",
+    "four": "4",
+    "five": "5",
+    "six": "6",
+    "seven": "7",
+    "eight": "8",
+    "nine": "9",
+
+    // حروف
+    "a": "a",
+    "b": "b",
+    "c": "c",
+    "d": "d",
+    "e": "e",
+    "f": "f",
+    "g": "g",
+    "h": "h",
+    "i": "i",
+    "j": "j",
+    "k": "k",
+    "l": "l",
+    "m": "m",
+    "n": "n",
+    "o": "o",
+    "p": "p",
+    "q": "q",
+    "r": "r",
+    "s": "s",
+    "t": "t",
+    "u": "u",
+    "v": "v",
+    "w": "w",
+    "x": "x",
+    "y": "y",
+    "z": "z",
+  };
+
+  final words = input.toLowerCase().split(' ');
+  final result = words.map((w) => map[w] ?? '').join();
+
+  return result;
+}
+
+  void _stopListening() {
+    _speech.stop();
+    setState(() => _isListening = false);
   }
 
   Future<void> _initCamera() async {
@@ -146,7 +228,9 @@ class _CameraScanViewState extends State<CameraScanView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text("Detected: $type"),
-        content: SingleChildScrollView(child: TextField(controller: TextEditingController(text: text), maxLines: null)),
+        content: SingleChildScrollView(
+          child: SelectableText(text),
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -205,9 +289,7 @@ class _CameraScanViewState extends State<CameraScanView> {
                 child: CircularProgressIndicator(strokeWidth: 2.6),
               ),
               SizedBox(width: 14),
-              Expanded(
-                child: Text('Please wait, loading data...'),
-              ),
+              Expanded(child: Text('Please wait, loading data...')),
             ],
           ),
         ),
@@ -272,6 +354,7 @@ class _CameraScanViewState extends State<CameraScanView> {
     _cameraController?.dispose();
     _barcodeController.dispose();
     _textRecognizer.close();
+    _speech.stop();
     super.dispose();
   }
 
@@ -290,13 +373,13 @@ class _CameraScanViewState extends State<CameraScanView> {
                     onDetect: _onDetect,
                   )
                 : _isCameraReady
-                    ? CameraPreview(_cameraController!)
-                    : const ColoredBox(
-                        color: Colors.black,
-                        child: Center(
-                          child: CircularProgressIndicator(color: Colors.white),
-                        ),
-                      ),
+                ? CameraPreview(_cameraController!)
+                : const ColoredBox(
+                    color: Colors.black,
+                    child: Center(
+                      child: CircularProgressIndicator(color: Colors.white),
+                    ),
+                  ),
           ),
 
           // ── Dark gradient top ──────────────────────────────
@@ -340,13 +423,18 @@ class _CameraScanViewState extends State<CameraScanView> {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
                 child: Row(
                   children: [
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: Colors.white),
+                      icon: const Icon(
+                        Icons.arrow_back_ios_new_rounded,
+                        color: Colors.white,
+                      ),
                     ),
                     const Spacer(),
                     Text(
@@ -381,7 +469,7 @@ class _CameraScanViewState extends State<CameraScanView> {
                 ],
               ),
             ),
-          ),          
+          ),
           // ── Bottom controls ────────────────────────────────
           Positioned(
             bottom: 0,
@@ -389,8 +477,10 @@ class _CameraScanViewState extends State<CameraScanView> {
             right: 0,
             child: SafeArea(
               child: Padding(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 16,
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -419,13 +509,13 @@ class _CameraScanViewState extends State<CameraScanView> {
                             activeColor: const Color(0xFF6C63FF),
                             onTap: () => _switchMode(false),
                           ),
-                          // _ModeTab(
-                          //   label: 's',
-                          //   icon: Icons.text_fields_rounded,
-                          //   selected: !_isBarcodeMode,
-                          //   activeColor: const Color(0xFF6C63FF),
-                          //   onTap: () => _requestDetails('WBA3A5C59CF340123   '),
-                          // ),
+                          _ModeTab(
+                            label: _isListening ? 'Listening...' : 'Speech',
+                            icon: Icons.mic_rounded,
+                            selected: _isListening,
+                            activeColor: const Color(0xFF00A86B),
+                            onTap: () => _isListening ? _stopListening() : _startListening(),
+                          ),
                         ],
                       ),
                     ),
@@ -437,7 +527,9 @@ class _CameraScanViewState extends State<CameraScanView> {
                       child: !_isBarcodeMode
                           ? GestureDetector(
                               key: const ValueKey('captureBtn'),
-                              onTap: (_isProcessing || !_isCameraReady) ? null : _scanText,
+                              onTap: (_isProcessing || !_isCameraReady)
+                                  ? null
+                                  : _scanText,
                               child: Container(
                                 width: 70,
                                 height: 70,
@@ -448,14 +540,15 @@ class _CameraScanViewState extends State<CameraScanView> {
                                       : Colors.white,
                                   boxShadow: [
                                     BoxShadow(
-                                      color:
-                                          const Color(0xFF6C63FF).withOpacity(0.5),
+                                      color: const Color(
+                                        0xFF6C63FF,
+                                      ).withOpacity(0.5),
                                       blurRadius: 20,
                                       spreadRadius: 2,
                                     ),
                                   ],
                                 ),
-                                    child: _isProcessing
+                                child: _isProcessing
                                     ? const Padding(
                                         padding: EdgeInsets.all(18),
                                         child: CircularProgressIndicator(
@@ -465,7 +558,9 @@ class _CameraScanViewState extends State<CameraScanView> {
                                       )
                                     : Icon(
                                         Icons.document_scanner_rounded,
-                                        color: !_isCameraReady ? Colors.grey : const Color(0xFF6C63FF),
+                                        color: !_isCameraReady
+                                            ? Colors.grey
+                                            : const Color(0xFF6C63FF),
                                         size: 32,
                                       ),
                               ),
@@ -491,8 +586,10 @@ class _Corner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final isTop = alignment == Alignment.topLeft || alignment == Alignment.topRight;
-    final isLeft = alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;
+    final isTop =
+        alignment == Alignment.topLeft || alignment == Alignment.topRight;
+    final isLeft =
+        alignment == Alignment.topLeft || alignment == Alignment.bottomLeft;
 
     return Align(
       alignment: alignment,
@@ -565,15 +662,17 @@ class _ModeTab extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 18, color: selected ? Colors.white : Colors.white54),
+              Icon(
+                icon,
+                size: 18,
+                color: selected ? Colors.white : Colors.white54,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
                 style: TextStyle(
                   color: selected ? Colors.white : Colors.white54,
-                  fontWeight:
-                      selected ? FontWeight.w700 : FontWeight.w400,
+                  fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                   fontSize: 14,
                 ),
               ),

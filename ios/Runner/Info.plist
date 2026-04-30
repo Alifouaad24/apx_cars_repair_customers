@@ -29,6 +29,11 @@
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
 	<string>Main</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>نحتاج المايك لتحويل الصوت إلى نص</string>
+
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>نستخدم التعرف على الصوت لتحسين التجربة</string>
 	<key>UISupportedInterfaceOrientations</key>
 	<array>
 		<string>UIInterfaceOrientationPortrait</string>
