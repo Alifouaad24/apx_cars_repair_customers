@@ -230,7 +230,7 @@ class _CameraScanViewState extends State<CameraScanView> {
     try {
       final file = await _cameraController!.takePicture();
 
-      final inputImage = InputImage.fromFile(File(file.path));
+      final inputImage = InputImage.fromFilePath(file.path);
       final recognizedText = await _textRecognizer.processImage(inputImage);
 
       setState(() {
