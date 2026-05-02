@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controllers/scan_chaseh_controller.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
@@ -16,7 +15,8 @@ class CameraScanView extends StatefulWidget {
   State<CameraScanView> createState() => _CameraScanViewState();
 }
 
-class _CameraScanViewState extends State<CameraScanView> {
+class _CameraScanViewState extends State<CameraScanView>
+    with WidgetsBindingObserver {
   final TextRecognizer _textRecognizer = TextRecognizer();
   final MobileScannerController _barcodeController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
@@ -30,6 +30,8 @@ class _CameraScanViewState extends State<CameraScanView> {
   bool _isProcessing = false;
   bool _isListening = false;
   bool _hasFinalResult = false;
+  bool _isInitializingCamera = false;
+  String? _cameraErrorMessage;
   String _text = 'اضغط وابدأ التحدث';
 
   String _result = '';
@@ -37,6 +39,7 @@ class _CameraScanViewState extends State<CameraScanView> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scanController = Get.find<ScanChasehController>();
     // Initialize camera on startup (start in OCR mode)
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -44,6 +47,21 @@ class _CameraScanViewState extends State<CameraScanView> {
         _initCamera();
       }
     });
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (!mounted || _isBarcodeMode) return;
+
+    if (state == AppLifecycleState.inactive ||
+        state == AppLifecycleState.paused) {
+      _disposeCameraController();
+      return;
+    }
+
+    if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
   }
 
   Future<void> _startListening() async {
@@ -163,18 +181,40 @@ class _CameraScanViewState extends State<CameraScanView> {
   }
 
   Future<void> _initCamera() async {
-    if (_cameraController != null) return; // Already initialized
+    if (_cameraController != null || _isInitializingCamera) return;
+
+    setState(() {
+      _isInitializingCamera = true;
+      _cameraErrorMessage = null;
+    });
 
     try {
-      final permission = await Permission.camera.request();
+      var permission = await Permission.camera.status;
+      if (permission.isDenied) {
+        permission = await Permission.camera.request();
+      }
+
       if (!permission.isGranted) {
-        debugPrint('Camera permission denied');
+        debugPrint('Camera permission denied or blocked: $permission');
+        if (mounted) {
+          setState(() {
+            _cameraErrorMessage =
+                permission.isPermanentlyDenied || permission.isRestricted
+                ? 'Camera access is blocked. Please enable it from iPhone Settings.'
+                : 'Camera permission is required to scan text.';
+          });
+        }
         return;
       }
 
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         debugPrint('No cameras available');
+        if (mounted) {
+          setState(() {
+            _cameraErrorMessage = 'No camera found on this device.';
+          });
+        }
         return;
       }
 
@@ -200,16 +240,26 @@ class _CameraScanViewState extends State<CameraScanView> {
       setState(() {
         _cameraController = controller;
         _isCameraReady = true;
+        _cameraErrorMessage = null;
       });
     } catch (e) {
       debugPrint('Camera initialization error: $e');
       if (mounted) {
+        setState(() {
+          _cameraErrorMessage = 'Failed to initialize camera.';
+        });
         Get.snackbar(
           'Camera Error',
           'Failed to initialize camera: $e',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: Colors.red.withOpacity(0.7),
         );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isInitializingCamera = false;
+        });
       }
     }
   }
@@ -266,7 +316,9 @@ class _CameraScanViewState extends State<CameraScanView> {
       context: context,
       builder: (_) => AlertDialog(
         title: Text("Detected: $type"),
-        content: SingleChildScrollView(child: TextField(controller: TextEditingController(text: text))),
+        content: SingleChildScrollView(
+          child: TextField(controller: TextEditingController(text: text)),
+        ),
         actions: [
           TextButton(
             onPressed: () {
@@ -354,6 +406,7 @@ class _CameraScanViewState extends State<CameraScanView> {
         _isBarcodeMode = barcode;
         _result = '';
         _isCameraReady = false;
+        _cameraErrorMessage = null;
       });
 
       if (barcode) {
@@ -387,6 +440,7 @@ class _CameraScanViewState extends State<CameraScanView> {
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _barcodeController.dispose();
     _textRecognizer.close();
@@ -410,6 +464,11 @@ class _CameraScanViewState extends State<CameraScanView> {
                   )
                 : _isCameraReady
                 ? CameraPreview(_cameraController!)
+                : _cameraErrorMessage != null
+                ? _CameraErrorView(
+                    message: _cameraErrorMessage!,
+                    onRetry: _initCamera,
+                  )
                 : const ColoredBox(
                     color: Colors.black,
                     child: Center(
@@ -713,6 +772,57 @@ class _ModeTab extends StatelessWidget {
                   fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
                   fontSize: 14,
                 ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _CameraErrorView extends StatelessWidget {
+  final String message;
+  final VoidCallback onRetry;
+
+  const _CameraErrorView({required this.message, required this.onRetry});
+
+  @override
+  Widget build(BuildContext context) {
+    return ColoredBox(
+      color: Colors.black,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.camera_alt_outlined,
+                color: Colors.white70,
+                size: 46,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                message,
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: Colors.white, fontSize: 15),
+              ),
+              const SizedBox(height: 14),
+              Wrap(
+                spacing: 10,
+                runSpacing: 10,
+                alignment: WrapAlignment.center,
+                children: [
+                  OutlinedButton(
+                    onPressed: onRetry,
+                    child: const Text('Retry'),
+                  ),
+                  ElevatedButton(
+                    onPressed: openAppSettings,
+                    child: const Text('Open Settings'),
+                  ),
+                ],
               ),
             ],
           ),
