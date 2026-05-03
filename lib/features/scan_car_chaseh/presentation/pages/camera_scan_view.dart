@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controllers/scan_chaseh_controller.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
@@ -227,7 +228,9 @@ class _CameraScanViewState extends State<CameraScanView>
         back,
         ResolutionPreset.medium, // Use medium — high is too heavy
         enableAudio: false,
-        imageFormatGroup: ImageFormatGroup.jpeg,
+        imageFormatGroup: Platform.isIOS
+            ? ImageFormatGroup.bgra8888
+            : ImageFormatGroup.jpeg,
       );
 
       await controller.initialize();
@@ -290,6 +293,14 @@ class _CameraScanViewState extends State<CameraScanView>
       _showResultDialog(_result, "From Text");
     } catch (e) {
       debugPrint("OCR Error: $e");
+      if (mounted) {
+        Get.snackbar(
+          'OCR Error',
+          'Failed to scan text: $e',
+          snackPosition: SnackPosition.BOTTOM,
+          backgroundColor: Colors.red.withOpacity(0.7),
+        );
+      }
     }
 
     setState(() => _isProcessing = false);
