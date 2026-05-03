@@ -226,7 +226,7 @@ class _CameraScanViewState extends State<CameraScanView>
 
       final controller = CameraController(
         back,
-        ResolutionPreset.medium, // Use medium — high is too heavy
+        ResolutionPreset.high, // Use medium — high is too heavy
         enableAudio: false,
         imageFormatGroup: Platform.isIOS
             ? ImageFormatGroup.bgra8888
@@ -284,7 +284,19 @@ class _CameraScanViewState extends State<CameraScanView>
       final file = await _cameraController!.takePicture();
 
       final inputImage = InputImage.fromFilePath(file.path);
+
       final recognizedText = await _textRecognizer.processImage(inputImage);
+
+      debugPrint("OCR RESULT: ${recognizedText.text}");
+
+      if (recognizedText.text.trim().isEmpty) {
+        Get.snackbar(
+          'No Text Found',
+          'Try closer or clearer image',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
 
       setState(() {
         _result = recognizedText.text.trim();
@@ -293,14 +305,12 @@ class _CameraScanViewState extends State<CameraScanView>
       _showResultDialog(_result, "From Text");
     } catch (e) {
       debugPrint("OCR Error: $e");
-      if (mounted) {
-        Get.snackbar(
-          'OCR Error',
-          'Failed to scan text: $e',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: Colors.red.withOpacity(0.7),
-        );
-      }
+
+      Get.snackbar(
+        'OCR Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
 
     setState(() => _isProcessing = false);
