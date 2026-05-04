@@ -35,14 +35,12 @@ class _CameraScanViewState extends State<CameraScanView>
   String? _cameraErrorMessage;
   String _text = 'اضغط وابدأ التحدث';
 
-  String _result = '';
-
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _scanController = Get.find<ScanChasehController>();
-    // Initialize camera on startup (start in OCR mode)
+    // Initialize camera on startup (start in camera capture mode)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted && !_isBarcodeMode) {
         _initCamera();
@@ -202,7 +200,7 @@ class _CameraScanViewState extends State<CameraScanView>
             _cameraErrorMessage =
                 permission.isPermanentlyDenied || permission.isRestricted
                 ? 'Camera access is blocked. Please enable it from iPhone Settings.'
-                : 'Camera permission is required to scan text.';
+                : 'Camera permission is required to capture image.';
           });
         }
         return;
@@ -274,40 +272,20 @@ class _CameraScanViewState extends State<CameraScanView>
     await ctrl?.dispose();
   }
 
-  // ================= OCR (نقطة القوة) =================
-  Future<void> _scanText() async {
+  // ================= Camera Capture =================
+  Future<void> _captureImage() async {
     if (_cameraController == null || _isProcessing) return;
 
     setState(() => _isProcessing = true);
 
     try {
       final file = await _cameraController!.takePicture();
-
-      final inputImage = InputImage.fromFilePath(file.path);
-
-      final recognizedText = await _textRecognizer.processImage(inputImage);
-
-      debugPrint("OCR RESULT: ${recognizedText.text}");
-
-      if (recognizedText.text.trim().isEmpty) {
-        Get.snackbar(
-          'No Text Found',
-          'Try closer or clearer image',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      setState(() {
-        _result = recognizedText.text.trim();
-      });
-
-      _showResultDialog(_result, "From Text");
+      await _extractTextFromCapturedImage(file.path);
     } catch (e) {
-      debugPrint("OCR Error: $e");
+      debugPrint("Capture Error: $e");
 
       Get.snackbar(
-        'OCR Error',
+        'Capture Error',
         e.toString(),
         snackPosition: SnackPosition.BOTTOM,
       );
@@ -316,16 +294,38 @@ class _CameraScanViewState extends State<CameraScanView>
     setState(() => _isProcessing = false);
   }
 
+  Future<void> _extractTextFromCapturedImage(String imagePath) async {
+    try {
+      final inputImage = InputImage.fromFilePath(imagePath);
+      final recognizedText = await _textRecognizer.processImage(inputImage);
+      final extractedText = recognizedText.text.trim();
+
+      if (extractedText.isEmpty) {
+        Get.snackbar(
+          'No Text Found',
+          'No readable text was detected in the captured image.',
+          snackPosition: SnackPosition.BOTTOM,
+        );
+        return;
+      }
+
+      _showResultDialog(extractedText, 'From Captured Image');
+    } catch (e) {
+      debugPrint('Text extraction error: $e');
+      Get.snackbar(
+        'Text Extraction Error',
+        e.toString(),
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    }
+  }
+
   // ================= Barcode =================
   void _onDetect(BarcodeCapture capture) {
     if (!_isBarcodeMode) return;
 
     final code = capture.barcodes.first.rawValue;
     if (code == null) return;
-
-    setState(() {
-      _result = code;
-    });
 
     _barcodeController.stop();
     _showResultDialog(code, "From Barcode");
@@ -425,7 +425,6 @@ class _CameraScanViewState extends State<CameraScanView>
     try {
       setState(() {
         _isBarcodeMode = barcode;
-        _result = '';
         _isCameraReady = false;
         _cameraErrorMessage = null;
       });
@@ -437,7 +436,7 @@ class _CameraScanViewState extends State<CameraScanView>
           await _barcodeController.start();
         }
       } else {
-        // Switching to OCR: stop barcode scanner, init camera
+        // Switching to camera capture: stop barcode scanner, init camera
         await _barcodeController.stop();
         if (mounted) {
           await _initCamera();
@@ -554,7 +553,7 @@ class _CameraScanViewState extends State<CameraScanView>
                     ),
                     const Spacer(),
                     Text(
-                      _isBarcodeMode ? 'Barcode' : 'Text Recognition',
+                      _isBarcodeMode ? 'Barcode' : 'Camera Capture',
                       style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
@@ -619,7 +618,7 @@ class _CameraScanViewState extends State<CameraScanView>
                             onTap: () => _switchMode(true),
                           ),
                           _ModeTab(
-                            label: 'Text',
+                            label: 'Camera',
                             icon: Icons.text_fields_rounded,
                             selected: !_isBarcodeMode,
                             activeColor: const Color(0xFF6C63FF),
@@ -647,7 +646,7 @@ class _CameraScanViewState extends State<CameraScanView>
                               key: const ValueKey('captureBtn'),
                               onTap: (_isProcessing || !_isCameraReady)
                                   ? null
-                                  : _scanText,
+                                  : _captureImage,
                               child: Container(
                                 width: 70,
                                 height: 70,
@@ -675,7 +674,7 @@ class _CameraScanViewState extends State<CameraScanView>
                                         ),
                                       )
                                     : Icon(
-                                        Icons.document_scanner_rounded,
+                                        Icons.camera_alt_rounded,
                                         color: !_isCameraReady
                                             ? Colors.grey
                                             : const Color(0xFF6C63FF),
