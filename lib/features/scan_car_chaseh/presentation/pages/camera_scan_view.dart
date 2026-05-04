@@ -4,7 +4,6 @@ import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controller
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -18,7 +17,6 @@ class CameraScanView extends StatefulWidget {
 
 class _CameraScanViewState extends State<CameraScanView>
     with WidgetsBindingObserver {
-  final TextRecognizer _textRecognizer = TextRecognizer();
   final MobileScannerController _barcodeController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     autoStart: false,
@@ -280,7 +278,8 @@ class _CameraScanViewState extends State<CameraScanView>
 
     try {
       final file = await _cameraController!.takePicture();
-      await _extractTextFromCapturedImage(file.path);
+
+      _showCapturedImageDialog(file.path);
     } catch (e) {
       debugPrint("Capture Error: $e");
 
@@ -294,30 +293,104 @@ class _CameraScanViewState extends State<CameraScanView>
     setState(() => _isProcessing = false);
   }
 
-  Future<void> _extractTextFromCapturedImage(String imagePath) async {
-    try {
-      final inputImage = InputImage.fromFilePath(imagePath);
-      final recognizedText = await _textRecognizer.processImage(inputImage);
-      final extractedText = recognizedText.text.trim();
+  void _showCapturedImageDialog(String imagePath) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(16)),
+              child: Image.file(
+                File(imagePath),
+                fit: BoxFit.cover,
+                width: double.infinity,
+                height: 280,
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _resume();
+                      },
+                      icon: const Icon(Icons.camera_alt_rounded),
+                      label: const Text('إعادة التقاط'),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: ElevatedButton.icon(
+                      onPressed: () {
+                        Navigator.pop(context);
+                        _showTextInputDialog();
+                      },
+                      icon: const Icon(Icons.text_fields_rounded),
+                      label: const Text('استخراج نص'),
+                      style: ElevatedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
-      if (extractedText.isEmpty) {
-        Get.snackbar(
-          'No Text Found',
-          'No readable text was detected in the captured image.',
-          snackPosition: SnackPosition.BOTTOM,
-        );
-        return;
-      }
-
-      _showResultDialog(extractedText, 'From Captured Image');
-    } catch (e) {
-      debugPrint('Text extraction error: $e');
-      Get.snackbar(
-        'Text Extraction Error',
-        e.toString(),
-        snackPosition: SnackPosition.BOTTOM,
-      );
-    }
+  void _showTextInputDialog() {
+    final TextEditingController textCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('النص المستخرج'),
+        content: TextField(
+          controller: textCtrl,
+          maxLines: 4,
+          decoration: const InputDecoration(
+            hintText: 'أدخل النص هنا...',
+            border: OutlineInputBorder(),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _resume();
+            },
+            child: const Text('إلغاء'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              final text = textCtrl.text.trim();
+              if (text.isEmpty) return;
+              Navigator.pop(context);
+              await _requestDetails(text);
+            },
+            child: const Text('Get Details'),
+          ),
+        ],
+      ),
+    );
   }
 
   // ================= Barcode =================
@@ -463,7 +536,6 @@ class _CameraScanViewState extends State<CameraScanView>
     WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _barcodeController.dispose();
-    _textRecognizer.close();
     _speech.stop();
     super.dispose();
   }
