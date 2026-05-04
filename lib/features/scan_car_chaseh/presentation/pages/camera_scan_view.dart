@@ -188,24 +188,6 @@ class _CameraScanViewState extends State<CameraScanView>
     });
 
     try {
-      var permission = await Permission.camera.status;
-      if (permission.isDenied) {
-        permission = await Permission.camera.request();
-      }
-
-      if (!permission.isGranted) {
-        debugPrint('Camera permission denied or blocked: $permission');
-        if (mounted) {
-          setState(() {
-            _cameraErrorMessage =
-                permission.isPermanentlyDenied || permission.isRestricted
-                ? 'Camera access is blocked. Please enable it from iPhone Settings.'
-                : 'Camera permission is required to capture image.';
-          });
-        }
-        return;
-      }
-
       final cameras = await availableCameras();
       if (cameras.isEmpty) {
         debugPrint('No cameras available');
@@ -243,6 +225,23 @@ class _CameraScanViewState extends State<CameraScanView>
         _isCameraReady = true;
         _cameraErrorMessage = null;
       });
+    } on CameraException catch (e) {
+      debugPrint('Camera exception (${e.code}): ${e.description}');
+      if (mounted) {
+        final msg = switch (e.code) {
+          'CameraAccessDenied' =>
+            'Camera permission was denied. Please allow access and retry.',
+          'CameraAccessDeniedWithoutPrompt' =>
+            'Camera access is denied and cannot be requested again. Open iPhone Settings and allow camera access.',
+          'CameraAccessRestricted' =>
+            'Camera access is restricted on this device.',
+          _ => 'Failed to initialize camera.',
+        };
+
+        setState(() {
+          _cameraErrorMessage = msg;
+        });
+      }
     } catch (e) {
       debugPrint('Camera initialization error: $e');
       if (mounted) {
