@@ -4,6 +4,7 @@ import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controller
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -17,6 +18,7 @@ class CameraScanView extends StatefulWidget {
 
 class _CameraScanViewState extends State<CameraScanView>
     with WidgetsBindingObserver {
+  final TextRecognizer _textRecognizer = TextRecognizer();
   final MobileScannerController _barcodeController = MobileScannerController(
     detectionSpeed: DetectionSpeed.noDuplicates,
     autoStart: false,
@@ -279,7 +281,7 @@ class _CameraScanViewState extends State<CameraScanView>
     try {
       final file = await _cameraController!.takePicture();
 
-      _showCapturedImageDialog(file.path);
+      await _extractTextFromImage(file.path);
     } catch (e) {
       debugPrint("Capture Error: $e");
 
@@ -293,7 +295,14 @@ class _CameraScanViewState extends State<CameraScanView>
     setState(() => _isProcessing = false);
   }
 
-  void _showCapturedImageDialog(String imagePath) {
+  Future<void> _extractTextFromImage(String imagePath) async {
+    final inputImage = InputImage.fromFilePath(imagePath);
+    final recognized = await _textRecognizer.processImage(inputImage);
+    final extractedText = recognized.text.trim();
+    _showCapturedImageDialog(imagePath, extractedText);
+  }
+
+  void _showCapturedImageDialog(String imagePath, String extractedText) {
     showDialog(
       context: context,
       builder: (_) => Dialog(
@@ -336,7 +345,7 @@ class _CameraScanViewState extends State<CameraScanView>
                     child: ElevatedButton.icon(
                       onPressed: () {
                         Navigator.pop(context);
-                        _showTextInputDialog();
+                        _showTextInputDialog(extractedText);
                       },
                       icon: const Icon(Icons.text_fields_rounded),
                       label: const Text('استخراج نص'),
@@ -357,8 +366,9 @@ class _CameraScanViewState extends State<CameraScanView>
     );
   }
 
-  void _showTextInputDialog() {
-    final TextEditingController textCtrl = TextEditingController();
+  void _showTextInputDialog([String initialText = '']) {
+    final TextEditingController textCtrl =
+        TextEditingController(text: initialText);
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -536,6 +546,7 @@ class _CameraScanViewState extends State<CameraScanView>
     WidgetsBinding.instance.removeObserver(this);
     _cameraController?.dispose();
     _barcodeController.dispose();
+    _textRecognizer.close();
     _speech.stop();
     super.dispose();
   }
