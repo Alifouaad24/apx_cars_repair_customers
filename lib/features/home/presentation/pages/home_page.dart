@@ -1,5 +1,5 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
-import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
+import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/widgets/result_vin_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -25,7 +25,6 @@ class _HomePageState extends State<HomePage> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-
             /// HEADER CARD
             Container(
               width: double.infinity,
@@ -74,12 +73,11 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.black.withOpacity(0.05),
                       blurRadius: 10,
                       spreadRadius: 2,
-                    )
+                    ),
                   ],
                 ),
                 child: Row(
                   children: [
-
                     /// ICON
                     Container(
                       padding: const EdgeInsets.all(12),
@@ -151,6 +149,32 @@ class _HomePageState extends State<HomePage> {
                 ),
               ],
             ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: _buildSmallCard(
+                    title: "Search Car",
+                    icon: Icons.search,
+                    color: Colors.green,
+                    onTap: () {
+                      
+                      Get.dialog(ResultVinDialog());
+                    },
+                  ),
+                ),
+                const SizedBox(width: 10),
+
+                Expanded(
+                  child: _buildSmallCard(
+                    title: "About Us",
+                    icon: Icons.info,
+                    color: Colors.green,
+                    onTap: () {},
+                  ),
+                ),
+              ],
+            ),
           ],
         ),
       ),
@@ -171,10 +195,7 @@ class _HomePageState extends State<HomePage> {
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 8,
-            )
+            BoxShadow(color: Colors.black.withOpacity(0.05), blurRadius: 8),
           ],
         ),
         child: Column(

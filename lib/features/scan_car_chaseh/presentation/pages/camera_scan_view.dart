@@ -371,12 +371,12 @@ class _CameraScanViewState extends State<CameraScanView>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('النص المستخرج'),
+        title: const Text('Extructed text'),
         content: TextField(
           controller: textCtrl,
           maxLines: 4,
           decoration: const InputDecoration(
-            hintText: 'أدخل النص هنا...',
+            hintText: '',
             border: OutlineInputBorder(),
           ),
         ),
@@ -386,7 +386,7 @@ class _CameraScanViewState extends State<CameraScanView>
               Navigator.pop(context);
               _resume();
             },
-            child: const Text('إلغاء'),
+            child: const Text('Cancel'),
           ),
           ElevatedButton(
             onPressed: () async {
