@@ -4,7 +4,7 @@ import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dar
 
 class CaseModel {
   final int id;
-  final CustomerModel customer;
+  final CustomerModel? customer;
   final int? customerId;
   final List<CaseImage>? images;
   final CarInfo carInfo;
@@ -21,9 +21,7 @@ class CaseModel {
     return CaseModel(
       // ✅ الصحيح
       id: json['caseId'],
-
-      customer: CustomerModel.fromJson(json['customer']),
-
+      customer: json['customer'] != null ? CustomerModel.fromJson(json['customer']) : null,
       // ✅ الصحيح
       carInfo: CarInfo.fromJson(json['carInfoTbl']),
 
@@ -42,7 +40,7 @@ class CaseModel {
   Map<String, dynamic> toJson() {
     return {
       'caseId': id,
-      'customer': customer.toJson(),
+      'customer': customer?.toJson(),
       'carInfoTbl': carInfo.toJson(),
       'customerId': customerId,
       'caseImages':

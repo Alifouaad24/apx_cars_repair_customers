@@ -1,4 +1,5 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -238,14 +239,18 @@ class _ShowCustomersState extends State<ShowCustomers> {
                   ],
                 ),
               ),
-
-              /// COUNTRY
-              Chip(
-                label: Text(
-                  c.country?.name ?? "",
-                  style: const TextStyle(color: Colors.white),
-                ),
-                backgroundColor: Colors.blue,
+              TextButton.icon(
+                onPressed: () async {
+                  await Get.find<CaseController>().loadCustomers();
+                  Get.find<CaseController>().selectedCustomer =
+                      Get.find<CaseController>().customers.firstWhere(
+                        (customer) =>
+                            customer.globalCustomerId == c.globalCustomerId,
+                      );
+                  Get.toNamed(AppRoutes.addEditCase);
+                },
+                icon: const Icon(Icons.add, size: 16),
+                label: const Text("New Case"),
               ),
             ],
           ),

@@ -14,16 +14,29 @@ class CaseRepositoryImpl implements CaseRepository {
 
   @override
   Future<Either<Failure, CaseModel>> addCase(
-    Map<String, dynamic> caseData,
-  ) async {
-    try {
-      CaseModel model = await remoteDataSource.addCase(caseData);
+  Map<String, dynamic> caseData,
+) async {
+  try {
+    final model = await remoteDataSource.addCase(caseData);
 
-      return Right(model);
-    } catch (e) {
-      return Left(Failure("Failed to add case"));
-    }
+    return Right(model);
+  } on DioException catch (e) {
+
+    final message =
+        e.response?.data is Map<String, dynamic>
+            ? (e.response?.data['message']?.toString() ??
+                e.message ??
+                'Failed to add case')
+            : (e.message ?? 'Failed to add case');
+
+            print("DioException: $message");
+
+    return Left(Failure(message));
+  } catch (e) {
+
+    return Left(Failure(e.toString()));
   }
+}
 
   @override
   Future<Either<Failure, List<CaseModel>>> showCases() async {

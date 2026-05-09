@@ -58,7 +58,7 @@ class _ShowCasesState extends State<ShowCases> {
           }
 
           final totalCustomers = controller.cases
-              .map((caseItem) => caseItem.customer.globalCustomerId)
+              .map((caseItem) => caseItem.customer?.globalCustomerId ?? 0)
               .toSet()
               .length;
           final isFiltered =
@@ -387,14 +387,14 @@ class _ShowCasesState extends State<ShowCases> {
 
     for (final caseItem in cases) {
       grouped
-          .putIfAbsent(caseItem.customer.globalCustomerId, () => [])
+          .putIfAbsent(caseItem.customer?.globalCustomerId ?? 0, () => [])
           .add(caseItem);
     }
 
     final sortedCustomerIds = grouped.keys.toList()
       ..sort((a, b) {
-        final aName = grouped[a]!.first.customer.customerName.toLowerCase();
-        final bName = grouped[b]!.first.customer.customerName.toLowerCase();
+        final aName = grouped[a]!.first.customer?.customerName.toLowerCase() ?? '';
+        final bName = grouped[b]!.first.customer?.customerName.toLowerCase() ?? '';
         return aName.compareTo(bName);
       });
 
@@ -405,7 +405,7 @@ class _ShowCasesState extends State<ShowCases> {
 
   Widget _customerCasesSection(List<CaseModel> customerCases) {
     final customer = customerCases.first.customer;
-    final customerName = customer.customerName.trim();
+    final customerName = customer?.customerName.trim() ?? 'Unnamed Customer';
     final customerInitial = _customerInitial(customerName);
     final totalImages = customerCases.fold<int>(
       0,
@@ -469,7 +469,7 @@ class _ShowCasesState extends State<ShowCases> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      customer.customerMobile,
+                      customer?.customerMobile ?? 'No Mobile',
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade600,

@@ -239,15 +239,14 @@ class CaseController extends GetxController {
 
     final result = await addCaseUseCase(data);
 
-    result.fold(
-      (failure) => Get.snackbar("Error", failure.message),
-      (data) => {
-        Get.snackbar("Success", "Case added successfully"),
-        getCases(),
-        clearForm(),
-        Get.toNamed(AppRoutes.showCases),
-      },
-    );
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      Get.snackbar("Success", "Case added successfully");
+
+      getCases();
+      clearForm();
+
+      Get.offNamed(AppRoutes.showCases);
+    });
     isAddingCase = false;
     update();
   }

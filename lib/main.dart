@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/app/Bindings/AppBinding.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/app/routes/app_pages.dart';
 import 'package:flutter/material.dart';
@@ -22,6 +23,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
+      initialBinding: AppBinding(),
       initialRoute: AppRoutes.home,
       getPages: AppPages.routes,
       debugShowCheckedModeBanner: false,

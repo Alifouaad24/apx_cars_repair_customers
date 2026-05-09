@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/app/Bindings/case_binding.dart';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/core/services/TokenService.dart';
 import 'package:apx_cars_repair/features/customers/domain/CustomerRepositoryImpl.dart';
