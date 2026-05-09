@@ -35,6 +35,12 @@ class _CameraScanViewState extends State<CameraScanView>
   String? _cameraErrorMessage;
   String _text = 'اضغط وابدأ التحدث';
 
+  bool get _returnResultToCaller {
+    final args = Get.arguments;
+    if (args is! Map) return false;
+    return args['returnResult'] == true;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -310,8 +316,9 @@ class _CameraScanViewState extends State<CameraScanView>
           mainAxisSize: MainAxisSize.min,
           children: [
             ClipRRect(
-              borderRadius:
-                  const BorderRadius.vertical(top: Radius.circular(16)),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
               child: Image.file(
                 File(imagePath),
                 fit: BoxFit.cover,
@@ -366,8 +373,9 @@ class _CameraScanViewState extends State<CameraScanView>
   }
 
   void _showTextInputDialog([String initialText = '']) {
-    final TextEditingController textCtrl =
-        TextEditingController(text: initialText);
+    final TextEditingController textCtrl = TextEditingController(
+      text: initialText,
+    );
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -454,6 +462,12 @@ class _CameraScanViewState extends State<CameraScanView>
     if (!mounted) return;
 
     if (success) {
+      if (_returnResultToCaller) {
+        _scanController.carData.addAll({'scannedValue': scannedValue});
+        Get.back(result: _scanController.carData);
+        return;
+      }
+
       Get.to(() => const CarInfoView(), arguments: _scanController.carData);
     } else {
       Get.snackbar(

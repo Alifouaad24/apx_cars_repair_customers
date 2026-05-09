@@ -4,4 +4,6 @@ abstract class AppRoutes {
   static const addCustomer = '/add-customer';
   static const scanChaseh = '/scan-chaseh';
   static const resultVinDialog = '/result-vin-dialog';
+  static const showCases = '/show-cases';
+  static const addEditCase = '/add-edit-case';
 }

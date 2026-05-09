@@ -251,6 +251,147 @@ class _ShowCustomersState extends State<ShowCustomers> {
           ),
 
           const SizedBox(height: 10),
+          if (c.imageUrl != null && c.imageUrl.toString().isNotEmpty)
+            Stack(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(14),
+                  child: Image.network(
+                    c.imageUrl,
+                    width: double.infinity,
+                    height: 180,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+
+                Positioned(
+                  right: 8,
+                  top: 8,
+                  child: GestureDetector(
+                    onTap: () {
+                      Get.bottomSheet(
+                        Container(
+                          padding: const EdgeInsets.all(20),
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.vertical(
+                              top: Radius.circular(20),
+                            ),
+                          ),
+                          child: Wrap(
+                            children: [
+                              ListTile(
+                                leading: const Icon(Icons.camera_alt),
+                                title: const Text("Camera"),
+                                onTap: () async {
+                                  Get.back();
+
+                                  controller.pickCustomerImage(
+                                    customerId: c.globalCustomerId,
+                                    fromCamera: true,
+                                  );
+                                },
+                              ),
+                              ListTile(
+                                leading: const Icon(Icons.photo),
+                                title: const Text("Gallery"),
+                                onTap: () async {
+                                  Get.back();
+
+                                  controller.pickCustomerImage(
+                                    customerId: c.globalCustomerId,
+                                    fromCamera: false,
+                                  );
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: BoxDecoration(
+                        color: Colors.black.withOpacity(0.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.edit,
+                        size: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            )
+          else
+            GestureDetector(
+              onTap: () {
+                Get.bottomSheet(
+                  Container(
+                    padding: const EdgeInsets.all(20),
+                    decoration: const BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(20),
+                      ),
+                    ),
+                    child: Wrap(
+                      children: [
+                        ListTile(
+                          leading: const Icon(Icons.camera_alt),
+                          title: const Text("Camera"),
+                          onTap: () async {
+                            Get.back();
+
+                            controller.pickCustomerImage(
+                              customerId: c.globalCustomerId,
+                              fromCamera: true,
+                            );
+                          },
+                        ),
+
+                        ListTile(
+                          leading: const Icon(Icons.photo),
+                          title: const Text("Gallery"),
+                          onTap: () async {
+                            Get.back();
+
+                            controller.pickCustomerImage(
+                              customerId: c.globalCustomerId,
+                              fromCamera: false,
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              },
+              child: Container(
+                width: double.infinity,
+                height: 180,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.add_a_photo, size: 40, color: Colors.grey),
+                    SizedBox(height: 10),
+                    Text(
+                      "Add Customer Image",
+                      style: TextStyle(color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+          const SizedBox(height: 12),
 
           /// ADDRESS
           Row(
@@ -302,9 +443,27 @@ class _ShowCustomersState extends State<ShowCustomers> {
               ),
 
               const Spacer(),
+              // Delete Button
+              IconButton(
+                onPressed: () {
+                  Get.defaultDialog(
+                    title: "Delete Customer",
+                    middleText:
+                        "Are you sure you want to delete this customer?",
+                    textCancel: "Cancel",
+                    textConfirm: "Delete",
+                    confirmTextColor: Colors.white,
+                    onConfirm: () {
+                      controller.deleteCustomer(c.globalCustomerId);
+                      Get.back();
+                    },
+                  );
+                },
+                icon: const Icon(Icons.delete, color: Colors.red),
+              ),
 
               /// EDIT
-              TextButton.icon(
+              IconButton(
                 onPressed: () {
                   controller.currentCustomerId = c.globalCustomerId;
                   controller.line1Controller.text = address?.line1 ?? "";
@@ -324,8 +483,7 @@ class _ShowCustomersState extends State<ShowCustomers> {
 
                   Get.toNamed(AppRoutes.addCustomer);
                 },
-                icon: const Icon(Icons.edit),
-                label: const Text("Edit"),
+                icon: const Icon(Icons.edit, color: Colors.orange),
               ),
             ],
           ),

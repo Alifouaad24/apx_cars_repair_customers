@@ -3,16 +3,21 @@ import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dar
 import 'package:apx_cars_repair/features/customers/domain/entities/Customer.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/AddCustomerUseCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomerController extends GetxController {
   final AddCustomerUseCase addCustomerUseCase;
   final ShowCustomersUsecase showCustomersUsecase;
   final EditCustomerUseCase editCustomerUseCase;
+  final DeleteCustomerUseCase deleteCustomerUseCase;
+  final BindCustomerWithImageUseCase bindCustomerWithImageUseCase;
   final formKey = GlobalKey<FormState>();
 
   final firstNameController = TextEditingController();
@@ -34,6 +39,8 @@ class CustomerController extends GetxController {
     this.addCustomerUseCase,
     this.showCustomersUsecase,
     this.editCustomerUseCase,
+    this.deleteCustomerUseCase,
+    this.bindCustomerWithImageUseCase,
   );
 
   List<CustomerModel> customers = [];
@@ -44,6 +51,28 @@ class CustomerController extends GetxController {
   void onInit() {
     super.onInit();
     getCustomers();
+  }
+
+  pickCustomerImage({int? customerId, bool fromCamera = false}) async {
+    var picked = await ImagePicker().pickImage(source: fromCamera ? ImageSource.camera : ImageSource.gallery);
+
+    if (picked != null) {
+      final result = await bindCustomerWithImageUseCase(customerId!, picked);
+
+      result.fold(
+        (failure) {
+          Get.snackbar("Error", failure.message);
+        },
+        (_) {
+          Get.snackbar("Success", "Image bound to customer successfully");
+          getCustomers();
+        },
+      );
+    } else {
+      Get.snackbar("No Image", "No image was selected.");
+    }
+
+
   }
 
   Future<void> getCustomers() async {
@@ -59,6 +88,25 @@ class CustomerController extends GetxController {
       (data) {
         customers = data;
         allCustomers = data;
+      },
+    );
+
+    isLoading = false;
+    update();
+  }
+
+  Future<void> deleteCustomer(int customerId) async {
+    isLoading = true;
+    update();
+    final result = await deleteCustomerUseCase(customerId);
+
+    result.fold(
+      (failure) {
+        Get.snackbar("Error", failure.message);
+      },
+      (_) {
+        Get.snackbar("Success", "Customer deleted successfully");
+        getCustomers();
       },
     );
 

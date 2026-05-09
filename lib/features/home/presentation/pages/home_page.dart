@@ -167,10 +167,12 @@ class _HomePageState extends State<HomePage> {
 
                 Expanded(
                   child: _buildSmallCard(
-                    title: "About Us",
-                    icon: Icons.info,
-                    color: Colors.green,
-                    onTap: () {},
+                    title: "Cases",
+                    icon: Icons.cases_outlined,
+                    color: const Color.fromARGB(255, 16, 43, 175),
+                    onTap: () {
+                      Get.toNamed(AppRoutes.showCases);
+                    },
                   ),
                 ),
               ],

@@ -8,6 +8,7 @@ class CustomerModel {
   final int countryId;
   final int addressId;
   final int businessId;
+  final String? imageUrl;
 
   final AddressModel? address;
   final CountryModel? country;
@@ -22,6 +23,7 @@ class CustomerModel {
     required this.customerEmail,
     this.address,
     this.country,
+    this.imageUrl,
   });
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +41,7 @@ class CustomerModel {
       country: json['country'] != null
           ? CountryModel.fromJson(json['country'])
           : null,
+      imageUrl: json['customerImage'] ?? null,
     );
   }
 
