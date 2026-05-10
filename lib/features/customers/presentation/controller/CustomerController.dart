@@ -13,9 +13,10 @@ import 'package:apx_cars_repair/features/customers/presentation/pages/showCustom
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'package:latlong2/latlong.dart';
+import 'package:latlong2/latlong.dart' hide LatLng;
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomerController extends GetxController {
@@ -219,9 +220,10 @@ class CustomerController extends GetxController {
   //////////////////////////////
   ///
   ///
-  LatLng currentLocation = const LatLng(40.7128, -74.0060);
   AddressSearchService addressSearchService = AddressSearchService();
+  LatLng currentLocation = const LatLng(40.7128, -74.0060);
   LatLng? selectedLocation;
+  GoogleMapController? mapController;
 
   String latitude = "";
   String longitude = "";
@@ -250,15 +252,19 @@ class CustomerController extends GetxController {
     }
   }
 
+  void moveCamera(LatLng pos) {
+    mapController?.animateCamera(CameraUpdate.newLatLngZoom(pos, 15));
+  }
+
   Future<void> getCurrentLocation() async {
     LocationPermission permission = await Geolocator.requestPermission();
 
-    if (permission == LocationPermission.denied) {
-      return;
-    }
+    if (permission == LocationPermission.denied) return;
 
     Position position = await Geolocator.getCurrentPosition();
+
     currentLocation = LatLng(position.latitude, position.longitude);
+
     isLoadingMap = false;
     update();
   }
@@ -302,13 +308,14 @@ class CustomerController extends GetxController {
       print(e);
     }
   }
+
   bool isSearchLoading = false;
   var results = <dynamic>[];
   TextEditingController addressSearchController = TextEditingController();
 
-  
   Future<void> search(String query) async {
     final normalizedQuery = query.trim();
+
     if (normalizedQuery.isEmpty) {
       results.clear();
       update();
@@ -320,36 +327,8 @@ class CustomerController extends GetxController {
       update();
 
       final data = await addressSearchService.searchAddress(normalizedQuery);
-      const allowedAddressTypes = {
-        'house',
-        'road',
-        'building',
-        'neighbourhood',
-        'street',
-        'residential',
-        'suburb',
-        'quarter',
-        'hamlet',
-        'village',
-        'town',
-        'city',
-        'municipality',
-        'county',
-        'state',
-        'postcode',
-        'administrative',
-        'locality',
-        'place',
-      };
 
-      final filtered = data.where((item) {
-        final type = (item['addresstype'] ?? '').toString().toLowerCase();
-        return allowedAddressTypes.contains(type);
-      }).toList();
-
-      results = filtered.isNotEmpty ? filtered : List<dynamic>.from(data);
-      isSearchLoading = false;
-      update();
+      results = List<dynamic>.from(data);
     } catch (e) {
       results.clear();
     } finally {
