@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:apx_cars_repair/features/customers/domain/entities/Customer.dart';
@@ -8,8 +10,11 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustome
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
 import 'package:flutter/material.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
+import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
+import 'package:latlong2/latlong.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomerController extends GetxController {
@@ -51,10 +56,13 @@ class CustomerController extends GetxController {
   void onInit() {
     super.onInit();
     getCustomers();
+    getCurrentLocation();
   }
 
   pickCustomerImage({int? customerId, bool fromCamera = false}) async {
-    var picked = await ImagePicker().pickImage(source: fromCamera ? ImageSource.camera : ImageSource.gallery);
+    var picked = await ImagePicker().pickImage(
+      source: fromCamera ? ImageSource.camera : ImageSource.gallery,
+    );
 
     if (picked != null) {
       final result = await bindCustomerWithImageUseCase(customerId!, picked);
@@ -71,8 +79,6 @@ class CustomerController extends GetxController {
     } else {
       Get.snackbar("No Image", "No image was selected.");
     }
-
-
   }
 
   Future<void> getCustomers() async {
@@ -209,6 +215,24 @@ class CustomerController extends GetxController {
     update();
   }
 
+  //////////////////////////////
+  ///
+  ///
+  LatLng currentLocation = const LatLng(40.7128, -74.0060);
+
+  LatLng? selectedLocation;
+
+  String latitude = "";
+  String longitude = "";
+
+  String line1 = "";
+  String city = "";
+  String state = "";
+  String postalCode = "";
+  String country = "";
+
+  bool isLoadingMap = true;
+
   Future<void> openInMaps() async {
     final address =
         "${line1Controller.text}, ${line2Controller.text}, ${cityController.text}, ${stateController.text}, ${zipController.text}";
@@ -222,6 +246,59 @@ class CustomerController extends GetxController {
       await launchUrl(uri);
     } else {
       Get.snackbar("Error", "Cannot open maps");
+    }
+  }
+
+  Future<void> getCurrentLocation() async {
+    LocationPermission permission = await Geolocator.requestPermission();
+
+    if (permission == LocationPermission.denied) {
+      return;
+    }
+
+    Position position = await Geolocator.getCurrentPosition();
+    currentLocation = LatLng(position.latitude, position.longitude);
+    isLoadingMap = false;
+    update();
+  }
+
+  Future<void> getAddress(double lat, double lng) async {
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=$lat&lon=$lng',
+      );
+
+      final response = await http.get(
+        url,
+        headers: {'User-Agent': 'com.apx.carsrepair'},
+      );
+
+      final data = jsonDecode(response.body);
+
+      final address = data['address'];
+      latitude = lat.toStringAsFixed(6);
+
+      longitude = lng.toStringAsFixed(6);
+
+      selectedLocation = LatLng(lat, lng);
+
+      line1 = '${address['road'] ?? ''}';
+
+      city = address['city'] ?? address['town'] ?? address['village'] ?? '';
+
+      state = address['state'] ?? '';
+
+      postalCode = address['postcode'] ?? '';
+
+      country = address['country'] ?? '';
+      line1Controller.text = line1;
+      cityController.text = city;
+      stateController.text = state;
+      zipController.text = postalCode;
+
+      update();
+    } catch (e) {
+      print(e);
     }
   }
 }

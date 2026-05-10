@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -33,7 +34,6 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
               key: controller.formKey,
               child: Column(
                 children: [
-
                   /// ================= HEADER CARD =================
                   _headerCard(controller),
 
@@ -49,11 +49,7 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                         "First Name *",
                         true,
                       ),
-                      _field(
-                        controller.lastNameController,
-                        "Last Name",
-                        false,
-                      ),
+                      _field(controller.lastNameController, "Last Name", false),
                     ],
                   ),
 
@@ -82,7 +78,113 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                   const SizedBox(height: 15),
 
                   /// ================= ADDRESS =================
-                  _sectionTitle("Address (USA)"),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 14,
+                      vertical: 10,
+                    ),
+
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: Colors.grey.shade300),
+                      boxShadow: [
+                        BoxShadow(
+                          blurRadius: 8,
+                          offset: const Offset(0, 2),
+                          color: Colors.black.withOpacity(0.05),
+                        ),
+                      ],
+                    ),
+
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+
+                          decoration: BoxDecoration(
+                            color: Colors.blue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+
+                          child: const Icon(
+                            Icons.location_on_outlined,
+                            color: Colors.blue,
+                            size: 22,
+                          ),
+                        ),
+
+                        const SizedBox(width: 12),
+
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+
+                            children: [
+                              Text(
+                                "Address (USA)",
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                  color: Colors.grey.shade800,
+                                ),
+                              ),
+
+                              const SizedBox(height: 4),
+
+                              Text(
+                                "Select customer address from map",
+                                style: TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey.shade600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12),
+
+                          onTap: () {
+                            Get.toNamed(AppRoutes.map);
+                          },
+
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+
+                            decoration: BoxDecoration(
+                              color: Colors.blue,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.map_outlined,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+
+                                SizedBox(width: 6),
+
+                                Text(
+                                  "Map",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
                   _card(
                     children: [
@@ -109,16 +211,10 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
             padding: const EdgeInsets.all(16),
             decoration: const BoxDecoration(
               color: Colors.white,
-              boxShadow: [
-                BoxShadow(
-                  blurRadius: 10,
-                  color: Colors.black12,
-                )
-              ],
+              boxShadow: [BoxShadow(blurRadius: 10, color: Colors.black12)],
             ),
             child: Row(
               children: [
-
                 Expanded(
                   child: ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
@@ -126,22 +222,23 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                       padding: const EdgeInsets.symmetric(vertical: 14),
                     ),
                     onPressed: () {
-                      controller.isEdit ? controller.editCustomer(controller.currentCustomerId!) :
-                     controller.addCustomer();
+                      controller.isEdit
+                          ? controller.editCustomer(
+                              controller.currentCustomerId!,
+                            )
+                          : controller.addCustomer();
                     },
-                    icon: Icon(controller.isEdit ? Icons.edit : Icons.add, color: Colors.white),
+                    icon: Icon(
+                      controller.isEdit ? Icons.edit : Icons.add,
+                      color: Colors.white,
+                    ),
                     label: controller.isSaveLoading
                         ? CircularProgressIndicator(color: Colors.white)
-                        : Text(controller.isEdit ? "Update" : "Save", style: TextStyle(color: Colors.white)),
+                        : Text(
+                            controller.isEdit ? "Update" : "Save",
+                            style: TextStyle(color: Colors.white),
+                          ),
                   ),
-                ),
-
-                const SizedBox(width: 10),
-
-                OutlinedButton.icon(
-                  onPressed: controller.openInMaps,
-                  icon: const Icon(Icons.map),
-                  label: const Text("Map"),
                 ),
               ],
             ),
@@ -158,19 +255,12 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [Colors.indigo, Colors.blue],
-        ),
+        gradient: const LinearGradient(colors: [Colors.indigo, Colors.blue]),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
-        controller.isEdit
-            ? "Update customer details"
-            : "Create a new customer",
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 16,
-        ),
+        controller.isEdit ? "Update customer details" : "Create a new customer",
+        style: const TextStyle(color: Colors.white, fontSize: 16),
       ),
     );
   }
@@ -182,10 +272,7 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
         padding: const EdgeInsets.only(bottom: 8),
         child: Text(
           title,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
       ),
     );
@@ -215,9 +302,7 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
         keyboardType: keyboard,
         decoration: InputDecoration(
           labelText: label,
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
+          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
         ),
         validator: required
             ? (value) {

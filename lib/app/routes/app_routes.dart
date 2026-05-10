@@ -6,4 +6,5 @@ abstract class AppRoutes {
   static const resultVinDialog = '/result-vin-dialog';
   static const showCases = '/show-cases';
   static const addEditCase = '/add-edit-case';
+  static const map = '/map';
 }
