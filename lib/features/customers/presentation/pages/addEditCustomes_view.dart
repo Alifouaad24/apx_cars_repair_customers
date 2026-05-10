@@ -101,7 +101,6 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                       children: [
                         Container(
                           padding: const EdgeInsets.all(10),
-
                           decoration: BoxDecoration(
                             color: Colors.blue.withOpacity(0.1),
                             borderRadius: BorderRadius.circular(12),
@@ -113,27 +112,22 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                             size: 22,
                           ),
                         ),
-
                         const SizedBox(width: 12),
-
                         Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
-
                             children: [
                               Text(
-                                "Address (USA)",
+                                "Address",
                                 style: TextStyle(
                                   fontSize: 15,
                                   fontWeight: FontWeight.w700,
                                   color: Colors.grey.shade800,
                                 ),
                               ),
-
                               const SizedBox(height: 4),
-
                               Text(
-                                "Select customer address from map",
+                                "Select address from map",
                                 style: TextStyle(
                                   fontSize: 12,
                                   color: Colors.grey.shade600,
@@ -142,7 +136,314 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                             ],
                           ),
                         ),
+                        InkWell(
+                          borderRadius: BorderRadius.circular(12),
+                          onTap: () {
+                            controller.addressSearchController.clear();
+                            controller.results.clear(); 
+                            Get.dialog(
+                              GetBuilder<CustomerController>(
+                                builder: (controller) {
+                                  return Dialog(
+                                    backgroundColor: Colors.transparent,
+                                    child: Container(
+                                      padding: const EdgeInsets.all(20),
+                                      decoration: BoxDecoration(
+                                      color: Colors.white,
+                                      borderRadius: BorderRadius.circular(24),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          blurRadius: 20,
+                                          color: Colors.black.withOpacity(0.1),
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        /// HEADER
+                                        Row(
+                                          children: [
+                                            Container(
+                                              padding: const EdgeInsets.all(10),
+                                              decoration: BoxDecoration(
+                                                color: Colors.blue.withOpacity(
+                                                  0.1,
+                                                ),
+                                                borderRadius:
+                                                    BorderRadius.circular(14),
+                                              ),
+                                              child: const Icon(
+                                                Icons.location_on,
+                                                color: Colors.blue,
+                                              ),
+                                            ),
+                                
+                                            const SizedBox(width: 12),
+                                
+                                            const Expanded(
+                                              child: Text(
+                                                "Search Address",
+                                                style: TextStyle(
+                                                  fontSize: 20,
+                                                  fontWeight: FontWeight.bold,
+                                                ),
+                                              ),
+                                            ),
+                                
+                                            InkWell(
+                                              borderRadius: BorderRadius.circular(
+                                                100,
+                                              ),
+                                              onTap: () => Get.back(),
+                                              child: const Padding(
+                                                padding: EdgeInsets.all(4),
+                                                child: Icon(Icons.close),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                
+                                        const SizedBox(height: 20),
+                                
+                                        /// SEARCH FIELD
+                                        TextField(
+                                          controller:
+                                              controller.addressSearchController,
+                                          onChanged: (value) {
+                                            controller.search(value);
+                                          },
+                                          decoration: InputDecoration(
+                                            hintText: "Type address here...",
+                                            prefixIcon: const Icon(Icons.search),
+                                            filled: true,
+                                            fillColor: Colors.grey.shade100,
+                                
+                                            contentPadding:
+                                                const EdgeInsets.symmetric(
+                                                  vertical: 14,
+                                                ),
+                                
+                                            border: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                16,
+                                              ),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                
+                                            enabledBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                16,
+                                              ),
+                                              borderSide: BorderSide.none,
+                                            ),
+                                
+                                            focusedBorder: OutlineInputBorder(
+                                              borderRadius: BorderRadius.circular(
+                                                16,
+                                              ),
+                                              borderSide: BorderSide(
+                                                color: Colors.blue,
+                                                width: 1.5,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                
+                                        const SizedBox(height: 16),
+                                
+                                        /// LOADING
+                                        if (controller.isSearchLoading)
+                                          const Padding(
+                                            padding: EdgeInsets.all(20),
+                                            child: CircularProgressIndicator(),
+                                          ),
+                                
+                                        /// EMPTY
+                                        if (!controller.isSearchLoading &&
+                                            controller.results.isEmpty)
+                                          Padding(
+                                            padding: const EdgeInsets.symmetric(
+                                              vertical: 30,
+                                            ),
+                                            child: Column(
+                                              children: [
+                                                Icon(
+                                                  Icons.location_off,
+                                                  size: 50,
+                                                  color: Colors.grey.shade400,
+                                                ),
+                                                const SizedBox(height: 10),
+                                                Text(
+                                                  "No addresses found",
+                                                  style: TextStyle(
+                                                    color: Colors.grey.shade600,
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                
+                                        /// RESULTS
+                                        if (controller.results.isNotEmpty)
+                                          Container(
+                                            height: 300,
+                                            decoration: BoxDecoration(
+                                              color: Colors.grey.shade50,
+                                              borderRadius: BorderRadius.circular(
+                                                18,
+                                              ),
+                                            ),
+                                
+                                            child: ListView.separated(
+                                              padding: const EdgeInsets.all(10),
+                                              itemCount:
+                                                  controller.results.length,
+                                
+                                              separatorBuilder: (_, __) =>
+                                                  const SizedBox(height: 8),
+                                
+                                              itemBuilder: (context, index) {
+                                                final item =
+                                                    controller.results[index];
+                                
+                                                return Material(
+                                                  color: Colors.white,
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                
+                                                  child: InkWell(
+                                                    borderRadius:
+                                                        BorderRadius.circular(16),
+                                
+                                                    onTap: () {
+                                                      controller
+                                                              .addressSearchController
+                                                              .text =
+                                                          item['display_name'];
+                                
+                                                      Get.back();
+                                                    },
+                                
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                            14,
+                                                          ),
+                                
+                                                      child: Row(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                
+                                                        children: [
+                                                          Container(
+                                                            padding:
+                                                                const EdgeInsets.all(
+                                                                  10,
+                                                                ),
+                                                            decoration: BoxDecoration(
+                                                              color: Colors.blue
+                                                                  .withOpacity(
+                                                                    0.1,
+                                                                  ),
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                            child: const Icon(
+                                                              Icons.location_on,
+                                                              color: Colors.blue,
+                                                              size: 20,
+                                                            ),
+                                                          ),
+                                
+                                                          const SizedBox(
+                                                            width: 12,
+                                                          ),
+                                
+                                                          Expanded(
+                                                            child: Column(
+                                                              crossAxisAlignment:
+                                                                  CrossAxisAlignment
+                                                                      .start,
+                                
+                                                              children: [
+                                                                Text(
+                                                                  item['name'] ??
+                                                                      '',
+                                                                  style: const TextStyle(
+                                                                    fontWeight:
+                                                                        FontWeight
+                                                                            .bold,
+                                                                    fontSize: 15,
+                                                                  ),
+                                                                ),
+                                
+                                                                const SizedBox(
+                                                                  height: 4,
+                                                                ),
+                                
+                                                                Text(
+                                                                  item['display_name'] ??
+                                                                      '',
+                                                                  maxLines: 2,
+                                                                  overflow:
+                                                                      TextOverflow
+                                                                          .ellipsis,
+                                                                  style: TextStyle(
+                                                                    color: Colors
+                                                                        .grey
+                                                                        .shade700,
+                                                                    fontSize: 13,
+                                                                  ),
+                                                                ),
+                                                              ],
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+                                                  ),
+                                                );
+                                              },
+                                            ),
+                                          ),
+                                      ],
+                                    ),
+                                  ),
+                                );
+                                }
+                              ),
+                            );
+                          },
 
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
+
+                            decoration: BoxDecoration(
+                              color: const Color.fromARGB(255, 147, 177, 30),
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+
+                            child: const Row(
+                              children: [
+                                Icon(
+                                  Icons.location_on_outlined,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: 6),
                         InkWell(
                           borderRadius: BorderRadius.circular(12),
 

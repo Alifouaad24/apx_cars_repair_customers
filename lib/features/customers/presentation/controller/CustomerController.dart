@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/core/services/mapService.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:apx_cars_repair/features/customers/domain/entities/Customer.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/AddCustomerUseCase.dart';
@@ -219,7 +220,7 @@ class CustomerController extends GetxController {
   ///
   ///
   LatLng currentLocation = const LatLng(40.7128, -74.0060);
-
+  AddressSearchService addressSearchService = AddressSearchService();
   LatLng? selectedLocation;
 
   String latitude = "";
@@ -299,6 +300,61 @@ class CustomerController extends GetxController {
       update();
     } catch (e) {
       print(e);
+    }
+  }
+  bool isSearchLoading = false;
+  var results = <dynamic>[];
+  TextEditingController addressSearchController = TextEditingController();
+
+  
+  Future<void> search(String query) async {
+    final normalizedQuery = query.trim();
+    if (normalizedQuery.isEmpty) {
+      results.clear();
+      update();
+      return;
+    }
+
+    try {
+      isSearchLoading = true;
+      update();
+
+      final data = await addressSearchService.searchAddress(normalizedQuery);
+      const allowedAddressTypes = {
+        'house',
+        'road',
+        'building',
+        'neighbourhood',
+        'street',
+        'residential',
+        'suburb',
+        'quarter',
+        'hamlet',
+        'village',
+        'town',
+        'city',
+        'municipality',
+        'county',
+        'state',
+        'postcode',
+        'administrative',
+        'locality',
+        'place',
+      };
+
+      final filtered = data.where((item) {
+        final type = (item['addresstype'] ?? '').toString().toLowerCase();
+        return allowedAddressTypes.contains(type);
+      }).toList();
+
+      results = filtered.isNotEmpty ? filtered : List<dynamic>.from(data);
+      isSearchLoading = false;
+      update();
+    } catch (e) {
+      results.clear();
+    } finally {
+      isSearchLoading = false;
+      update();
     }
   }
 }
