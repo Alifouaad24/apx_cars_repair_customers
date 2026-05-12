@@ -21,10 +21,10 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/show_customer
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
+
 class AppBinding extends Bindings {
   @override
   void dependencies() {
-
     // Services
     Get.lazyPut<TokenService>(() => TokenService(Get.find()));
     Get.lazyPut<DioClient>(() => DioClient(Get.find<TokenService>()));
@@ -35,9 +35,7 @@ class AppBinding extends Bindings {
       () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
-    Get.lazyPut<CustomerRepository>(
-      () => CustomerRepositoryImpl(Get.find()),
-    );
+    Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
 
     Get.lazyPut(() => AddCustomerUseCase(Get.find()));
     Get.lazyPut(() => ShowCustomersUsecase(Get.find()));
@@ -51,9 +49,7 @@ class AppBinding extends Bindings {
       () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
-    Get.lazyPut<CaseRepository>(
-      () => CaseRepositoryImpl(Get.find()),
-    );
+    Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
 
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
 
@@ -69,23 +65,18 @@ class AppBinding extends Bindings {
         Get.find(),
         Get.find(),
         Get.find(),
-      ),
+      ),fenix: true,
     );
 
-     // ================= CASES =================
+    // ================= CASES =================
 
-Get.lazyPut(() => ShowCasesUsecase(Get.find()));
-Get.lazyPut(() => EditCaseUseCase(Get.find()));
-Get.lazyPut(() => AddCaseUseCase(Get.find()));
-Get.lazyPut(() => BindImagesWithCaseUseCase(Get.find()));
+    Get.lazyPut(() => ShowCasesUsecase(Get.find()));
+    Get.lazyPut(() => EditCaseUseCase(Get.find()));
+    Get.lazyPut(() => AddCaseUseCase(Get.find()));
+    Get.lazyPut(() => BindImagesWithCaseUseCase(Get.find()));
 
     Get.lazyPut<CaseController>(
-      () => CaseController(
-        Get.find(),
-        Get.find(),
-        Get.find(),
-        Get.find(),
-      ),
+      () => CaseController(Get.find(), Get.find(), Get.find(), Get.find()),fenix: true,
     );
   }
 }

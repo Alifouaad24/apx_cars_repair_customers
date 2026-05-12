@@ -18,7 +18,19 @@ class _ShowCustomersState extends State<ShowCustomers> {
     return Scaffold(
       backgroundColor: Colors.grey[100],
 
-      appBar: AppBar(title: const Text("Customers"), centerTitle: true),
+      appBar: AppBar(
+        title: const Text("Customers"),
+        centerTitle: true,
+        backgroundColor: const Color.fromARGB(0, 19, 120, 131),
+        actions: [
+          IconButton(
+            onPressed: () {
+              Get.toNamed(AppRoutes.addCustomer);
+            },
+            icon: const Icon(Icons.add),
+          ),
+        ],
+      ),
 
       body: GetBuilder<CustomerController>(
         builder: (controller) {
