@@ -6,6 +6,7 @@ abstract class AppRoutes {
   static const scanChaseh = '/scan-chaseh';
   static const resultVinDialog = '/result-vin-dialog';
   static const showCases = '/show-cases';
+  static const caseDetailView = '/case-detail';
   static const addEditCase = '/add-edit-case';
   static const map = '/map';
 }

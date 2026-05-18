@@ -2,9 +2,14 @@ import 'dart:io';
 
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
@@ -16,8 +21,12 @@ import 'package:dio/dio.dart';
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
   ShowCasesUsecase showCasesUsecase;
+  EditServiceToCaseUseCase editServiceToCaseUseCase;
+  AddServiceToCaseUseCase addServiceToCaseUseCase;
+  GetAllServiceUseCase getAllServiceUseCase;
   AddCaseUseCase addCaseUseCase;
   EditCaseUseCase editCaseUseCase;
+  AddCaseServiceNote addCaseServiceNote;
   BindImagesWithCaseUseCase bindImagesWithCaseUseCase;
   List<CaseModel> cases = [];
   List<CaseModel> allCases = [];
@@ -25,6 +34,9 @@ class CaseController extends GetxController {
   CustomerModel? selectedCustomer;
   bool isLoading = false;
   bool isEdit = false;
+  CaseModel? currentCase;
+  List<ServiceModel> Services = [];
+  bool isEditService = false;
 
   /// ================= FORM =================
   final formKey = GlobalKey<FormState>();
@@ -36,19 +48,44 @@ class CaseController extends GetxController {
   final yearController = TextEditingController();
   final brandController = TextEditingController();
   final modelController = TextEditingController();
+
+  ServiceModel? selectedService;
+  int? selectedServiceId;
+  bool? resolved;
+  final notesController = TextEditingController();
+  final costController = TextEditingController();
+  final discountController = TextEditingController();
+  final paidController = TextEditingController();
+
   List<File> images = [];
   CaseController(
     this.showCasesUsecase,
     this.addCaseUseCase,
     this.editCaseUseCase,
     this.bindImagesWithCaseUseCase,
+    this.getAllServiceUseCase,
+    this.addServiceToCaseUseCase,
+    this.editServiceToCaseUseCase,
+    this.addCaseServiceNote,
   );
 
   @override
   void onInit() async {
     super.onInit();
     getCases();
+    await getAllServices();
     await loadCustomers();
+  }
+
+  Future<void> getAllServices() async {
+    final result = await getAllServiceUseCase();
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      Services = data
+          .where((s) => s.businessServices.first.businessId == 40)
+          .toList();
+      update();
+    });
   }
 
   Future<void> loadCustomers() async {
@@ -258,6 +295,57 @@ class CaseController extends GetxController {
     brandController.clear();
     modelController.clear();
     images.clear();
+    update();
+  }
+
+  bool isEditingCase = false;
+
+  Future<void> addServiceToCase(Map<String, dynamic> data) async {
+    isEditingCase = true;
+    update();
+    final result = await addServiceToCaseUseCase(
+      (data['caseId'] as num).toInt(),
+      data,
+    );
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      currentCase!.caseServices?.add(data);
+      Get.snackbar("Success", "Service added to case successfully");
+      getCases();
+      Get.back();
+    });
+    isEditingCase = false;
+    update();
+  }
+
+  int? editingServiceId;
+  bool isEditingCaseService = false;
+  TextEditingController serviceNoteController = TextEditingController();
+  Future<void> editService(Map<String, dynamic> data) async {
+    isEditingCaseService = true;
+    update();
+    final result = await editServiceToCaseUseCase(editingServiceId!, data);
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      Get.snackbar("Success", "Service edited successfully");
+      getCases();
+      Get.back();
+    });
+    isEditingCaseService = false;
+    update();
+  }
+  bool addingNoteToService = false;
+  Future<void> addNoteToCaseService(int serviceId, Map<String, dynamic> data) async {
+    addingNoteToService = true;
+    update();
+    final result = await addCaseServiceNote(serviceId, data);
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      Get.snackbar("Success", "Note added successfully");
+      getCases();
+      Get.back();
+    });
+    addingNoteToService = false;
     update();
   }
 

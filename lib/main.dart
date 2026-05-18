@@ -5,6 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+const Color primary = Color(0xFF0E7490);
+const Color primaryDark = Color(0xFF0A5A6B);
+Color accent = Color(0xFF06B6D4);
+const Color amber = Color(0xFFF59E0B);
+const Color surface = Color(0xFFF8FAFC);
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();

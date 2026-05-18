@@ -393,8 +393,10 @@ class _ShowCasesState extends State<ShowCases> {
 
     final sortedCustomerIds = grouped.keys.toList()
       ..sort((a, b) {
-        final aName = grouped[a]!.first.customer?.customerName.toLowerCase() ?? '';
-        final bName = grouped[b]!.first.customer?.customerName.toLowerCase() ?? '';
+        final aName =
+            grouped[a]!.first.customer?.customerName.toLowerCase() ?? '';
+        final bName =
+            grouped[b]!.first.customer?.customerName.toLowerCase() ?? '';
         return aName.compareTo(bName);
       });
 
@@ -478,15 +480,15 @@ class _ShowCasesState extends State<ShowCases> {
                   ],
                 ),
               ),
-              Chip(
-                label: Text(
-                  '$totalImages Photos',
-                  style: const TextStyle(color: Colors.white),
-                ),
-                backgroundColor: _primary,
-                side: BorderSide.none,
-                padding: const EdgeInsets.symmetric(horizontal: 6),
-              ),
+              // Chip(
+              //   label: Text(
+              //     '$totalImages Photos',
+              //     style: const TextStyle(color: Colors.white),
+              //   ),
+              //   backgroundColor: _primary,
+              //   side: BorderSide.none,
+              //   padding: const EdgeInsets.symmetric(horizontal: 6),
+              // ),
             ],
           ),
           const SizedBox(height: 14),
@@ -616,28 +618,32 @@ class _ShowCasesState extends State<ShowCases> {
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                   child: Row(
                     children: [
-                     Expanded(
-  child: GetBuilder<CaseController>(
-    builder: (controller) {
-      return ElevatedButton.icon(
-        onPressed: () {
-          controller.takeMultiImages(caseItem.id);
-        },
-        icon: const Icon(Icons.camera_alt_outlined),
-        label: controller.isImagesAdding ? const Text('Adding...') : const Text('Add Images'),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: _primary,
-          foregroundColor: Colors.white,
-          elevation: 0,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-          ),
-        ),
-      );
-    },
-  ),
-),
+                      Expanded(
+                        child: GetBuilder<CaseController>(
+                          builder: (controller) {
+                            return ElevatedButton.icon(
+                              onPressed: () {
+                                controller.takeMultiImages(caseItem.id);
+                              },
+                              icon: const Icon(Icons.camera_alt_outlined),
+                              label: controller.isImagesAdding
+                                  ? const Text('Adding...')
+                                  : const Text('Add Images'),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: _primary,
+                                foregroundColor: Colors.white,
+                                elevation: 0,
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: ElevatedButton(
@@ -671,79 +677,87 @@ class _ShowCasesState extends State<ShowCases> {
         : null;
     final title = _caseTitle(caseItem);
 
-    return InkWell(
-      onTap: () => _showCaseImagesDialog(caseItem),
-      child: Container(
-        width: 158,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(18),
-          color: Colors.white,
-          border: Border.all(color: Colors.grey.shade100),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 14,
-              offset: const Offset(0, 8),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(18),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              if (firstImage == null)
-                Container(
-                  color: Colors.grey.shade100,
-                  child: const Icon(
-                    Icons.image_not_supported_outlined,
-                    color: Colors.grey,
-                    size: 34,
-                  ),
+    return GetBuilder<CaseController>(
+      builder: (controller) {
+        return InkWell(
+          onTap: () {
+            controller.currentCase = caseItem;
+            Get.toNamed(AppRoutes.caseDetailView);
+            //_showCaseImagesDialog(caseItem);
+          },
+          child: Container(
+            width: 158,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(18),
+              color: Colors.white,
+              border: Border.all(color: Colors.grey.shade100),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.05),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
                 ),
-              if (firstImage != null)
-                Image.network(firstImage, fit: BoxFit.cover),
-              Align(
-                alignment: Alignment.bottomCenter,
-                child: Container(
-                  padding: const EdgeInsets.fromLTRB(10, 18, 10, 10),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [Colors.transparent, Color(0xCC0F172A)],
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
+              ],
+            ),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(18),
+              child: Stack(
+                fit: StackFit.expand,
+                children: [
+                  if (firstImage == null)
+                    Container(
+                      color: Colors.grey.shade100,
+                      child: const Icon(
+                        Icons.image_not_supported_outlined,
+                        color: Colors.grey,
+                        size: 34,
+                      ),
+                    ),
+                  if (firstImage != null)
+                    Image.network(firstImage, fit: BoxFit.cover),
+                  Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Container(
+                      padding: const EdgeInsets.fromLTRB(10, 18, 10, 10),
+                      decoration: const BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [Colors.transparent, Color(0xCC0F172A)],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.w700,
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${caseItem.images?.length ?? 0} images',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.78),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 13,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        '${caseItem.images?.length ?? 0} images',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.78),
-                          fontSize: 11,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 

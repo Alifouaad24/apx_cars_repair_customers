@@ -15,6 +15,7 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
   static const Color _primary = Color(0xFF0E7490);
   static const Color _primaryDark = Color(0xFF155E75);
   static const Color _surface = Color(0xFFF8FAFC);
+  static const Color _mutedText = Color(0xFF475569);
 
   @override
   Widget build(BuildContext context) {
@@ -45,284 +46,351 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
             iconTheme: const IconThemeData(color: Colors.white),
           ),
 
-          body: Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-                colors: [Color(0xFFE2F8FB), Color(0xFFF8FAFC)],
-                stops: [0.0, 0.45],
-              ),
-            ),
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-              child: Form(
-                key: controller.formKey,
-                child: Column(
-                  children: [
-                    _sectionTitle(
-                      "Case Information",
-                      Icons.directions_car_filled,
-                    ),
-                    _card(
-                      children: [
-                        DropdownButtonFormField<CustomerModel>(
-                          value: controller.selectedCustomer,
-                          decoration: _inputDecoration(
-                            label: "Select Customer",
-                            icon: Icons.person_outline,
-                          ),
-                          items: controller.customers.map((customer) {
-                            return DropdownMenuItem<CustomerModel>(
-                              value: customer,
-                              child: Text(customer.customerName),
-                            );
-                          }).toList(),
-                          onChanged: (value) {
-                            controller.selectedCustomer = value;
-                            controller.update();
-                            print(value?.globalCustomerId);
-                          },
-                          validator: (value) {
-                            if (value == null) {
-                              return "Please select customer";
-                            }
-                            return null;
-                          },
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              child: _field(
-                                controller.vinNumberController,
-                                "VIN Number",
-                                true,
-                                icon: Icons.pin_outlined,
-                              ),
-                            ),
-                            const SizedBox(width: 2),
-                            SizedBox(
-                              height: 50,
-                              child: IconButton(
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _primaryDark,
-                                  foregroundColor: Colors.white,
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(14),
-                                  ),
-                                ),
-                                onPressed: () async {
-                                  final result = await Get.toNamed(
-                                    AppRoutes.scanChaseh,
-                                    arguments: {'returnResult': true},
-                                  );
-
-                                  if (result is Map<String, dynamic>) {
-                                    controller.fillFromScannedCarData(result);
-                                    return;
-                                  }
-
-                                  if (result is Map) {
-                                    controller.fillFromScannedCarData(
-                                      Map<String, dynamic>.from(result),
-                                    );
-                                  }
-                                },
-                                icon: const Icon(Icons.qr_code_scanner_rounded),
-                              ),
-                            ),
-                          ],
-                        ),
-                        _field(
-                          controller.yearController,
-                          "Year",
-                          false,
-                          keyboard: TextInputType.number,
-                          icon: Icons.calendar_today_outlined,
-                        ),
-                        _field(
-                          controller.brandController,
-                          "Brand",
-                          false,
-                          icon: Icons.local_offer_outlined,
-                        ),
-                        _field(
-                          controller.modelController,
-                          "Model",
-                          false,
-                          icon: Icons.directions_car_outlined,
-                        ),
-                      ],
-                    ),
-                    // const SizedBox(height: 16),
-                    // _sectionTitle(
-                    //   "Vehicle Images",
-                    //   Icons.photo_library_outlined,
-                    // ),
-                    // _card(
-                    //   children: [
-                    //     InkWell(
-                    //       borderRadius: BorderRadius.circular(14),
-                    //       onTap: () {
-                    //         controller.pickImages();
-                    //       },
-                    //       child: Ink(
-                    //         height: 58,
-                    //         width: double.infinity,
-                    //         decoration: BoxDecoration(
-                    //           color: const Color(0xFFECFEFF),
-                    //           borderRadius: BorderRadius.circular(14),
-                    //           border: Border.all(
-                    //             color: const Color(0xFF67E8F9),
-                    //           ),
-                    //         ),
-                    //         child: const Row(
-                    //           mainAxisAlignment: MainAxisAlignment.center,
-                    //           children: [
-                    //             Icon(
-                    //               Icons.add_photo_alternate_outlined,
-                    //               color: _primaryDark,
-                    //             ),
-                    //             SizedBox(width: 10),
-                    //             Text(
-                    //               "Take Images",
-                    //               style: TextStyle(
-                    //                 fontWeight: FontWeight.w700,
-                    //                 color: _primaryDark,
-                    //               ),
-                    //             ),
-                    //           ],
-                    //         ),
-                    //       ),
-                    //     ),
-                    //     const SizedBox(height: 14),
-                    //     if (controller.images.isNotEmpty)
-                    //       Wrap(
-                    //         spacing: 10,
-                    //         runSpacing: 10,
-                    //         children: controller.images.map<Widget>((img) {
-                    //           return Stack(
-                    //             children: [
-                    //               ClipRRect(
-                    //                 borderRadius: BorderRadius.circular(14),
-                    //                 child: Image.file(
-                    //                   img,
-                    //                   width: 104,
-                    //                   height: 104,
-                    //                   fit: BoxFit.cover,
-                    //                 ),
-                    //               ),
-                    //               Positioned(
-                    //                 right: 4,
-                    //                 top: 4,
-                    //                 child: GestureDetector(
-                    //                   onTap: () {
-                    //                     controller.removeImage(img);
-                    //                   },
-                    //                   child: Container(
-                    //                     padding: const EdgeInsets.all(4),
-                    //                     decoration: const BoxDecoration(
-                    //                       color: Color(0xFFB91C1C),
-                    //                       shape: BoxShape.circle,
-                    //                     ),
-                    //                     child: const Icon(
-                    //                       Icons.close,
-                    //                       size: 14,
-                    //                       color: Colors.white,
-                    //                     ),
-                    //                   ),
-                    //                 ),
-                    //               ),
-                    //             ],
-                    //           );
-                    //         }).toList(),
-                    //       )
-                    //     else
-                    //       Container(
-                    //         width: double.infinity,
-                    //         padding: const EdgeInsets.symmetric(vertical: 18),
-                    //         decoration: BoxDecoration(
-                    //           borderRadius: BorderRadius.circular(12),
-                    //           border: Border.all(
-                    //             color: const Color(0xFFCBD5E1),
-                    //           ),
-                    //         ),
-                    //         child: const Text(
-                    //           "No images selected yet",
-                    //           textAlign: TextAlign.center,
-                    //           style: TextStyle(
-                    //             color: Color(0xFF64748B),
-                    //             fontWeight: FontWeight.w500,
-                    //           ),
-                    //         ),
-                    //       ),
-                    //   ],
-                    // ),
-                    const SizedBox(height: 20),
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: DecoratedBox(
-                        decoration: BoxDecoration(
-                          gradient: const LinearGradient(
-                            colors: [_primary, _primaryDark],
-                          ),
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: const [
-                            BoxShadow(
-                              color: Color(0x33155E75),
-                              blurRadius: 14,
-                              offset: Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.transparent,
-                            shadowColor: Colors.transparent,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          onPressed: () {
-                            if (!controller.isAddingCase) {
-                              controller.submitCase();
-                            }
-                          },
-                          icon: const Icon(
-                            Icons.check_circle_outline,
-                            color: Colors.white,
-                          ),
-                          label: controller.isAddingCase
-                              ? const Text(
-                                  "Submitting...",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                                  ),
-                                )
-                              : const Text(
-                                  "Submit Case",
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w700,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 26),
-                  ],
+          body: Stack(
+            children: [
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFE2F8FB), Color(0xFFF8FAFC)],
+                    stops: [0.0, 0.45],
+                  ),
                 ),
               ),
-            ),
+              Positioned(
+                top: -40,
+                right: -30,
+                child: Container(
+                  width: 180,
+                  height: 180,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0x3322D3EE),
+                  ),
+                ),
+              ),
+              Positioned(
+                bottom: -50,
+                left: -40,
+                child: Container(
+                  width: 210,
+                  height: 210,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Color(0x1A0E7490),
+                  ),
+                ),
+              ),
+              SafeArea(
+                child: SingleChildScrollView(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 20),
+                  child: Form(
+                    key: controller.formKey,
+                    child: Column(
+                      children: [
+                        _heroBanner(controller),
+                        const SizedBox(height: 14),
+                        _softInfoTile(),
+                        const SizedBox(height: 16),
+                        _sectionTitle(
+                          "Case Information",
+                          Icons.directions_car_filled,
+                        ),
+                        _card(
+                          children: [
+                            DropdownButtonFormField<CustomerModel>(
+                              value: controller.selectedCustomer,
+                              decoration: _inputDecoration(
+                                label: "Select Customer",
+                                icon: Icons.person_outline,
+                              ),
+                              items: controller.customers.map((customer) {
+                                return DropdownMenuItem<CustomerModel>(
+                                  value: customer,
+                                  child: Text(customer.customerName),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                controller.selectedCustomer = value;
+                                controller.update();
+                              },
+                              validator: (value) {
+                                if (value == null) {
+                                  return "Please select customer";
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Expanded(
+                                  child: _field(
+                                    controller.vinNumberController,
+                                    "VIN Number",
+                                    true,
+                                    icon: Icons.pin_outlined,
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                SizedBox(
+                                  height: 50,
+                                  width: 50,
+                                  child: IconButton(
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: const Color(0xFFE0F7FA),
+                                      foregroundColor: _primaryDark,
+                                      side: const BorderSide(
+                                        color: Color(0xFF99DDE7),
+                                        width: 1,
+                                      ),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(14),
+                                      ),
+                                    ),
+                                    onPressed: () async {
+                                      final result = await Get.toNamed(
+                                        AppRoutes.scanChaseh,
+                                        arguments: {'returnResult': true},
+                                      );
+
+                                      if (result is Map<String, dynamic>) {
+                                        controller.fillFromScannedCarData(
+                                          result,
+                                        );
+                                        return;
+                                      }
+
+                                      if (result is Map) {
+                                        controller.fillFromScannedCarData(
+                                          Map<String, dynamic>.from(result),
+                                        );
+                                      }
+                                    },
+                                    icon: const Icon(
+                                      Icons.qr_code_scanner_rounded,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            _field(
+                              controller.yearController,
+                              "Year",
+                              false,
+                              keyboard: TextInputType.number,
+                              icon: Icons.calendar_today_outlined,
+                            ),
+                            _field(
+                              controller.brandController,
+                              "Brand",
+                              false,
+                              icon: Icons.local_offer_outlined,
+                            ),
+                            _field(
+                              controller.modelController,
+                              "Model",
+                              false,
+                              icon: Icons.directions_car_outlined,
+                            ),
+                          ],
+                        ),
+                        // const SizedBox(height: 16),
+                        // _sectionTitle(
+                        //   "Vehicle Images",
+                        //   Icons.photo_library_outlined,
+                        // ),
+                        // _card(
+                        //   children: [
+                        //     InkWell(
+                        //       borderRadius: BorderRadius.circular(14),
+                        //       onTap: () {
+                        //         controller.pickImages();
+                        //       },
+                        //       child: Ink(
+                        //         height: 58,
+                        //         width: double.infinity,
+                        //         decoration: BoxDecoration(
+                        //           color: const Color(0xFFECFEFF),
+                        //           borderRadius: BorderRadius.circular(14),
+                        //           border: Border.all(
+                        //             color: const Color(0xFF67E8F9),
+                        //           ),
+                        //         ),
+                        //         child: const Row(
+                        //           mainAxisAlignment: MainAxisAlignment.center,
+                        //           children: [
+                        //             Icon(
+                        //               Icons.add_photo_alternate_outlined,
+                        //               color: _primaryDark,
+                        //             ),
+                        //             SizedBox(width: 10),
+                        //             Text(
+                        //               "Take Images",
+                        //               style: TextStyle(
+                        //                 fontWeight: FontWeight.w700,
+                        //                 color: _primaryDark,
+                        //               ),
+                        //             ),
+                        //           ],
+                        //         ),
+                        //       ),
+                        //     ),
+                        //     const SizedBox(height: 14),
+                        //     if (controller.images.isNotEmpty)
+                        //       Wrap(
+                        //         spacing: 10,
+                        //         runSpacing: 10,
+                        //         children: controller.images.map<Widget>((img) {
+                        //           return Stack(
+                        //             children: [
+                        //               ClipRRect(
+                        //                 borderRadius: BorderRadius.circular(14),
+                        //                 child: Image.file(
+                        //                   img,
+                        //                   width: 104,
+                        //                   height: 104,
+                        //                   fit: BoxFit.cover,
+                        //                 ),
+                        //               ),
+                        //               Positioned(
+                        //                 right: 4,
+                        //                 top: 4,
+                        //                 child: GestureDetector(
+                        //                   onTap: () {
+                        //                     controller.removeImage(img);
+                        //                   },
+                        //                   child: Container(
+                        //                     padding: const EdgeInsets.all(4),
+                        //                     decoration: const BoxDecoration(
+                        //                       color: Color(0xFFB91C1C),
+                        //                       shape: BoxShape.circle,
+                        //                     ),
+                        //                     child: const Icon(
+                        //                       Icons.close,
+                        //                       size: 14,
+                        //                       color: Colors.white,
+                        //                     ),
+                        //                   ),
+                        //                 ),
+                        //               ),
+                        //             ],
+                        //           );
+                        //         }).toList(),
+                        //       )
+                        //     else
+                        //       Container(
+                        //         width: double.infinity,
+                        //         padding: const EdgeInsets.symmetric(vertical: 18),
+                        //         decoration: BoxDecoration(
+                        //           borderRadius: BorderRadius.circular(12),
+                        //           border: Border.all(
+                        //             color: const Color(0xFFCBD5E1),
+                        //           ),
+                        //         ),
+                        //         child: const Text(
+                        //           "No images selected yet",
+                        //           textAlign: TextAlign.center,
+                        //           style: TextStyle(
+                        //             color: Color(0xFF64748B),
+                        //             fontWeight: FontWeight.w500,
+                        //           ),
+                        //         ),
+                        //       ),
+                        //   ],
+                        // ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: DecoratedBox(
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(
+                                colors: [_primary, _primaryDark],
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Color(0x33155E75),
+                                  blurRadius: 14,
+                                  offset: Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: ElevatedButton.icon(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                shadowColor: Colors.transparent,
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                              ),
+                              onPressed: () {
+                                if (!controller.isAddingCase) {
+                                  controller.submitCase();
+                                }
+                              },
+                              icon: Icon(
+                                controller.isAddingCase
+                                    ? Icons.hourglass_top_rounded
+                                    : Icons.check_circle_outline,
+                                color: Colors.white,
+                              ),
+                              label: Text(
+                                controller.isAddingCase
+                                    ? "Submitting..."
+                                    : (controller.isEdit
+                                          ? "Save Changes"
+                                          : "Submit Case"),
+                                style: const TextStyle(
+                                  fontSize: 16,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 26),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         );
       },
+    );
+  }
+
+  Widget _softInfoTile() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0x80FFFFFF),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFDAEEF2)),
+      ),
+      child: const Row(
+        children: [
+          Icon(Icons.tips_and_updates_outlined, color: _primaryDark, size: 18),
+          SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              "Use scan to fill VIN quickly, then complete vehicle details.",
+              style: TextStyle(
+                color: _mutedText,
+                fontWeight: FontWeight.w600,
+                fontSize: 12.8,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
@@ -357,9 +425,11 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
             ),
           ),
           const SizedBox(height: 6),
-          const Text(
-            "Fill in vehicle details, attach images, and save in one step.",
-            style: TextStyle(color: Color(0xFFE0F2FE), fontSize: 13.5),
+          Text(
+            controller.isEdit
+                ? "Refine vehicle details and keep the case information updated."
+                : "Capture vehicle info in a few simple, clean steps.",
+            style: const TextStyle(color: Color(0xFFE0F2FE), fontSize: 13.5),
           ),
         ],
       ),
@@ -393,7 +463,11 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Colors.white, Color(0xFFFBFEFF)],
+        ),
         borderRadius: BorderRadius.circular(18),
         border: Border.all(color: const Color(0xFFE2E8F0)),
         boxShadow: const [

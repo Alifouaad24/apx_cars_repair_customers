@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:apx_cars_repair/core/error/Failure.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
@@ -14,29 +15,26 @@ class CaseRepositoryImpl implements CaseRepository {
 
   @override
   Future<Either<Failure, CaseModel>> addCase(
-  Map<String, dynamic> caseData,
-) async {
-  try {
-    final model = await remoteDataSource.addCase(caseData);
+    Map<String, dynamic> caseData,
+  ) async {
+    try {
+      final model = await remoteDataSource.addCase(caseData);
 
-    return Right(model);
-  } on DioException catch (e) {
-
-    final message =
-        e.response?.data is Map<String, dynamic>
-            ? (e.response?.data['message']?.toString() ??
+      return Right(model);
+    } on DioException catch (e) {
+      final message = e.response?.data is Map<String, dynamic>
+          ? (e.response?.data['message']?.toString() ??
                 e.message ??
                 'Failed to add case')
-            : (e.message ?? 'Failed to add case');
+          : (e.message ?? 'Failed to add case');
 
-            print("DioException: $message");
+      print("DioException: $message");
 
-    return Left(Failure(message));
-  } catch (e) {
-
-    return Left(Failure(e.toString()));
+      return Left(Failure(message));
+    } catch (e) {
+      return Left(Failure(e.toString()));
+    }
   }
-}
 
   @override
   Future<Either<Failure, List<CaseModel>>> showCases() async {
@@ -45,6 +43,16 @@ class CaseRepositoryImpl implements CaseRepository {
       return Right(cases);
     } catch (e) {
       return Left(Failure("Failed to fetch cases"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ServiceModel>>> getAllServices() async {
+    try {
+      List<ServiceModel> services = await remoteDataSource.getAllServices();
+      return Right(services);
+    } catch (e) {
+      return Left(Failure("Failed to fetch services"));
     }
   }
 
@@ -77,6 +85,45 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure(message));
     } catch (e) {
       return Left(Failure("Failed to bind images with case"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, CaseService>> addServiceToCase(
+    int caseId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      CaseService model = await remoteDataSource.addServiceToCase(caseId, data);
+      return Right(model);
+    } catch (e) {
+      return Left(Failure("Failed to add service to case"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, CaseService>> editServiceToCase(
+    int caseServiceId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      CaseService model = await remoteDataSource.editServiceToCase(caseServiceId, data);
+      return Right(model);
+    } catch (e) {
+      return Left(Failure("Failed to edit service in case"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> addCaseServiceNote(
+    int caseServiceId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      Map<String, dynamic> response = await remoteDataSource.addCaseServiceNote(caseServiceId, data);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to add note to case service"));
     }
   }
 }

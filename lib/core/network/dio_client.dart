@@ -1,3 +1,5 @@
+import 'dart:math';
+
 import 'package:apx_cars_repair/core/services/TokenService.dart';
 import 'package:dio/dio.dart';
 import 'package:logger/logger.dart';
@@ -45,7 +47,6 @@ class DioClient {
           logger.i("URL: ${response.requestOptions.uri}");
           logger.i("STATUS: ${response.statusCode}");
           logger.i("DATA: ${response.data}");
-
           handler.next(response);
         },
 

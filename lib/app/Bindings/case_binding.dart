@@ -8,6 +8,10 @@ import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
@@ -43,7 +47,21 @@ class CaseBinding extends Bindings {
     Get.lazyPut<BindImagesWithCaseUseCase>(
       () => BindImagesWithCaseUseCase(Get.find<CaseRepository>()),
     );
+    Get.lazyPut<GetAllServiceUseCase>(
+      () => GetAllServiceUseCase(Get.find<CaseRepository>()),
+    );
 
+    Get.lazyPut<AddServiceToCaseUseCase>(
+      () => AddServiceToCaseUseCase(Get.find<CaseRepository>()),
+    );
+
+    Get.lazyPut<EditServiceToCaseUseCase>(
+      () => EditServiceToCaseUseCase(Get.find<CaseRepository>()),
+    );
+
+    Get.lazyPut<AddCaseServiceNote>(
+      () => AddCaseServiceNote(Get.find<CaseRepository>()),
+    );
 
     Get.lazyPut<CaseController>(
       () => CaseController(
@@ -51,6 +69,10 @@ class CaseBinding extends Bindings {
         Get.find<AddCaseUseCase>(),
         Get.find<EditCaseUseCase>(),
         Get.find<BindImagesWithCaseUseCase>(),
+        Get.find<GetAllServiceUseCase>(),
+        Get.find<AddServiceToCaseUseCase>(),
+        Get.find<EditServiceToCaseUseCase>(),
+        Get.find<AddCaseServiceNote>(),
       ),
     );
   }

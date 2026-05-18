@@ -6,6 +6,7 @@ import 'package:apx_cars_repair/app/Bindings/home_binding.dart';
 import 'package:apx_cars_repair/app/Bindings/main_navBar_binding.dart';
 import 'package:apx_cars_repair/app/Bindings/scan_chaseh_binding.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/addEditCase_view.dart';
+import 'package:apx_cars_repair/features/cases/presentation/pages/case_detail_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/showCases_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/addEditCustomes_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/map_view.dart';
@@ -63,6 +64,11 @@ class AppPages {
       name: AppRoutes.map,
       page: () => MapPage(),
       binding: CustomerBinding(),
+    ),
+        GetPage(
+      name: AppRoutes.caseDetailView,
+      page: () => CaseDetailView(),
+      binding: CaseBinding(),
     ),
   ];
 }

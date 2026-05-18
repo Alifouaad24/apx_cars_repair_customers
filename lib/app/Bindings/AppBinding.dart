@@ -7,6 +7,10 @@ import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSource.dart';
@@ -65,7 +69,8 @@ class AppBinding extends Bindings {
         Get.find(),
         Get.find(),
         Get.find(),
-      ),fenix: true,
+      ),
+      fenix: true,
     );
 
     // ================= CASES =================
@@ -74,9 +79,22 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => EditCaseUseCase(Get.find()));
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
     Get.lazyPut(() => BindImagesWithCaseUseCase(Get.find()));
-
+    Get.lazyPut(() => GetAllServiceUseCase(Get.find()));
+    Get.lazyPut(() => AddServiceToCaseUseCase(Get.find()));
+    Get.lazyPut(() => EditServiceToCaseUseCase(Get.find()));
+    Get.lazyPut(() => AddCaseServiceNote(Get.find()));
     Get.lazyPut<CaseController>(
-      () => CaseController(Get.find(), Get.find(), Get.find(), Get.find()),fenix: true,
+      () => CaseController(
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
+      ),
+      fenix: true,
     );
   }
 }
