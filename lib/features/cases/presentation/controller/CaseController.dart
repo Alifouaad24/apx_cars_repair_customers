@@ -304,21 +304,21 @@ class CaseController extends GetxController {
   bool isEditingCase = false;
 
   Future<void> addServiceToCase(Map<String, dynamic> data) async {
-    if (selectedService?.serviceId == null ||
-        notesController.text.trim().isEmpty ||
-        costController.text.trim().isEmpty ||
-        discountController.text.trim().isEmpty ||
-        paidController.text.trim().isEmpty) {
-      Get.snackbar(
-        "Error",
-        "Please fill all fields",
-        snackPosition: SnackPosition.BOTTOM,
-        backgroundColor: Colors.red,
-        colorText: Colors.white,
-        margin: const EdgeInsets.all(12),
-        duration: const Duration(seconds: 2),
-      );
+    if (selectedService?.serviceId == null) {
 
+      Future.delayed(const Duration(milliseconds: 100), () {
+        Get.defaultDialog(
+          title: "Error",
+          middleText: "Please select a service",
+          textConfirm: "OK",
+          confirmTextColor: Colors.white,
+          onConfirm: () {
+            Get.back();
+          },
+        );
+      });
+
+      update();
       return;
     }
 
