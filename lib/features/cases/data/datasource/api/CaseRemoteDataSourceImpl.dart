@@ -103,4 +103,14 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     );
     return response.data;
   }
+
+  @override
+  Future<CaseService> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data) async {
+    final response = await client.dio.put(
+      "/Case/changeStatusCaseService?caseServicId=$caseServiceId",
+      data: data,
+      options: Options(contentType: "application/json"),
+    );
+    return CaseService.fromJson(response.data);
+  }
 }

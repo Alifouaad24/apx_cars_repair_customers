@@ -126,4 +126,17 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to add note to case service"));
     }
   }
+
+  @override
+  Future<Either<Failure, CaseService>> changeCaseServiceStatus(
+    int caseServiceId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      CaseService model = await remoteDataSource.changCaseServiceStatus(caseServiceId, data);
+      return Right(model);
+    } catch (e) {
+      return Left(Failure("Failed to change case service status"));
+    }
+  }
 }

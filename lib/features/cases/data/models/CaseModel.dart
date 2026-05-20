@@ -166,7 +166,7 @@ class CaseService {
   final int caseServiceId;
   final int caseId;
   final int serviceId;
-  final bool? resolved;
+  bool? resolved;
   final String? notes;
   final double? cost;
   final double? discount;
@@ -178,7 +178,7 @@ class CaseService {
     required this.caseServiceId,
     required this.caseId,
     required this.serviceId,
-    required this.resolved,
+    this.resolved,
     required this.notes,
     required this.cost,
     required this.discount,

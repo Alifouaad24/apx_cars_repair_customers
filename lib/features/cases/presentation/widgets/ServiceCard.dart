@@ -242,12 +242,18 @@ class ServiceCard extends StatelessWidget {
                         color: statusColor.withOpacity(0.12),
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: Text(
-                        isResolved ? 'Resolved' : 'Pending',
-                        style: TextStyle(
-                          color: statusColor.shade700,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
+                      child: InkWell(
+                        onTap: () {
+                          print("Status tapped for service ${service.caseServiceId}");
+                          controller.changeServiceStatus(service.caseServiceId, !isResolved);
+                        },
+                        child: Text(
+                          isResolved ? 'Resolved' : 'Pending',
+                          style: TextStyle(
+                            color: statusColor.shade700,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ),

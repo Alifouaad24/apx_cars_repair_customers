@@ -19,4 +19,5 @@ abstract class CaseRepository {
   Future<Either<Failure, List<ServiceModel>>> getAllServices();
   Future<Either<Failure, CaseService>> addServiceToCase(int caseId, Map<String, dynamic> data);
   Future<Either<Failure, Map<String, dynamic>>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data);
+  Future<Either<Failure, CaseService>> changeCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);
 }

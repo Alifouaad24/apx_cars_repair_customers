@@ -48,12 +48,6 @@ class _CaseDetailViewState extends State<CaseDetailView> {
           backgroundColor: surface,
           body: Stack(
             children: [
-              controller.isEditingCaseService
-                  ? Container(
-                      color: Colors.black45,
-                      child: const Center(child: CircularProgressIndicator()),
-                    )
-                  : const SizedBox.shrink(),
               CustomScrollView(
                 slivers: [
                   // ─── Sliver App Bar ────────────────────────────────────────────
@@ -202,14 +196,9 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                                   icon: Icons.build_circle_rounded,
                                   color: amber,
                                   onTap: () {
-                                    controller.isEditService = true;
-                                    // controller.selectedService =
-                                    //     controller.Services.firstWhere(
-                                    //       (s) =>
-                                    //           s.caseServices?.service.serviceId ==
-                                    //           service.service.service_id,
-                                    //     );
-
+                                    controller.isEditService = false;
+                                    controller.selectedService = null;
+                                    controller.isEditingCaseService = false;
                                     controller.editingServiceId = null;
                                     controller.costController.text = '';
                                     controller.paidController.text = '';
@@ -296,6 +285,11 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                   ),
                 ],
               ),
+              if (controller.isEditingCaseService)
+                Container(
+                  color: Colors.black45,
+                  child: const Center(child: CircularProgressIndicator()),
+                ),
             ],
           ),
         );

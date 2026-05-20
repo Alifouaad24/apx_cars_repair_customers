@@ -9,6 +9,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseServiceStatus.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
@@ -21,6 +22,7 @@ import 'package:dio/dio.dart';
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
   ShowCasesUsecase showCasesUsecase;
+  ChangeCaseServiceStatus changeCaseServiceStatus;
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
   GetAllServiceUseCase getAllServiceUseCase;
@@ -67,6 +69,7 @@ class CaseController extends GetxController {
     this.addServiceToCaseUseCase,
     this.editServiceToCaseUseCase,
     this.addCaseServiceNote,
+    this.changeCaseServiceStatus,
   );
 
   @override
@@ -301,19 +304,47 @@ class CaseController extends GetxController {
   bool isEditingCase = false;
 
   Future<void> addServiceToCase(Map<String, dynamic> data) async {
+    if (selectedService?.serviceId == null ||
+        notesController.text.trim().isEmpty ||
+        costController.text.trim().isEmpty ||
+        discountController.text.trim().isEmpty ||
+        paidController.text.trim().isEmpty) {
+      Get.snackbar(
+        "Error",
+        "Please fill all fields",
+        snackPosition: SnackPosition.BOTTOM,
+        backgroundColor: Colors.red,
+        colorText: Colors.white,
+        margin: const EdgeInsets.all(12),
+        duration: const Duration(seconds: 2),
+      );
+
+      return;
+    }
+
     isEditingCase = true;
     update();
+
     final result = await addServiceToCaseUseCase(
       (data['caseId'] as num).toInt(),
       data,
     );
 
-    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      currentCase!.caseServices?.add(data);
-      Get.snackbar("Success", "Service added to case successfully");
-      getCases();
-      Get.back();
-    });
+    result.fold(
+      (failure) {
+        Get.snackbar("Error", failure.message);
+      },
+      (data) {
+        currentCase!.caseServices?.add(data);
+
+        Get.snackbar("Success", "Service added to case successfully");
+
+        getCases();
+
+        Get.back();
+      },
+    );
+
     isEditingCase = false;
     update();
   }
@@ -334,8 +365,12 @@ class CaseController extends GetxController {
     isEditingCaseService = false;
     update();
   }
+
   bool addingNoteToService = false;
-  Future<void> addNoteToCaseService(int serviceId, Map<String, dynamic> data) async {
+  Future<void> addNoteToCaseService(
+    int serviceId,
+    Map<String, dynamic> data,
+  ) async {
     addingNoteToService = true;
     update();
     final result = await addCaseServiceNote(serviceId, data);
@@ -346,6 +381,28 @@ class CaseController extends GetxController {
       Get.back();
     });
     addingNoteToService = false;
+    update();
+  }
+
+  Future<void> changeServiceStatus(int serviceId, bool resolved) async {
+    isEditingCaseService = true;
+    update();
+    final data = {'resulved': resolved};
+
+    final result = await changeCaseServiceStatus(serviceId, data);
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      final service = currentCase?.caseServices?.firstWhere(
+        (e) => e.caseServiceId == serviceId,
+      );
+
+      if (service != null) {
+        service.resolved = resolved;
+      }
+      Get.snackbar("Success", "Service status updated successfully");
+      getCases();
+    });
+    isEditingCaseService = false;
     update();
   }
 
