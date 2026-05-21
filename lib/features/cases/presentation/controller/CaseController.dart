@@ -335,6 +335,7 @@ class CaseController extends GetxController {
         isEditingCase = false;
         update();
       },
+      
       (data) {
         final serviceToAdd = data.service != null || selectedService == null
             ? data
