@@ -10,6 +10,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCase
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseServiceStatus.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
@@ -26,6 +27,7 @@ class CaseController extends GetxController {
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
   GetAllServiceUseCase getAllServiceUseCase;
+  DeletecaseserviceUsecase deletecaseserviceUsecase;
   AddCaseUseCase addCaseUseCase;
   EditCaseUseCase editCaseUseCase;
   AddCaseServiceNote addCaseServiceNote;
@@ -70,6 +72,7 @@ class CaseController extends GetxController {
     this.editServiceToCaseUseCase,
     this.addCaseServiceNote,
     this.changeCaseServiceStatus,
+    this.deletecaseserviceUsecase,
   );
 
   @override
@@ -335,7 +338,7 @@ class CaseController extends GetxController {
         isEditingCase = false;
         update();
       },
-      
+
       (data) {
         final serviceToAdd = data.service != null || selectedService == null
             ? data
@@ -371,18 +374,65 @@ class CaseController extends GetxController {
   int? editingServiceId;
   bool isEditingCaseService = false;
   TextEditingController serviceNoteController = TextEditingController();
-  Future<void> editService(Map<String, dynamic> data) async {
+  Future<bool> editService(Map<String, dynamic> data) async {
+    if (editingServiceId == null) {
+      Get.snackbar("Error", "No service selected for editing");
+      return false;
+    }
+
     isEditingCaseService = true;
     update();
-    final result = await editServiceToCaseUseCase(editingServiceId!, data);
+    var isSuccess = false;
 
-    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      Get.snackbar("Success", "Service edited successfully");
-      getCases();
-      Get.back();
-    });
-    isEditingCaseService = false;
+    try {
+      final result = await editServiceToCaseUseCase(editingServiceId!, data);
+
+      await result.fold(
+        (failure) async {
+          Get.snackbar("Error", failure.message);
+        },
+        (data) async {
+          isSuccess = true;
+          Get.snackbar("Success", "Service edited successfully");
+          await getCases();
+        },
+      );
+    } finally {
+      isEditingCaseService = false;
+      update();
+    }
+
+    return isSuccess;
+  }
+
+  bool isDeletingCaseService = false;
+  Future<bool> deleteCaseService(int serviceId) async {
+    isDeletingCaseService = true;
     update();
+    var isSuccess = false;
+
+    try {
+      final result = await deletecaseserviceUsecase(serviceId);
+
+      await result.fold(
+        (failure) async {
+          Get.snackbar("Error", failure.message);
+        },
+        (data) async {
+          isSuccess = true;
+          Get.snackbar("Success", "Service deleted successfully");
+          currentCase?.caseServices?.removeWhere(
+            (s) => s.caseServiceId == serviceId,
+          );
+          await getCases();
+        },
+      );
+    } finally {
+      isDeletingCaseService = false;
+      update();
+    }
+
+    return isSuccess;
   }
 
   bool addingNoteToService = false;

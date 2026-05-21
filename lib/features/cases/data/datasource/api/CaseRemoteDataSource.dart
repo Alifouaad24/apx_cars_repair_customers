@@ -14,4 +14,5 @@ abstract class CaseRemoteDataSource {
   Future<CaseService> editServiceToCase(int caseServiceId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data);
   Future<CaseService> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);
+  Future<Map<String, dynamic>> deleteCaseService(int caseServiceId);
 }

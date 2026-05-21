@@ -432,7 +432,15 @@ void showAddServiceDialog(CaseController controller) {
                                 };
                                 debugPrint(data.toString());
                                 if (controller.isEditService) {
-                                  await controller.editService(data);
+                                  final edited = await controller.editService(
+                                    data,
+                                  );
+                                  if (edited && context.mounted) {
+                                    Navigator.of(
+                                      context,
+                                      rootNavigator: true,
+                                    ).pop();
+                                  }
                                 } else {
                                   await controller.addServiceToCase(data);
                                 }

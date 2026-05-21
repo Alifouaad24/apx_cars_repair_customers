@@ -139,4 +139,14 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to change case service status"));
     }
   }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> deleteCaseService(int caseServiceId) async {
+    try {
+      Map<String, dynamic> response = await remoteDataSource.deleteCaseService(caseServiceId);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to delete case service"));
+    }
+  }
 }

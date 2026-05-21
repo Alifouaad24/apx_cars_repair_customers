@@ -113,4 +113,12 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     );
     return CaseService.fromJson(response.data);
   }
+
+  @override
+  Future<Map<String, dynamic>> deleteCaseService(int caseServiceId) async {
+    final response = await client.dio.delete(
+      "/Case/DeletetCaseService?caseServicId=$caseServiceId",
+    );
+    return response.data;
+  }
 }

@@ -172,7 +172,103 @@ class ServiceCard extends StatelessWidget {
                                       height: 52,
                                       child: ElevatedButton.icon(
                                         onPressed: () {
+                                          //
                                           Get.back();
+                                          controller.isDeletingCaseService =
+                                              false;
+                                          controller.update();
+                                          Get.dialog(
+                                            GetBuilder<CaseController>(
+                                              builder: (controller) {
+                                                return AlertDialog(
+                                                  shape: RoundedRectangleBorder(
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          20,
+                                                        ),
+                                                  ),
+                                                  title: const Row(
+                                                    children: [
+                                                      Icon(
+                                                        Icons.delete,
+                                                        color: Colors.red,
+                                                      ),
+                                                      SizedBox(width: 10),
+                                                      Text("Delete Service"),
+                                                    ],
+                                                  ),
+                                                  content: const Text(
+                                                    "Are you sure you want to delete this service?",
+                                                  ),
+                                                  actions: [
+                                                    TextButton(
+                                                      onPressed:
+                                                          controller
+                                                              .isDeletingCaseService
+                                                          ? null
+                                                          : () {
+                                                              Get.back(); // إغلاق الديالوج
+                                                            },
+                                                      child: const Text(
+                                                        "Cancel",
+                                                      ),
+                                                    ),
+
+                                                    ElevatedButton(
+                                                      style:
+                                                          ElevatedButton.styleFrom(
+                                                            backgroundColor:
+                                                                Colors.red,
+                                                          ),
+                                                      onPressed:
+                                                          controller
+                                                              .isDeletingCaseService
+                                                          ? null
+                                                          : () async {
+                                                              final deleted =
+                                                                  await controller
+                                                                      .deleteCaseService(
+                                                                        service
+                                                                            .caseServiceId,
+                                                                      );
+
+                                                              if (deleted &&
+                                                                  Get.overlayContext !=
+                                                                      null) {
+                                                                Navigator.of(
+                                                                  Get.overlayContext!,
+                                                                  rootNavigator:
+                                                                      true,
+                                                                ).pop();
+                                                              }
+                                                            },
+                                                      child:
+                                                          controller
+                                                              .isDeletingCaseService
+                                                          ? const SizedBox(
+                                                              width: 20,
+                                                              height: 20,
+                                                              child:
+                                                                  CircularProgressIndicator(
+                                                                    strokeWidth:
+                                                                        2,
+                                                                    color: Colors
+                                                                        .white,
+                                                                  ),
+                                                            )
+                                                          : const Text(
+                                                              "Delete",
+                                                              style: TextStyle(
+                                                                color: Colors
+                                                                    .white,
+                                                              ),
+                                                            ),
+                                                    ),
+                                                  ],
+                                                );
+                                              },
+                                            ),
+                                          );
                                         },
                                         icon: const Icon(Icons.delete_rounded),
                                         label: const Text(
@@ -244,8 +340,13 @@ class ServiceCard extends StatelessWidget {
                       ),
                       child: InkWell(
                         onTap: () {
-                          print("Status tapped for service ${service.caseServiceId}");
-                          controller.changeServiceStatus(service.caseServiceId, !isResolved);
+                          print(
+                            "Status tapped for service ${service.caseServiceId}",
+                          );
+                          controller.changeServiceStatus(
+                            service.caseServiceId,
+                            !isResolved,
+                          );
                         },
                         child: Text(
                           isResolved ? 'Resolved' : 'Pending',
