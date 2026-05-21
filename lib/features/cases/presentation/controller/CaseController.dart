@@ -305,7 +305,6 @@ class CaseController extends GetxController {
 
   Future<void> addServiceToCase(Map<String, dynamic> data) async {
     if (selectedService?.serviceId == null) {
-
       Future.delayed(const Duration(milliseconds: 100), () {
         Get.defaultDialog(
           title: "Error",
@@ -333,20 +332,39 @@ class CaseController extends GetxController {
     result.fold(
       (failure) {
         Get.snackbar("Error", failure.message);
+        isEditingCase = false;
+        update();
       },
       (data) {
-        currentCase!.caseServices?.add(data);
+        final serviceToAdd = data.service != null || selectedService == null
+            ? data
+            : CaseService(
+                caseServiceId: data.caseServiceId,
+                caseId: data.caseId,
+                serviceId: data.serviceId,
+                resolved: data.resolved,
+                notes: data.notes,
+                cost: data.cost,
+                discount: data.discount,
+                paid: data.paid,
+                service: ServiceModel1(
+                  serviceId: selectedService!.serviceId,
+                  description: selectedService!.description,
+                  serviceIcon: selectedService!.serviceIcon,
+                  serviceRoute: selectedService!.serviceRoute,
+                ),
+                caseServiceNotes: data.caseServiceNotes,
+              );
 
+        currentCase!.caseServices?.add(serviceToAdd);
         Get.snackbar("Success", "Service added to case successfully");
 
         getCases();
-
+        isEditingCase = false;
+        update();
         Get.back();
       },
     );
-
-    isEditingCase = false;
-    update();
   }
 
   int? editingServiceId;

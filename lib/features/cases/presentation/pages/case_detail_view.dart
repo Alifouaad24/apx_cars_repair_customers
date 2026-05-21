@@ -35,9 +35,9 @@ class _CaseDetailViewState extends State<CaseDetailView> {
 
   @override
   Widget build(BuildContext context) {
-    final currentCase = Get.find<CaseController>().currentCase;
     return GetBuilder<CaseController>(
       builder: (controller) {
+        final currentCase = controller.currentCase;
         if (currentCase == null) {
           return const Scaffold(body: Center(child: Text('No case selected')));
         }
@@ -299,6 +299,7 @@ class _CaseDetailViewState extends State<CaseDetailView> {
 }
 
 void showAddServiceDialog(CaseController controller) {
+  bool isSubmitting = false;
   Get.dialog(
     Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -403,34 +404,43 @@ void showAddServiceDialog(CaseController controller) {
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed: () {
-                          final data = {
-                            "caseId": controller.currentCase!.id,
-                            "serviceId": controller.selectedService?.serviceId,
-                            "resolved": controller.resolved,
-                            "notes": controller.notesController.text,
-                            "cost":
-                                double.tryParse(
-                                  controller.costController.text,
-                                ) ??
-                                0,
-                            "discount":
-                                double.tryParse(
-                                  controller.discountController.text,
-                                ) ??
-                                0,
-                            "paid":
-                                double.tryParse(
-                                  controller.paidController.text,
-                                ) ??
-                                0,
-                          };
-                          debugPrint(data.toString());
-                          controller.isEditService
-                              ? controller.editService(data)
-                              : controller.addServiceToCase(data);
-                          Get.back();
-                        },
+                        onPressed: isSubmitting
+                            ? null
+                            : () async {
+                                setDState(() => isSubmitting = true);
+                                final data = {
+                                  "caseId": controller.currentCase!.id,
+                                  "serviceId":
+                                      controller.selectedService?.serviceId,
+                                  "resolved": controller.resolved,
+                                  "notes": controller.notesController.text,
+                                  "cost":
+                                      double.tryParse(
+                                        controller.costController.text,
+                                      ) ??
+                                      0,
+                                  "discount":
+                                      double.tryParse(
+                                        controller.discountController.text,
+                                      ) ??
+                                      0,
+                                  "paid":
+                                      double.tryParse(
+                                        controller.paidController.text,
+                                      ) ??
+                                      0,
+                                };
+                                debugPrint(data.toString());
+                                if (controller.isEditService) {
+                                  await controller.editService(data);
+                                } else {
+                                  await controller.addServiceToCase(data);
+                                }
+
+                                if (context.mounted) {
+                                  setDState(() => isSubmitting = false);
+                                }
+                              },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primary,
                           foregroundColor: Colors.white,
@@ -439,7 +449,7 @@ void showAddServiceDialog(CaseController controller) {
                             borderRadius: BorderRadius.circular(14),
                           ),
                         ),
-                        child: controller.isEditingCase
+                        child: isSubmitting
                             ? const CircularProgressIndicator()
                             : const Text('Confirm'),
                       ),
