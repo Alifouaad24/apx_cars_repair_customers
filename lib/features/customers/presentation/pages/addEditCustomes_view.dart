@@ -75,8 +75,7 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                     ],
                   ),
 
-                  const SizedBox(height: 15),
-
+const SizedBox(height: 15),
                   /// ================= ADDRESS =================
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -136,347 +135,347 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                             ],
                           ),
                         ),
-                        InkWell(
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            controller.addressSearchController.clear();
-                            controller.results.clear();
-                            Get.dialog(
-                              GetBuilder<CustomerController>(
-                                builder: (controller) {
-                                  return Dialog(
-                                    backgroundColor: Colors.transparent,
-                                    child: Container(
-                                      padding: const EdgeInsets.all(20),
-                                      decoration: BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.circular(24),
-                                        boxShadow: [
-                                          BoxShadow(
-                                            blurRadius: 20,
-                                            color: Colors.black.withOpacity(
-                                              0.1,
-                                            ),
-                                            offset: const Offset(0, 10),
-                                          ),
-                                        ],
-                                      ),
+                        // InkWell(
+                        //   borderRadius: BorderRadius.circular(12),
+                        //   onTap: () {
+                        //     controller.addressSearchController.clear();
+                        //     controller.results.clear();
+                        //     Get.dialog(
+                        //       GetBuilder<CustomerController>(
+                        //         builder: (controller) {
+                        //           return Dialog(
+                        //             backgroundColor: Colors.transparent,
+                        //             child: Container(
+                        //               padding: const EdgeInsets.all(20),
+                        //               decoration: BoxDecoration(
+                        //                 color: Colors.white,
+                        //                 borderRadius: BorderRadius.circular(24),
+                        //                 boxShadow: [
+                        //                   BoxShadow(
+                        //                     blurRadius: 20,
+                        //                     color: Colors.black.withOpacity(
+                        //                       0.1,
+                        //                     ),
+                        //                     offset: const Offset(0, 10),
+                        //                   ),
+                        //                 ],
+                        //               ),
 
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          /// HEADER
-                                          Row(
-                                            children: [
-                                              Container(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                decoration: BoxDecoration(
-                                                  color: Colors.blue
-                                                      .withOpacity(0.1),
-                                                  borderRadius:
-                                                      BorderRadius.circular(14),
-                                                ),
-                                                child: const Icon(
-                                                  Icons.location_on,
-                                                  color: Colors.blue,
-                                                ),
-                                              ),
+                        //               child: Column(
+                        //                 mainAxisSize: MainAxisSize.min,
+                        //                 children: [
+                        //                   /// HEADER
+                        //                   Row(
+                        //                     children: [
+                        //                       Container(
+                        //                         padding: const EdgeInsets.all(
+                        //                           10,
+                        //                         ),
+                        //                         decoration: BoxDecoration(
+                        //                           color: Colors.blue
+                        //                               .withOpacity(0.1),
+                        //                           borderRadius:
+                        //                               BorderRadius.circular(14),
+                        //                         ),
+                        //                         child: const Icon(
+                        //                           Icons.location_on,
+                        //                           color: Colors.blue,
+                        //                         ),
+                        //                       ),
 
-                                              const SizedBox(width: 12),
+                        //                       const SizedBox(width: 12),
 
-                                              const Expanded(
-                                                child: Text(
-                                                  "Search Address",
-                                                  style: TextStyle(
-                                                    fontSize: 20,
-                                                    fontWeight: FontWeight.bold,
-                                                  ),
-                                                ),
-                                              ),
+                        //                       const Expanded(
+                        //                         child: Text(
+                        //                           "Search Address",
+                        //                           style: TextStyle(
+                        //                             fontSize: 20,
+                        //                             fontWeight: FontWeight.bold,
+                        //                           ),
+                        //                         ),
+                        //                       ),
 
-                                              InkWell(
-                                                borderRadius:
-                                                    BorderRadius.circular(100),
-                                                onTap: () => Get.back(),
-                                                child: const Padding(
-                                                  padding: EdgeInsets.all(4),
-                                                  child: Icon(Icons.close),
-                                                ),
-                                              ),
-                                            ],
-                                          ),
+                        //                       InkWell(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(100),
+                        //                         onTap: () => Get.back(),
+                        //                         child: const Padding(
+                        //                           padding: EdgeInsets.all(4),
+                        //                           child: Icon(Icons.close),
+                        //                         ),
+                        //                       ),
+                        //                     ],
+                        //                   ),
 
-                                          const SizedBox(height: 20),
+                        //                   const SizedBox(height: 20),
 
-                                          /// SEARCH FIELD
-                                          TextField(
-                                            controller: controller
-                                                .addressSearchController,
-                                            onChanged: (value) {
-                                              controller.search(value);
-                                            },
-                                            decoration: InputDecoration(
-                                              hintText: "Type address here...",
-                                              prefixIcon: const Icon(
-                                                Icons.search,
-                                              ),
-                                              filled: true,
-                                              fillColor: Colors.grey.shade100,
+                        //                   /// SEARCH FIELD
+                        //                   TextField(
+                        //                     controller: controller
+                        //                         .addressSearchController,
+                        //                     onChanged: (value) {
+                        //                       controller.search(value);
+                        //                     },
+                        //                     decoration: InputDecoration(
+                        //                       hintText: "Type address here...",
+                        //                       prefixIcon: const Icon(
+                        //                         Icons.search,
+                        //                       ),
+                        //                       filled: true,
+                        //                       fillColor: Colors.grey.shade100,
 
-                                              contentPadding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 14,
-                                                  ),
+                        //                       contentPadding:
+                        //                           const EdgeInsets.symmetric(
+                        //                             vertical: 14,
+                        //                           ),
 
-                                              border: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                                borderSide: BorderSide.none,
-                                              ),
+                        //                       border: OutlineInputBorder(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(16),
+                        //                         borderSide: BorderSide.none,
+                        //                       ),
 
-                                              enabledBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                                borderSide: BorderSide.none,
-                                              ),
+                        //                       enabledBorder: OutlineInputBorder(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(16),
+                        //                         borderSide: BorderSide.none,
+                        //                       ),
 
-                                              focusedBorder: OutlineInputBorder(
-                                                borderRadius:
-                                                    BorderRadius.circular(16),
-                                                borderSide: BorderSide(
-                                                  color: Colors.blue,
-                                                  width: 1.5,
-                                                ),
-                                              ),
-                                            ),
-                                          ),
+                        //                       focusedBorder: OutlineInputBorder(
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(16),
+                        //                         borderSide: BorderSide(
+                        //                           color: Colors.blue,
+                        //                           width: 1.5,
+                        //                         ),
+                        //                       ),
+                        //                     ),
+                        //                   ),
 
-                                          const SizedBox(height: 16),
+                        //                   const SizedBox(height: 16),
 
-                                          /// LOADING
-                                          if (controller.isSearchLoading)
-                                            const Padding(
-                                              padding: EdgeInsets.all(20),
-                                              child:
-                                                  CircularProgressIndicator(),
-                                            ),
+                        //                   /// LOADING
+                        //                   if (controller.isSearchLoading)
+                        //                     const Padding(
+                        //                       padding: EdgeInsets.all(20),
+                        //                       child:
+                        //                           CircularProgressIndicator(),
+                        //                     ),
 
-                                          /// EMPTY
-                                          if (!controller.isSearchLoading &&
-                                              controller.results.isEmpty)
-                                            Padding(
-                                              padding:
-                                                  const EdgeInsets.symmetric(
-                                                    vertical: 30,
-                                                  ),
-                                              child: Column(
-                                                children: [
-                                                  Icon(
-                                                    Icons.location_off,
-                                                    size: 50,
-                                                    color: Colors.grey.shade400,
-                                                  ),
-                                                  const SizedBox(height: 10),
-                                                  Text(
-                                                    "No addresses found",
-                                                    style: TextStyle(
-                                                      color:
-                                                          Colors.grey.shade600,
-                                                    ),
-                                                  ),
-                                                ],
-                                              ),
-                                            ),
+                        //                   /// EMPTY
+                        //                   if (!controller.isSearchLoading &&
+                        //                       controller.results.isEmpty)
+                        //                     Padding(
+                        //                       padding:
+                        //                           const EdgeInsets.symmetric(
+                        //                             vertical: 30,
+                        //                           ),
+                        //                       child: Column(
+                        //                         children: [
+                        //                           Icon(
+                        //                             Icons.location_off,
+                        //                             size: 50,
+                        //                             color: Colors.grey.shade400,
+                        //                           ),
+                        //                           const SizedBox(height: 10),
+                        //                           Text(
+                        //                             "No addresses found",
+                        //                             style: TextStyle(
+                        //                               color:
+                        //                                   Colors.grey.shade600,
+                        //                             ),
+                        //                           ),
+                        //                         ],
+                        //                       ),
+                        //                     ),
 
-                                          /// RESULTS
-                                          if (controller.results.isNotEmpty)
-                                            Container(
-                                              height: 300,
-                                              decoration: BoxDecoration(
-                                                color: Colors.grey.shade50,
-                                                borderRadius:
-                                                    BorderRadius.circular(18),
-                                              ),
+                        //                   /// RESULTS
+                        //                   if (controller.results.isNotEmpty)
+                        //                     Container(
+                        //                       height: 300,
+                        //                       decoration: BoxDecoration(
+                        //                         color: Colors.grey.shade50,
+                        //                         borderRadius:
+                        //                             BorderRadius.circular(18),
+                        //                       ),
 
-                                              child: ListView.separated(
-                                                padding: const EdgeInsets.all(
-                                                  10,
-                                                ),
-                                                itemCount:
-                                                    controller.results.length,
+                        //                       child: ListView.separated(
+                        //                         padding: const EdgeInsets.all(
+                        //                           10,
+                        //                         ),
+                        //                         itemCount:
+                        //                             controller.results.length,
 
-                                                separatorBuilder: (_, __) =>
-                                                    const SizedBox(height: 8),
+                        //                         separatorBuilder: (_, __) =>
+                        //                             const SizedBox(height: 8),
 
-                                                itemBuilder: (context, index) {
-                                                  final item =
-                                                      controller.results[index];
+                        //                         itemBuilder: (context, index) {
+                        //                           final item =
+                        //                               controller.results[index];
 
-                                                  return Material(
-                                                    color: Colors.white,
-                                                    borderRadius:
-                                                        BorderRadius.circular(
-                                                          16,
-                                                        ),
+                        //                           return Material(
+                        //                             color: Colors.white,
+                        //                             borderRadius:
+                        //                                 BorderRadius.circular(
+                        //                                   16,
+                        //                                 ),
 
-                                                    child: InkWell(
-                                                      borderRadius:
-                                                          BorderRadius.circular(
-                                                            16,
-                                                          ),
+                        //                             child: InkWell(
+                        //                               borderRadius:
+                        //                                   BorderRadius.circular(
+                        //                                     16,
+                        //                                   ),
 
-                                                      onTap: () async {
-                                                        final placeId =
-                                                            item['place_id'];
+                        //                               onTap: () async {
+                        //                                 final placeId =
+                        //                                     item['place_id'];
 
-                                                        final details =
-                                                            await controller
-                                                                .addressSearchService
-                                                                .getPlaceDetails(
-                                                                  placeId,
-                                                                );
+                        //                                 final details =
+                        //                                     await controller
+                        //                                         .addressSearchService
+                        //                                         .getPlaceDetails(
+                        //                                           placeId,
+                        //                                         );
 
-                                                        controller
-                                                                .line1Controller
-                                                                .text =
-                                                            details["line1"]
-                                                                ?.toString() ??
-                                                            '';
+                        //                                 controller
+                        //                                         .line1Controller
+                        //                                         .text =
+                        //                                     details["line1"]
+                        //                                         ?.toString() ??
+                        //                                     '';
 
-                                                        controller
-                                                                .line2Controller
-                                                                .text =
-                                                            details["line2"]
-                                                                ?.toString() ??
-                                                            '';
+                        //                                 controller
+                        //                                         .line2Controller
+                        //                                         .text =
+                        //                                     details["line2"]
+                        //                                         ?.toString() ??
+                        //                                     '';
 
-                                                        controller
-                                                                .zipController
-                                                                .text =
-                                                            details["postalCode"]
-                                                                ?.toString() ??
-                                                            '';
+                        //                                 controller
+                        //                                         .zipController
+                        //                                         .text =
+                        //                                     details["postalCode"]
+                        //                                         ?.toString() ??
+                        //                                     '';
 
-                                                        controller
-                                                                .cityController
-                                                                .text =
-                                                            details["city"]
-                                                                ?.toString() ??
-                                                            '';
+                        //                                 controller
+                        //                                         .cityController
+                        //                                         .text =
+                        //                                     details["city"]
+                        //                                         ?.toString() ??
+                        //                                     '';
 
-                                                        controller.update();
+                        //                                 controller.update();
 
-                                                        Get.back();
-                                                      },
+                        //                                 Get.back();
+                        //                               },
 
-                                                      child: Padding(
-                                                        padding:
-                                                            const EdgeInsets.all(
-                                                              14,
-                                                            ),
+                        //                               child: Padding(
+                        //                                 padding:
+                        //                                     const EdgeInsets.all(
+                        //                                       14,
+                        //                                     ),
 
-                                                        child: Row(
-                                                          crossAxisAlignment:
-                                                              CrossAxisAlignment
-                                                                  .start,
+                        //                                 child: Row(
+                        //                                   crossAxisAlignment:
+                        //                                       CrossAxisAlignment
+                        //                                           .start,
 
-                                                          children: [
-                                                            Container(
-                                                              padding:
-                                                                  const EdgeInsets.all(
-                                                                    10,
-                                                                  ),
-                                                              decoration: BoxDecoration(
-                                                                color: Colors
-                                                                    .blue
-                                                                    .withOpacity(
-                                                                      0.1,
-                                                                    ),
-                                                                borderRadius:
-                                                                    BorderRadius.circular(
-                                                                      12,
-                                                                    ),
-                                                              ),
-                                                              child: const Icon(
-                                                                Icons
-                                                                    .location_on,
-                                                                color:
-                                                                    Colors.blue,
-                                                                size: 20,
-                                                              ),
-                                                            ),
+                        //                                   children: [
+                        //                                     Container(
+                        //                                       padding:
+                        //                                           const EdgeInsets.all(
+                        //                                             10,
+                        //                                           ),
+                        //                                       decoration: BoxDecoration(
+                        //                                         color: Colors
+                        //                                             .blue
+                        //                                             .withOpacity(
+                        //                                               0.1,
+                        //                                             ),
+                        //                                         borderRadius:
+                        //                                             BorderRadius.circular(
+                        //                                               12,
+                        //                                             ),
+                        //                                       ),
+                        //                                       child: const Icon(
+                        //                                         Icons
+                        //                                             .location_on,
+                        //                                         color:
+                        //                                             Colors.blue,
+                        //                                         size: 20,
+                        //                                       ),
+                        //                                     ),
 
-                                                            const SizedBox(
-                                                              width: 12,
-                                                            ),
+                        //                                     const SizedBox(
+                        //                                       width: 12,
+                        //                                     ),
 
-                                                            Expanded(
-                                                              child: Column(
-                                                                crossAxisAlignment:
-                                                                    CrossAxisAlignment
-                                                                        .start,
+                        //                                     Expanded(
+                        //                                       child: Column(
+                        //                                         crossAxisAlignment:
+                        //                                             CrossAxisAlignment
+                        //                                                 .start,
 
-                                                                children: [
-                                                                  Text(
-                                                                    item['description'] ??
-                                                                        '',
-                                                                    maxLines: 2,
-                                                                    overflow:
-                                                                        TextOverflow
-                                                                            .ellipsis,
-                                                                    style: TextStyle(
-                                                                      color: Colors
-                                                                          .grey
-                                                                          .shade700,
-                                                                      fontSize:
-                                                                          13,
-                                                                    ),
-                                                                  ),
-                                                                ],
-                                                              ),
-                                                            ),
-                                                          ],
-                                                        ),
-                                                      ),
-                                                    ),
-                                                  );
-                                                },
-                                              ),
-                                            ),
-                                        ],
-                                      ),
-                                    ),
-                                  );
-                                },
-                              ),
-                            );
-                          },
+                        //                                         children: [
+                        //                                           Text(
+                        //                                             item['description'] ??
+                        //                                                 '',
+                        //                                             maxLines: 2,
+                        //                                             overflow:
+                        //                                                 TextOverflow
+                        //                                                     .ellipsis,
+                        //                                             style: TextStyle(
+                        //                                               color: Colors
+                        //                                                   .grey
+                        //                                                   .shade700,
+                        //                                               fontSize:
+                        //                                                   13,
+                        //                                             ),
+                        //                                           ),
+                        //                                         ],
+                        //                                       ),
+                        //                                     ),
+                        //                                   ],
+                        //                                 ),
+                        //                               ),
+                        //                             ),
+                        //                           );
+                        //                         },
+                        //                       ),
+                        //                     ),
+                        //                 ],
+                        //               ),
+                        //             ),
+                        //           );
+                        //         },
+                        //       ),
+                        //     );
+                        //   },
 
-                          child: Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 10,
-                            ),
+                        //   child: Container(
+                        //     padding: const EdgeInsets.symmetric(
+                        //       horizontal: 14,
+                        //       vertical: 10,
+                        //     ),
 
-                            decoration: BoxDecoration(
-                              color: const Color.fromARGB(255, 147, 177, 30),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                        //     decoration: BoxDecoration(
+                        //       color: const Color.fromARGB(255, 147, 177, 30),
+                        //       borderRadius: BorderRadius.circular(12),
+                        //     ),
 
-                            child: const Row(
-                              children: [
-                                Icon(
-                                  Icons.location_on_outlined,
-                                  color: Colors.white,
-                                  size: 18,
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        SizedBox(width: 6),
+                        //     child: const Row(
+                        //       children: [
+                        //         Icon(
+                        //           Icons.location_on_outlined,
+                        //           color: Colors.white,
+                        //           size: 18,
+                        //         ),
+                        //       ],
+                        //     ),
+                        //   ),
+                        // ),
+                        // SizedBox(width: 6),
                         InkWell(
                           borderRadius: BorderRadius.circular(12),
 
@@ -522,7 +521,7 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
 
                   _card(
                     children: [
-                      _field(controller.line1Controller, "Line 1", false),
+                      _addressField(controller),
                       _field(controller.line2Controller, "Line 2", false),
                       _field(controller.cityController, "City", false),
                       _field(
@@ -620,6 +619,107 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(children: children),
+    );
+  }
+
+  Widget _addressField(CustomerController controller) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          TextFormField(
+            controller: controller.line1Controller,
+            keyboardType: TextInputType.text,
+            decoration: InputDecoration(
+              labelText: "Line 1",
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              suffixIcon: controller.line1Controller.text.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        controller.line1Controller.clear();
+                        controller.results.clear();
+                        controller.update();
+                      },
+                    )
+                  : null,
+            ),
+            onChanged: (value) {
+              if (value.isNotEmpty) {
+                controller.search(value);
+              } else {
+                controller.results.clear();
+                controller.update();
+              }
+            },
+          ),
+
+          const SizedBox(height: 6),
+
+          if (controller.isSearchLoading)
+            const Padding(
+              padding: EdgeInsets.all(8),
+              child: CircularProgressIndicator(),
+            ),
+
+          if (!controller.isSearchLoading && controller.results.isNotEmpty)
+            Container(
+              constraints: const BoxConstraints(maxHeight: 200),
+              margin: const EdgeInsets.only(top: 6),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade300),
+              ),
+              child: ListView.separated(
+                padding: const EdgeInsets.all(8),
+                shrinkWrap: true,
+                itemCount: controller.results.length,
+                separatorBuilder: (_, __) => const SizedBox(height: 6),
+                itemBuilder: (context, index) {
+                  final item = controller.results[index];
+                  return Material(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                    child: InkWell(
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () async {
+                        controller.line1Controller.clear();
+                        
+                        final placeId = item['place_id'];
+                        final details = await controller.addressSearchService
+                            .getPlaceDetails(placeId);
+                        controller.line1Controller.text =
+                            details["line1"]?.toString() ?? '';
+                        controller.line2Controller.text =
+                            details["line2"]?.toString() ?? '';
+                        controller.zipController.text =
+                            details["postalCode"]?.toString() ?? '';
+                        controller.cityController.text =
+                            details["city"]?.toString() ?? '';
+
+                        controller.results.clear();
+                        controller.update();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(12),
+                        child: Text(
+                          item['description'] ?? '',
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(color: Colors.grey.shade700),
+                        ),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 

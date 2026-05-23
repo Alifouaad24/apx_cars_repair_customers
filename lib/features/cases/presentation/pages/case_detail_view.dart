@@ -1,5 +1,6 @@
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
+import 'package:apx_cars_repair/features/cases/presentation/pages/case_detail_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/ActionButton.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/CarInfoCard.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/EmptyServices.dart';
@@ -184,9 +185,8 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                                       : 'Add Photos',
                                   icon: Icons.add_a_photo_rounded,
                                   color: primary,
-                                  onTap: () => controller.takeMultiImages(
-                                    currentCase.id,
-                                  ),
+                                  onTap: () => controller
+                                      .showImagePickerOptions(currentCase.id),
                                 ),
                               ),
                               const SizedBox(width: 12),
@@ -432,17 +432,11 @@ void showAddServiceDialog(CaseController controller) {
                                 };
                                 debugPrint(data.toString());
                                 if (controller.isEditService) {
-                                  final edited = await controller.editService(
-                                    data,
-                                  );
-                                  if (edited && context.mounted) {
-                                    Navigator.of(
-                                      context,
-                                      rootNavigator: true,
-                                    ).pop();
-                                  }
+                                  await controller.editService(data);
                                 } else {
                                   await controller.addServiceToCase(data);
+
+                                  Get.back();
                                 }
 
                                 if (context.mounted) {

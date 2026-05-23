@@ -154,6 +154,85 @@ class CaseController extends GetxController {
     }
   }
 
+  Future<void> showImagePickerOptions(int caseId) async {
+    Get.bottomSheet(
+      Container(
+        padding: const EdgeInsets.all(20),
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+        ),
+        child: Wrap(
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () {
+                Get.back();
+                takeMultiImages(caseId);
+              },
+            ),
+
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () {
+                Get.back();
+                takeImageFromCamera(caseId);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> takeImageFromCamera(int caseId) async {
+    try {
+      final picked = await _picker.pickImage(source: ImageSource.camera);
+
+      if (picked == null) {
+        Get.snackbar("Info", "No image selected");
+        return;
+      }
+
+      isImagesAdding = true;
+      update();
+
+      final selectedImage = File(picked.path);
+
+      final result = await bindImagesWithCaseUseCase(caseId, [selectedImage]);
+
+      result.fold(
+        (failure) {
+          isImagesAdding = false;
+          update();
+
+          Get.snackbar("Error", failure.message);
+          print(failure.message);
+        },
+        (_) async {
+          Get.snackbar("Success", "Image added successfully");
+
+          Get.back();
+          Get.back();
+
+          await getCases();
+
+          isImagesAdding = false;
+          update();
+        },
+      );
+    } catch (e) {
+      print(e);
+
+      isImagesAdding = false;
+      update();
+
+      Get.snackbar("Error", "Failed to capture image");
+    }
+  }
+
   void fillFromScannedCarData(Map<String, dynamic> data) {
     final vin = _pickValue(data, const [
       'vin',
@@ -366,7 +445,7 @@ class CaseController extends GetxController {
         getCases();
         isEditingCase = false;
         update();
-        Get.back();
+        Get.toNamed(AppRoutes.main);
       },
     );
   }
@@ -374,6 +453,7 @@ class CaseController extends GetxController {
   int? editingServiceId;
   bool isEditingCaseService = false;
   TextEditingController serviceNoteController = TextEditingController();
+  
   Future<bool> editService(Map<String, dynamic> data) async {
     if (editingServiceId == null) {
       Get.snackbar("Error", "No service selected for editing");
@@ -395,11 +475,13 @@ class CaseController extends GetxController {
           isSuccess = true;
           Get.snackbar("Success", "Service edited successfully");
           await getCases();
+          
         },
       );
     } finally {
       isEditingCaseService = false;
       update();
+      Get.toNamed(AppRoutes.main);
     }
 
     return isSuccess;

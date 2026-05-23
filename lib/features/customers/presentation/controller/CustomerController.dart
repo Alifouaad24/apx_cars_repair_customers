@@ -32,7 +32,7 @@ class CustomerController extends GetxController {
   final phoneController = TextEditingController();
   final emailController = TextEditingController();
   final businessController = TextEditingController();
-
+  final businessNameController = TextEditingController();
   // USA Address
   final line1Controller = TextEditingController();
   final line2Controller = TextEditingController();
