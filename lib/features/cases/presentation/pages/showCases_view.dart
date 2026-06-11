@@ -674,7 +674,11 @@ class _ShowCasesState extends State<ShowCases> {
   Widget _caseImageTile(CaseModel caseItem) {
     final firstImage = (caseItem.images != null && caseItem.images!.isNotEmpty)
         ? caseItem.images!.first.imageUrl
+        : (caseItem.carInfo.carBrandModel != null &&
+              caseItem.carInfo.carBrandModel!.carBrandImgUrl.isNotEmpty)
+        ? caseItem.carInfo.carBrandModel!.carBrandImgUrl
         : null;
+
     final title = _caseTitle(caseItem);
 
     return GetBuilder<CaseController>(

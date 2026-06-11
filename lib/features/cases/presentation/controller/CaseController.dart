@@ -1,5 +1,5 @@
 import 'dart:io';
-
+import 'package:intl/intl.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -60,6 +60,8 @@ class CaseController extends GetxController {
   final costController = TextEditingController();
   final discountController = TextEditingController();
   final paidController = TextEditingController();
+  var visitDate = DateTime.now();
+  bool sendDateToApi = false;
 
   List<File> images = [];
   CaseController(
@@ -357,6 +359,9 @@ class CaseController extends GetxController {
       "year": yearController.text.trim(),
       "brand": brandController.text.trim(),
       "model": modelController.text.trim(),
+      "visitDate": sendDateToApi
+          ? DateFormat('yyyy-MM-dd').format(visitDate)
+          : null,
     };
 
     final result = await addCaseUseCase(data);
@@ -453,7 +458,7 @@ class CaseController extends GetxController {
   int? editingServiceId;
   bool isEditingCaseService = false;
   TextEditingController serviceNoteController = TextEditingController();
-  
+
   Future<bool> editService(Map<String, dynamic> data) async {
     if (editingServiceId == null) {
       Get.snackbar("Error", "No service selected for editing");
@@ -475,7 +480,6 @@ class CaseController extends GetxController {
           isSuccess = true;
           Get.snackbar("Success", "Service edited successfully");
           await getCases();
-          
         },
       );
     } finally {

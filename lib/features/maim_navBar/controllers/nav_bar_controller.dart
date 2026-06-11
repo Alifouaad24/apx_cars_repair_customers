@@ -1,5 +1,6 @@
 import 'package:apx_cars_repair/features/cases/presentation/pages/addEditCase_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/showCases_view.dart';
+import 'package:apx_cars_repair/features/cases/presentation/pages/showSchadualCases.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/map_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
 import 'package:flutter/material.dart';
@@ -17,9 +18,9 @@ class MainNavBarController extends GetxController {
       label: 'Cases',
     ),
     MainNavBarItem(
-      page: const AddeditCaseView(),
-      icon: Icons.add_box_outlined,
-      label: 'Add Case',
+      page: const Showschadualcases(),
+      icon: Icons.calendar_month_outlined,
+      label: 'Schadual',
     ),
     MainNavBarItem(
       page: const ShowCustomers(),

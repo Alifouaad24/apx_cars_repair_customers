@@ -2,17 +2,11 @@ import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dar
 
 class CaseModel {
   final int id;
-
   final CustomerModel? customer;
-
   final int? customerId;
-
   final List<CaseImage>? images;
-
   final CarInfo carInfo;
-
   final List<CaseService>? caseServices;
-
   final String? date;
 
   CaseModel({
@@ -118,14 +112,11 @@ class CaseImage {
 
 class CarInfo {
   final int id;
-
   final String brand;
-
   final String vinNumber;
-
   final String model;
-
   final String year;
+  final CarBrandModel? carBrandModel;
 
   CarInfo({
     required this.id,
@@ -133,6 +124,7 @@ class CarInfo {
     required this.brand,
     required this.model,
     required this.year,
+    this.carBrandModel
   });
 
   factory CarInfo.fromJson(
@@ -140,14 +132,11 @@ class CarInfo {
   ) {
     return CarInfo(
       id: json['carInfoTblId'] ?? 0,
-
       vinNumber: json['vinNumber'] ?? '',
-
       brand: json['brand'] ?? '',
-
       model: json['model'] ?? '',
-
       year: json['year'] ?? '',
+      carBrandModel : json['carBrand'] != null ? CarBrandModel.fromJson(json['carBrand']) : null
     );
   }
 
@@ -307,6 +296,36 @@ class ServiceModel1 {
       'description': description,
       'service_icon': serviceIcon,
       'service_Route': serviceRoute,
+    };
+  }
+}
+
+class CarBrandModel {
+  final int carBrandId;
+  final String carBrandName;
+  final String carBrandImgUrl;
+  CarBrandModel({
+    required this.carBrandId,
+    required this.carBrandName,
+    required this.carBrandImgUrl,
+  });
+
+
+  factory CarBrandModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
+    return CarBrandModel(
+      carBrandId: json['carBrandId'] ?? 0,
+      carBrandName: json['carBrandName'] ?? '',
+      carBrandImgUrl: json['carBrandImgUrl'] ?? '',
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'carBrandId': carBrandId,
+      'carBrandName':  carBrandName,
+      'carBrandImgUrl': carBrandImgUrl,
     };
   }
 }

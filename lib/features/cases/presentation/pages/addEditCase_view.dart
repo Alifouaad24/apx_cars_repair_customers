@@ -3,6 +3,7 @@ import 'package:apx_cars_repair/features/cases/presentation/controller/CaseContr
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 
 class AddeditCaseView extends StatefulWidget {
   const AddeditCaseView({super.key});
@@ -301,7 +302,140 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                         //       ),
                         //   ],
                         // ),
-                        const SizedBox(height: 20),
+                        const SizedBox(height: 10),
+                        _sectionTitle("Visit Date", Icons.date_range_outlined),
+
+                        _card(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(color: Colors.grey.shade200),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.04),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 4),
+                                  ),
+                                ],
+                              ),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: Colors.blue.withOpacity(0.08),
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: const Icon(
+                                      Icons.calendar_today_rounded,
+                                      size: 18,
+                                      color: Colors.blue,
+                                    ),
+                                  ),
+
+                                  const SizedBox(width: 14),
+
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          "Set Date",
+                                          style: TextStyle(
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w600,
+                                            color: Colors.black87,
+                                          ),
+                                        ),
+
+                                        const SizedBox(height: 3),
+
+                                        Text(
+                                          "Enable to set date to visit customer",
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            color: _mutedText,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+
+                                  Transform.scale(
+                                    scale: 0.9,
+                                    child: Switch(
+                                      value: controller.sendDateToApi,
+                                      activeColor: Colors.white,
+                                      activeTrackColor: Colors.blue,
+                                      inactiveThumbColor: Colors.white,
+                                      inactiveTrackColor: Colors.grey.shade300,
+                                      onChanged: (value) {
+                                        controller.sendDateToApi = value;
+                                        controller.update();
+                                      },
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (controller.sendDateToApi)
+                              InkWell(
+                                onTap: () async {
+                                  final pickedDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: controller.visitDate,
+                                    firstDate: DateTime(2000),
+                                    lastDate: DateTime(2100),
+                                  );
+
+                                  if (pickedDate != null) {
+                                    controller.visitDate = pickedDate;
+                                    controller.update();
+                                  }
+                                },
+                                child: Container(
+                                  height: 50,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8FAFC),
+                                    borderRadius: BorderRadius.circular(14),
+                                    border: Border.all(
+                                      color: const Color(0xFFCBD5E1),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      const Icon(
+                                        Icons.calendar_today_outlined,
+                                        color: Color(0xFF0F766E),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        DateFormat(
+                                          'yyyy-MM-dd',
+                                        ).format(controller.visitDate),
+                                        style: const TextStyle(
+                                          color: Color(0xFF334155),
+                                          fontSize: 16,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                          ],
+                        ),
+                        const SizedBox(height: 16),
+
                         SizedBox(
                           width: double.infinity,
                           height: 56,

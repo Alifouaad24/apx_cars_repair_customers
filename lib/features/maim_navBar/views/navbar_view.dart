@@ -16,7 +16,6 @@ class _MainNavBarViewState extends State<MainNavBarView> {
       builder: (controller) {
         return Scaffold(
           body: controller.items[controller.currentIndex].page,
-
           bottomNavigationBar: Container(
             margin: const EdgeInsets.fromLTRB(5, 0, 5, 5),
             decoration: BoxDecoration(

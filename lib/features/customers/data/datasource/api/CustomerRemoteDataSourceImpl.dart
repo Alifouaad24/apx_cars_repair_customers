@@ -20,7 +20,7 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
   @override
   Future<List<CustomerModel>> showCustomers() async {
-    final response = await client.dio.get("/Customers/40");
+    final response = await client.dio.get("/Customers/GetAllCustomersBuBusiness/40");
     return (response.data as List).map((json) => CustomerModel.fromJson(json)).toList();
   }
 
