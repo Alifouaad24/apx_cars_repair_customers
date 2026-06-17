@@ -1,9 +1,10 @@
-import 'dart:math';
+import 'dart:io';
 
 import 'package:apx_cars_repair/core/services/TokenService.dart';
 import 'package:dio/dio.dart';
+import 'package:dio/io.dart';
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 class DioClient {
   late Dio dio;
@@ -13,9 +14,19 @@ class DioClient {
     dio = Dio(
       BaseOptions(
         baseUrl: "https://apxapi.somee.com/api",
-        connectTimeout: const Duration(seconds: 10),
-        receiveTimeout: const Duration(seconds: 10),
+        connectTimeout: const Duration(seconds: 30),
+        receiveTimeout: const Duration(seconds: 30),
       ),
+    );
+
+    // ⚠️ مؤقّت للتطوير فقط: سيرفر somee لا يرسل سلسلة الشهادة كاملة،
+    // فنتجاوز التحقق من شهادة SSL. أزل هذا قبل الإطلاق للـ production.
+    dio.httpClientAdapter = IOHttpClientAdapter(
+      createHttpClient: () {
+        final client = HttpClient();
+        client.badCertificateCallback = (cert, host, port) => true;
+        return client;
+      },
     );
 
     _initializeInterceptors();
@@ -31,33 +42,30 @@ class DioClient {
             options.headers["Authorization"] = "Bearer $token";
           }
 
-          // 🟢 LOG REQUEST
-          logger.i("➡️ REQUEST");
-          logger.i("URL: ${options.uri}");
-          logger.i("METHOD: ${options.method}");
-          logger.i("HEADERS: ${options.headers}");
-          logger.i("DATA: ${options.data}");
+          if (kDebugMode) {
+            logger.i("➡️ ${options.method} ${options.uri}"
+                "${options.data != null ? "\nDATA: ${options.data}" : ""}");
+          }
 
           handler.next(options);
         },
 
         onResponse: (response, handler) {
-          // 🔵 LOG RESPONSE
-          logger.i("✅ RESPONSE");
-          logger.i("URL: ${response.requestOptions.uri}");
-          logger.i("STATUS: ${response.statusCode}");
-          logger.i("DATA: ${response.data}");
+          if (kDebugMode) {
+            logger.i("✅ ${response.statusCode} ${response.requestOptions.uri}"
+                "\nDATA: ${response.data}");
+          }
           handler.next(response);
         },
 
         onError: (DioException e, handler) {
-          // 🔴 LOG ERROR
-          logger.e("❌ ERROR");
-          logger.e("URL: ${e.requestOptions.uri}");
-          logger.e("MESSAGE: ${e.message}");
-          logger.e("STATUS: ${e.response?.statusCode}");
-          logger.e("DATA: ${e.response?.data}");
-
+          if (kDebugMode) {
+            logger.e("❌ ${e.type} ${e.requestOptions.uri}"
+                "\nSTATUS: ${e.response?.statusCode}"
+                "\nMESSAGE: ${e.message}"
+                "\nERROR: ${e.error}"
+                "\nDATA: ${e.response?.data}");
+          }
           handler.next(e);
         },
       ),

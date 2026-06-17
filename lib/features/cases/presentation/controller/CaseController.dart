@@ -80,9 +80,14 @@ class CaseController extends GetxController {
   @override
   void onInit() async {
     super.onInit();
-    getCases();
-    await getAllServices();
-    await loadCustomers();
+
+
+    Future.wait([
+          getCases(),
+     getAllServices(),
+     loadCustomers(),
+]);
+
   }
 
   Future<void> getAllServices() async {

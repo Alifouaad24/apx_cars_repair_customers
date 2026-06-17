@@ -674,9 +674,9 @@ class _ShowCasesState extends State<ShowCases> {
   Widget _caseImageTile(CaseModel caseItem) {
     final firstImage = (caseItem.images != null && caseItem.images!.isNotEmpty)
         ? caseItem.images!.first.imageUrl
-        : (caseItem.carInfo.carBrandModel != null &&
-              caseItem.carInfo.carBrandModel!.carBrandImgUrl.isNotEmpty)
-        ? caseItem.carInfo.carBrandModel!.carBrandImgUrl
+        : (caseItem.carInfo?.carModel?.carModelName != null &&
+              caseItem.carInfo!.carBrand!.carBrandImgUrl!.isNotEmpty)
+        ? caseItem.carInfo?.carBrand?.carBrandImgUrl
         : null;
 
     final title = _caseTitle(caseItem);
@@ -766,7 +766,7 @@ class _ShowCasesState extends State<ShowCases> {
   }
 
   String _caseTitle(CaseModel caseItem) {
-    final title = '${caseItem.carInfo.brand} ${caseItem.carInfo.model}'.trim();
+    final title = '${caseItem.carInfo!.carBrand!.carBrandName} ${caseItem.carInfo!.carModel?.carModelName}'.trim();
     return title.isEmpty ? 'Case' : title;
   }
 

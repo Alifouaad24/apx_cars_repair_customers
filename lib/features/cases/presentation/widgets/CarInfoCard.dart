@@ -43,7 +43,7 @@ class CarInfoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${currentCase.carInfo.brand} ${currentCase.carInfo.model}',
+                      '${currentCase.carInfo.carBrand.carBrandName} ${currentCase.carInfo.carModel.carModelName}',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -51,7 +51,7 @@ class CarInfoCard extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      currentCase.carInfo.year,
+                      currentCase.carInfo.carModel.carYear.carYearNumber,
                       style: TextStyle(
                         fontSize: 13,
                         color: Colors.grey.shade500,

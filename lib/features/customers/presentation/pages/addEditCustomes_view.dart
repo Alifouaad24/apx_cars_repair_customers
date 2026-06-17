@@ -75,7 +75,8 @@ class _AddeditcustomesViewState extends State<AddeditcustomesView> {
                     ],
                   ),
 
-const SizedBox(height: 15),
+                  const SizedBox(height: 15),
+
                   /// ================= ADDRESS =================
                   Container(
                     padding: const EdgeInsets.symmetric(
@@ -688,7 +689,7 @@ const SizedBox(height: 15),
                       borderRadius: BorderRadius.circular(12),
                       onTap: () async {
                         controller.line1Controller.clear();
-                        
+
                         final placeId = item['place_id'];
                         final details = await controller.addressSearchService
                             .getPlaceDetails(placeId);

@@ -7,7 +7,7 @@ class CustomerModel {
   final String customerEmail;
   final int countryId;
   final int addressId;
-  final int businessId;
+  final int? businessId;
   final String? imageUrl;
 
   final AddressModel? address;
@@ -19,7 +19,7 @@ class CustomerModel {
     required this.customerMobile,
     required this.countryId,
     required this.addressId,
-    required this.businessId,
+    this.businessId,
     required this.customerEmail,
     this.address,
     this.country,
@@ -28,12 +28,12 @@ class CustomerModel {
 
   factory CustomerModel.fromJson(Map<String, dynamic> json) {
     return CustomerModel(
-      globalCustomerId: json['globalCustomerId'],
-      customerName: json['customerName'],
-      customerMobile: json['customerMobile'],
+      globalCustomerId: json['globalCustomerId'] ?? 0,
+      customerName: json['customerName'] ?? "",
+      customerMobile: json['customerMobile'] ?? "",
       customerEmail: json['customerEmail'] ?? "",
-      countryId: json['country_id'],
-      addressId: json['addressId'],
+      countryId: json['country_id'] ?? 0,
+      addressId: json['addressId'] ?? 0,
       businessId: json['business_id'],
       address: json['address'] != null
           ? AddressModel.fromJson(json['address'])
@@ -41,7 +41,7 @@ class CustomerModel {
       country: json['country'] != null
           ? CountryModel.fromJson(json['country'])
           : null,
-      imageUrl: json['customerImage'] ?? null,
+      imageUrl: json['customerImage'],
     );
   }
 
@@ -79,14 +79,14 @@ class AddressModel {
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      addressId: json['address_id'],
-      line1: json['line_1'],
+      addressId: json['address_id'] ?? 0,
+      line1: json['line_1'] ?? "",
       line2: json['line_2'] ?? "",
       stateId: json['stateId'] ?? 0,
-      postCode: json['post_code'],
+      postCode: json['post_code']?.toString() ?? "",
       usCity: json['us_City'] ?? "",
       landMark: json['land_Mark'] ?? "",
-      countryId: json['countryId'],
+      countryId: json['countryId'] ?? 0,
     );
   }
 }

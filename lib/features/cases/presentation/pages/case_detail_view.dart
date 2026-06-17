@@ -66,7 +66,7 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            '${currentCase.carInfo.brand} ${currentCase.carInfo.model}',
+                            '${currentCase.carInfo?.carBrand?.carBrandName} ${currentCase.carInfo?.carModel?.carModelName}',
                             style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
@@ -74,7 +74,7 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                             ),
                           ),
                           Text(
-                            currentCase.carInfo.year,
+                            currentCase.carInfo?.carModel?.carYear?.carYearNumber ?? '',
                             style: const TextStyle(
                               fontSize: 11,
                               color: Colors.white70,
