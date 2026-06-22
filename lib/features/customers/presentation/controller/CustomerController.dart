@@ -128,7 +128,7 @@ class CustomerController extends GetxController {
                 anchor: const Offset(0.5, 1.0),
                 infoWindow: InfoWindow(
                   title: c.customerName,
-                  snippet: c.address?.line1 ?? "",
+                  snippet: c.address![0].line1 ?? "",
                 ),
               ),
             );
@@ -150,10 +150,10 @@ class CustomerController extends GetxController {
 
   Future<LatLng?> _getLatLngFromAddress(CustomerModel c) async {
     final parts = <String>[
-      c.address?.line1 ?? "",
-      c.address?.line2 ?? "",
-      c.address?.usCity ?? "",
-      c.address?.postCode ?? "",
+      c.address![0].line1 ?? "",
+      c.address![0].line2 ?? "",
+      c.address![0].usCity ?? "",
+      c.address![0].postCode ?? "",
       "USA",
     ].map((e) => e.trim()).where((e) => e.isNotEmpty).toList();
 
@@ -248,7 +248,7 @@ class CustomerController extends GetxController {
             anchor: const Offset(0.5, 1.0),
             infoWindow: InfoWindow(
               title: c.customerName,
-              snippet: c.address?.line1 ?? "",
+              snippet: c.address![0].line1 ?? "",
             ),
           ),
         );

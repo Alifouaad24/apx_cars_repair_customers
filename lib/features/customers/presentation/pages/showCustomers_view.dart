@@ -205,6 +205,9 @@ class _ShowCustomersState extends State<ShowCustomers> {
   /// ================= CUSTOMER CARD =================
   Widget _customerCard(dynamic c) {
     final address = c.address;
+    final firstAddress = address != null && address!.isNotEmpty
+        ? address!.first
+        : null;
     final controller = Get.find<CustomerController>();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -417,13 +420,17 @@ class _ShowCustomersState extends State<ShowCustomers> {
               const SizedBox(width: 5),
               Expanded(
                 child: Text(
-                  "${address?.line1 ?? ""}, ${address?.line2 ?? ""}, ${address?.usCity ?? ""}, ${address?.postCode ?? ""}",
+                  firstAddress == null
+                      ? 'No address'
+                      : '${firstAddress.line1}, '
+                            '${firstAddress.line2}, '
+                            '${firstAddress.usCity}, '
+                            '${firstAddress.postCode}',
                   style: const TextStyle(color: Colors.grey),
                 ),
               ),
             ],
           ),
-
           const SizedBox(height: 10),
 
           /// ACTIONS

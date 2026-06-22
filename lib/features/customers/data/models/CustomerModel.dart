@@ -10,7 +10,7 @@ class CustomerModel {
   final int? businessId;
   final String? imageUrl;
 
-  final AddressModel? address;
+  final List<AddressModel>? address;
   final CountryModel? country;
 
   CustomerModel({
@@ -35,9 +35,10 @@ class CustomerModel {
       countryId: json['country_id'] ?? 0,
       addressId: json['addressId'] ?? 0,
       businessId: json['business_id'],
-      address: json['address'] != null
-          ? AddressModel.fromJson(json['address'])
-          : null,
+      address: (json['address'] as List?)
+        ?.map((el) => AddressModel.fromJson(el as Map<String, dynamic>))
+        .toList() ??
+    [],
       country: json['country'] != null
           ? CountryModel.fromJson(json['country'])
           : null,

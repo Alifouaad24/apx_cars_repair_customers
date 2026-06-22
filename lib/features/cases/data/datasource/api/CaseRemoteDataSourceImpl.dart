@@ -26,7 +26,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
 
     @override
   Future<List<ServiceModel>> getAllServices() async {
-    final response = await client.dio.get("/Service");
+    final response = await client.dio.get("/Service/40");
     return (response.data as List)
         .map((json) => ServiceModel.fromJson(json))
         .toList();
