@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:dio/dio.dart';
 
@@ -11,20 +12,23 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   CaseRemoteDataSourceImpl(this.client);
 
   @override
-  Future<CaseModel> addCase(Map<String, dynamic> caseData) async {
-    final response = await client.dio.post("/Case", data: caseData);
-    return CaseModel.fromJson(response.data);
+  Future<GlobalOrderModel> addCase(Map<String, dynamic> caseData) async {
+    final response = await client.dio.post(
+      "/Orders/AddGlobalOrder",
+      data: caseData,
+    );
+    return GlobalOrderModel.fromJson(response.data);
   }
 
   @override
-  Future<List<CaseModel>> showCases() async {
-    final response = await client.dio.get("/Case");
+  Future<List<GlobalOrderModel>> showCases() async {
+    final response = await client.dio.get("/Orders/40");
     return (response.data as List)
-        .map((json) => CaseModel.fromJson(json))
+        .map((json) => GlobalOrderModel.fromJson(json))
         .toList();
   }
 
-    @override
+  @override
   Future<List<ServiceModel>> getAllServices() async {
     final response = await client.dio.get("/Service/40");
     return (response.data as List)
@@ -33,21 +37,27 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   }
 
   @override
-  Future<CaseModel> editCase(int caseId, Map<String, dynamic> caseData) async {
+  Future<GlobalOrderModel> editCase(
+    int caseId,
+    Map<String, dynamic> caseData,
+  ) async {
     final response = await client.dio.put(
       "/Case/$caseId",
       data: caseData,
       options: Options(contentType: "application/json"),
     );
-    return CaseModel.fromJson(response.data);
+    return GlobalOrderModel.fromJson(response.data);
   }
 
   @override
-  Future<void> bindImagesWithCase(int caseId, List<File> images) async {
+  Future<List<OrderImage>> bindImagesWithCase(
+    int orderTd,
+    List<File> images,
+  ) async {
     if (images.isEmpty) {
       throw DioException(
         requestOptions: RequestOptions(
-          path: '/Case/BindImagesWithCase/$caseId',
+          path: '/Orders/BindImagesWithOrder/$orderTd',
         ),
         error: 'No images selected',
       );
@@ -66,35 +76,44 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
       );
     }
 
-    await client.dio.put(
-      "/Case/BindImagesWithCase/$caseId",
+    var response = await client.dio.put(
+      "/Orders/BindImagesWithOrder/$orderTd",
       data: formData,
       options: Options(contentType: 'multipart/form-data'),
     );
+
+    List<OrderImage> data = response.data;
+    return data;
   }
 
   @override
-  Future<CaseService> addServiceToCase(int caseId, Map<String, dynamic> data) async {
+  Future<OrderServiceModel> addServiceToCase(Map<String, dynamic> data) async {
     final response = await client.dio.post(
-      "/Case/AddCaseServiceToCase?caseId=$caseId",
+      "/Orders/AddServiceToGlobalOrder",
       data: data,
       options: Options(contentType: "application/json"),
     );
-    return CaseService.fromJson(response.data);
+    return OrderServiceModel.fromJson(response.data);
   }
 
   @override
-  Future<CaseService> editServiceToCase(int caseServiceId, Map<String, dynamic> data) async {
+  Future<OrderServiceModel> editServiceToCase(
+    int orderServicId,
+    Map<String, dynamic> data,
+  ) async {
     final response = await client.dio.put(
-      "/Case/EditCaseService?caseServicId=$caseServiceId",
+      "/Orders/EditOrderService?orderServicId=$orderServicId",
       data: data,
       options: Options(contentType: "application/json"),
     );
-    return CaseService.fromJson(response.data);
+    return OrderServiceModel.fromJson(response.data);
   }
 
   @override
-  Future<Map<String, dynamic>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data) async {
+  Future<Map<String, dynamic>> addCaseServiceNote(
+    int caseServiceId,
+    Map<String, dynamic> data,
+  ) async {
     final response = await client.dio.post(
       "/Case/AddServiceCaseNote?caseServicId=$caseServiceId",
       data: data,
@@ -104,19 +123,32 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   }
 
   @override
-  Future<CaseService> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data) async {
+  Future<OrderServiceModel> changCaseServiceStatus(
+    int caseServiceId,
+    Map<String, dynamic> data,
+  ) async {
     final response = await client.dio.put(
-      "/Case/changeStatusCaseService?caseServicId=$caseServiceId",
+      "/Orders/changeStatusOrderService?caseServicId=$caseServiceId",
       data: data,
       options: Options(contentType: "application/json"),
     );
-    return CaseService.fromJson(response.data);
+    return OrderServiceModel.fromJson(response.data);
   }
 
   @override
   Future<Map<String, dynamic>> deleteCaseService(int caseServiceId) async {
     final response = await client.dio.delete(
-      "/Case/DeletetCaseService?caseServicId=$caseServiceId",
+      "/Orders/DeletetCaseService?caseServicId=$caseServiceId",
+    );
+    return response.data;
+  }
+
+  @override
+  Future<CarInfoModel> addCarToOrder(Map<String, dynamic> carData) async {
+    final response = await client.dio.post(
+      "/Orders/AddCarGlobalOrder",
+      data: carData,
+      options: Options(contentType: "application/json"),
     );
     return response.data;
   }

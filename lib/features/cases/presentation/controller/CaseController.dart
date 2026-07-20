@@ -1,10 +1,12 @@
 import 'dart:io';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:intl/intl.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
-import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
@@ -22,23 +24,26 @@ import 'package:dio/dio.dart';
 
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
+
   ShowCasesUsecase showCasesUsecase;
+  AddCarToOrderUseCase addCarToOrderUseCase;
   ChangeCaseServiceStatus changeCaseServiceStatus;
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
   GetAllServiceUseCase getAllServiceUseCase;
+  TimeOfDay visitTime = TimeOfDay.now();
   DeletecaseserviceUsecase deletecaseserviceUsecase;
   AddCaseUseCase addCaseUseCase;
   EditCaseUseCase editCaseUseCase;
   AddCaseServiceNote addCaseServiceNote;
   BindImagesWithCaseUseCase bindImagesWithCaseUseCase;
-  List<CaseModel> cases = [];
-  List<CaseModel> allCases = [];
+  List<GlobalOrderModel> cases = [];
+  List<GlobalOrderModel> allCases = [];
   List<CustomerModel> customers = [];
   CustomerModel? selectedCustomer;
   bool isLoading = false;
   bool isEdit = false;
-  CaseModel? currentCase;
+  GlobalOrderModel? currentCase;
   List<ServiceModel> Services = [];
   bool isEditService = false;
 
@@ -63,7 +68,15 @@ class CaseController extends GetxController {
   var visitDate = DateTime.now();
   bool sendDateToApi = false;
 
-  List<File> images = [];
+  final List<File> images = [];
+
+  // final List<CarBrandModel> carBrands;
+  // final List<CarYear> carYears;
+  // final CarBrandModel? selectedCarBrand;
+  // final CarModel? selectedCarModel;
+  // final CarYear? selectedCarYear;
+  // final TextEditingController vinController;
+
   CaseController(
     this.showCasesUsecase,
     this.addCaseUseCase,
@@ -75,19 +88,14 @@ class CaseController extends GetxController {
     this.addCaseServiceNote,
     this.changeCaseServiceStatus,
     this.deletecaseserviceUsecase,
+    this.addCarToOrderUseCase,
   );
 
   @override
   void onInit() async {
     super.onInit();
 
-
-    Future.wait([
-          getCases(),
-     getAllServices(),
-     loadCustomers(),
-]);
-
+    Future.wait([getCases(), getAllServices(), loadCustomers()]);
   }
 
   Future<void> getAllServices() async {
@@ -141,15 +149,13 @@ class CaseController extends GetxController {
 
       final result = await bindImagesWithCaseUseCase(caseId, selectedImages);
 
-      result.fold((failure) => Get.snackbar("Error", failure.message), (
-        _,
-      ) async {
+      result.fold((failure) => Get.snackbar("Error", failure.message), (success) async {
         Get.snackbar(
           "Success",
           "${selectedImages.length} images added successfully",
         );
         Get.back();
-        Get.back();
+        currentCase!.orderImages = success;
         await getCases();
         isImagesAdding = false;
         update();
@@ -161,7 +167,7 @@ class CaseController extends GetxController {
     }
   }
 
-  Future<void> showImagePickerOptions(int caseId) async {
+  Future<void> showImagePickerOptions(int orderId) async {
     Get.bottomSheet(
       Container(
         padding: const EdgeInsets.all(20),
@@ -176,7 +182,7 @@ class CaseController extends GetxController {
               title: const Text('Gallery'),
               onTap: () {
                 Get.back();
-                takeMultiImages(caseId);
+                takeMultiImages(orderId);
               },
             ),
 
@@ -185,7 +191,7 @@ class CaseController extends GetxController {
               title: const Text('Camera'),
               onTap: () {
                 Get.back();
-                takeImageFromCamera(caseId);
+                takeImageFromCamera(orderId);
               },
             ),
           ],
@@ -359,20 +365,19 @@ class CaseController extends GetxController {
     isAddingCase = true;
     update();
     final data = {
-      "customerId": selectedCustomer!.globalCustomerId,
-      "vinNumber": vinNumberController.text.trim(),
-      "year": yearController.text.trim(),
-      "brand": brandController.text.trim(),
-      "model": modelController.text.trim(),
-      "visitDate": sendDateToApi
-          ? DateFormat('yyyy-MM-dd').format(visitDate)
-          : null,
+      "globalCustomerId": selectedCustomer!.globalCustomerId,
+      "business_id": 40,
+      "notes": notesController.text.trim(),
+      "status": "",
+      "schedule_time":
+          "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
+      "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
     };
 
     final result = await addCaseUseCase(data);
 
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      Get.snackbar("Success", "Case added successfully");
+      Get.snackbar("Success", "Order added successfully");
 
       getCases();
       clearForm();
@@ -395,69 +400,27 @@ class CaseController extends GetxController {
 
   bool isEditingCase = false;
 
-  Future<void> addServiceToCase(Map<String, dynamic> data) async {
-    if (selectedService?.serviceId == null) {
-      Future.delayed(const Duration(milliseconds: 100), () {
-        Get.defaultDialog(
-          title: "Error",
-          middleText: "Please select a service",
-          textConfirm: "OK",
-          confirmTextColor: Colors.white,
-          onConfirm: () {
-            Get.back();
-          },
-        );
-      });
-
-      update();
-      return;
-    }
-
-    isEditingCase = true;
+  Future<void> addServiceToOrder(Map<String, dynamic> data) async {
     update();
 
-    final result = await addServiceToCaseUseCase(
-      (data['caseId'] as num).toInt(),
-      data,
-    );
+    try {
+      final result = await addServiceToCaseUseCase(data);
 
-    result.fold(
-      (failure) {
-        Get.snackbar("Error", failure.message);
-        isEditingCase = false;
-        update();
-      },
-
-      (data) {
-        final serviceToAdd = data.service != null || selectedService == null
-            ? data
-            : CaseService(
-                caseServiceId: data.caseServiceId,
-                caseId: data.caseId,
-                serviceId: data.serviceId,
-                resolved: data.resolved,
-                notes: data.notes,
-                cost: data.cost,
-                discount: data.discount,
-                paid: data.paid,
-                service: ServiceModel1(
-                  serviceId: selectedService!.serviceId,
-                  description: selectedService!.description,
-                  serviceIcon: selectedService!.serviceIcon,
-                  serviceRoute: selectedService!.serviceRoute,
-                ),
-                caseServiceNotes: data.caseServiceNotes,
-              );
-
-        currentCase!.caseServices?.add(serviceToAdd);
-        Get.snackbar("Success", "Service added to case successfully");
-
-        getCases();
-        isEditingCase = false;
-        update();
-        Get.toNamed(AppRoutes.main);
-      },
-    );
+      await result.fold(
+        (failure) async {
+          Get.snackbar("Error", failure.message);
+        },
+        (data) async {
+          Get.snackbar("Success", "Service edited successfully");
+          currentCase?.oredesServices?.add(data);
+          await getCases();
+        },
+      );
+    } finally {
+      isEditingCaseService = false;
+      update();
+      Get.toNamed(AppRoutes.main);
+    }
   }
 
   int? editingServiceId;
@@ -512,8 +475,8 @@ class CaseController extends GetxController {
         (data) async {
           isSuccess = true;
           Get.snackbar("Success", "Service deleted successfully");
-          currentCase?.caseServices?.removeWhere(
-            (s) => s.caseServiceId == serviceId,
+          currentCase?.oredesServices?.removeWhere(
+            (s) => s.oredesServicesId == serviceId,
           );
           await getCases();
         },
@@ -552,8 +515,8 @@ class CaseController extends GetxController {
     final result = await changeCaseServiceStatus(serviceId, data);
 
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      final service = currentCase?.caseServices?.firstWhere(
-        (e) => e.caseServiceId == serviceId,
+      final service = currentCase?.oredesServices?.firstWhere(
+        (e) => e.oredesServicesId == serviceId,
       );
 
       if (service != null) {
@@ -576,5 +539,25 @@ class CaseController extends GetxController {
     modelController.dispose();
 
     super.onClose();
+  }
+
+  bool addCarToOrder = false;
+
+  Future<void> addCarToCase(Map<String, dynamic> data) async {
+    addCarToOrder = true;
+    update();
+    var result = await addCarToOrderUseCase(data);
+    result.fold(
+      (error) {
+        print("Error: $error");
+        addCarToOrder = false;
+        update();
+      },
+      (carInfo) {
+        currentCase!.oredesServices![0].carInfo = carInfo;
+        addCarToOrder = false;
+        update();
+      },
+    );
   }
 }

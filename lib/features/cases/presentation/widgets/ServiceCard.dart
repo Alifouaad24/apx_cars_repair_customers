@@ -125,9 +125,7 @@ class ServiceCard extends StatelessWidget {
                                                     s.serviceId ==
                                                     service.service.serviceId,
                                               );
-
-                                          controller.editingServiceId =
-                                              service.caseServiceId;
+      
                                           controller.costController.text =
                                               service.cost?.toString() ?? '';
                                           controller.paidController.text =
@@ -135,13 +133,14 @@ class ServiceCard extends StatelessWidget {
                                           controller.discountController.text =
                                               service.discount?.toString() ??
                                               '';
+                                            controller.editingServiceId = service.oredesServicesId;
                                           controller.notesController.text =
                                               service.notes ?? '';
 
                                           controller.resolved =
                                               service.resolved;
 
-                                          showAddServiceDialog(controller);
+                                          showAddServiceDialog(controller, controller.currentCase);
                                         },
                                         icon: const Icon(Icons.edit_rounded),
                                         label: const Text(
@@ -229,7 +228,7 @@ class ServiceCard extends StatelessWidget {
                                                                   await controller
                                                                       .deleteCaseService(
                                                                         service
-                                                                            .caseServiceId,
+                                                                            .oredesServicesId,
                                                                       );
 
                                                               if (deleted &&
@@ -341,10 +340,10 @@ class ServiceCard extends StatelessWidget {
                       child: InkWell(
                         onTap: () {
                           print(
-                            "Status tapped for service ${service.caseServiceId}",
+                            "Status tapped for service ${service.oredesServicesId}",
                           );
                           controller.changeServiceStatus(
-                            service.caseServiceId,
+                            service.oredesServicesId,
                             !isResolved,
                           );
                         },

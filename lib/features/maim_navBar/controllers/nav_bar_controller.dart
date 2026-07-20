@@ -15,7 +15,7 @@ class MainNavBarController extends GetxController {
     MainNavBarItem(
       page: const ShowCases(),
       icon: Icons.home_outlined,
-      label: 'Cases',
+      label: 'Orders',
     ),
     MainNavBarItem(
       page: const Showschadualcases(),

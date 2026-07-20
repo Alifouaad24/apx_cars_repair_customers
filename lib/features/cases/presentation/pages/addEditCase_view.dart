@@ -38,7 +38,7 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
               ),
             ),
             title: Text(
-              controller.isEdit ? "Edit Case" : "Add Case",
+              controller.isEdit ? "Edit Order" : "Add Order",
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -89,13 +89,15 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                   child: Form(
                     key: controller.formKey,
                     child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.start,
                       children: [
-                        _heroBanner(controller),
-                        const SizedBox(height: 14),
-                        _softInfoTile(),
-                        const SizedBox(height: 16),
+                        // _heroBanner(controller),
+                        // const SizedBox(height: 14),
+                        // _softInfoTile(),
+                        const SizedBox(height: 2),
                         _sectionTitle(
-                          "Case Information",
+                          "Order Information",
                           Icons.directions_car_filled,
                         ),
                         _card(
@@ -123,371 +125,214 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                 return null;
                               },
                             ),
-                            const SizedBox(height: 12),
+                            const SizedBox(height: 15),
                             Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Expanded(
-                                  child: _field(
-                                    controller.vinNumberController,
-                                    "VIN Number",
-                                    true,
-                                    icon: Icons.pin_outlined,
-                                  ),
+                              children: const [
+                                Icon(
+                                  Icons.note_alt_outlined,
+                                  color: Color(0xFF0F766E),
+                                  size: 20,
                                 ),
-                                const SizedBox(width: 8),
-                                SizedBox(
-                                  height: 50,
-                                  width: 50,
-                                  child: IconButton(
-                                    style: FilledButton.styleFrom(
-                                      backgroundColor: const Color(0xFFE0F7FA),
-                                      foregroundColor: _primaryDark,
-                                      side: const BorderSide(
-                                        color: Color(0xFF99DDE7),
-                                        width: 1,
-                                      ),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius: BorderRadius.circular(14),
-                                      ),
-                                    ),
-                                    onPressed: () async {
-                                      final result = await Get.toNamed(
-                                        AppRoutes.scanChaseh,
-                                        arguments: {'returnResult': true},
-                                      );
-
-                                      if (result is Map<String, dynamic>) {
-                                        controller.fillFromScannedCarData(
-                                          result,
-                                        );
-                                        return;
-                                      }
-
-                                      if (result is Map) {
-                                        controller.fillFromScannedCarData(
-                                          Map<String, dynamic>.from(result),
-                                        );
-                                      }
-                                    },
-                                    icon: const Icon(
-                                      Icons.qr_code_scanner_rounded,
-                                    ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Notes",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1E293B),
                                   ),
                                 ),
                               ],
                             ),
                             _field(
-                              controller.yearController,
-                              "Year",
+                              controller.notesController,
+                              "Notes",
                               false,
-                              keyboard: TextInputType.number,
-                              icon: Icons.calendar_today_outlined,
+                              icon: Icons.note,
                             ),
-                            _field(
-                              controller.brandController,
-                              "Brand",
-                              false,
-                              icon: Icons.local_offer_outlined,
+                            Row(
+                              children: const [
+                                Icon(
+                                  Icons.date_range,
+                                  color: Color(0xFF0F766E),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Scaduale Date",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
                             ),
-                            _field(
-                              controller.modelController,
-                              "Model",
-                              false,
-                              icon: Icons.directions_car_outlined,
-                            ),
-                          ],
-                        ),
-                        // const SizedBox(height: 16),
-                        // _sectionTitle(
-                        //   "Vehicle Images",
-                        //   Icons.photo_library_outlined,
-                        // ),
-                        // _card(
-                        //   children: [
-                        //     InkWell(
-                        //       borderRadius: BorderRadius.circular(14),
-                        //       onTap: () {
-                        //         controller.pickImages();
-                        //       },
-                        //       child: Ink(
-                        //         height: 58,
-                        //         width: double.infinity,
-                        //         decoration: BoxDecoration(
-                        //           color: const Color(0xFFECFEFF),
-                        //           borderRadius: BorderRadius.circular(14),
-                        //           border: Border.all(
-                        //             color: const Color(0xFF67E8F9),
-                        //           ),
-                        //         ),
-                        //         child: const Row(
-                        //           mainAxisAlignment: MainAxisAlignment.center,
-                        //           children: [
-                        //             Icon(
-                        //               Icons.add_photo_alternate_outlined,
-                        //               color: _primaryDark,
-                        //             ),
-                        //             SizedBox(width: 10),
-                        //             Text(
-                        //               "Take Images",
-                        //               style: TextStyle(
-                        //                 fontWeight: FontWeight.w700,
-                        //                 color: _primaryDark,
-                        //               ),
-                        //             ),
-                        //           ],
-                        //         ),
-                        //       ),
-                        //     ),
-                        //     const SizedBox(height: 14),
-                        //     if (controller.images.isNotEmpty)
-                        //       Wrap(
-                        //         spacing: 10,
-                        //         runSpacing: 10,
-                        //         children: controller.images.map<Widget>((img) {
-                        //           return Stack(
-                        //             children: [
-                        //               ClipRRect(
-                        //                 borderRadius: BorderRadius.circular(14),
-                        //                 child: Image.file(
-                        //                   img,
-                        //                   width: 104,
-                        //                   height: 104,
-                        //                   fit: BoxFit.cover,
-                        //                 ),
-                        //               ),
-                        //               Positioned(
-                        //                 right: 4,
-                        //                 top: 4,
-                        //                 child: GestureDetector(
-                        //                   onTap: () {
-                        //                     controller.removeImage(img);
-                        //                   },
-                        //                   child: Container(
-                        //                     padding: const EdgeInsets.all(4),
-                        //                     decoration: const BoxDecoration(
-                        //                       color: Color(0xFFB91C1C),
-                        //                       shape: BoxShape.circle,
-                        //                     ),
-                        //                     child: const Icon(
-                        //                       Icons.close,
-                        //                       size: 14,
-                        //                       color: Colors.white,
-                        //                     ),
-                        //                   ),
-                        //                 ),
-                        //               ),
-                        //             ],
-                        //           );
-                        //         }).toList(),
-                        //       )
-                        //     else
-                        //       Container(
-                        //         width: double.infinity,
-                        //         padding: const EdgeInsets.symmetric(vertical: 18),
-                        //         decoration: BoxDecoration(
-                        //           borderRadius: BorderRadius.circular(12),
-                        //           border: Border.all(
-                        //             color: const Color(0xFFCBD5E1),
-                        //           ),
-                        //         ),
-                        //         child: const Text(
-                        //           "No images selected yet",
-                        //           textAlign: TextAlign.center,
-                        //           style: TextStyle(
-                        //             color: Color(0xFF64748B),
-                        //             fontWeight: FontWeight.w500,
-                        //           ),
-                        //         ),
-                        //       ),
-                        //   ],
-                        // ),
-                        const SizedBox(height: 10),
-                        _sectionTitle("Visit Date", Icons.date_range_outlined),
+                            InkWell(
+                              onTap: () async {
+                                final pickedDate = await showDatePicker(
+                                  context: context,
+                                  initialDate: controller.visitDate,
+                                  firstDate: DateTime(2000),
+                                  lastDate: DateTime(2100),
+                                );
 
-                        _card(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16,
-                                vertical: 10,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(color: Colors.grey.shade200),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.04),
-                                    blurRadius: 10,
-                                    offset: const Offset(0, 4),
+                                if (pickedDate != null) {
+                                  controller.visitDate = pickedDate;
+                                  controller.update();
+                                }
+                              },
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFFCBD5E1),
                                   ),
-                                ],
-                              ),
-                              child: Row(
-                                children: [
-                                  Container(
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blue.withOpacity(0.08),
-                                      borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.calendar_today_outlined,
+                                      color: Color(0xFF0F766E),
                                     ),
-                                    child: const Icon(
-                                      Icons.calendar_today_rounded,
-                                      size: 18,
-                                      color: Colors.blue,
-                                    ),
-                                  ),
-
-                                  const SizedBox(width: 14),
-
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          "Set Date",
-                                          style: TextStyle(
-                                            fontSize: 15,
-                                            fontWeight: FontWeight.w600,
-                                            color: Colors.black87,
-                                          ),
-                                        ),
-
-                                        const SizedBox(height: 3),
-
-                                        Text(
-                                          "Enable to set date to visit customer",
-                                          style: TextStyle(
-                                            fontSize: 12,
-                                            color: _mutedText,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-
-                                  Transform.scale(
-                                    scale: 0.9,
-                                    child: Switch(
-                                      value: controller.sendDateToApi,
-                                      activeColor: Colors.white,
-                                      activeTrackColor: Colors.blue,
-                                      inactiveThumbColor: Colors.white,
-                                      inactiveTrackColor: Colors.grey.shade300,
-                                      onChanged: (value) {
-                                        controller.sendDateToApi = value;
-                                        controller.update();
-                                      },
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            if (controller.sendDateToApi)
-                              InkWell(
-                                onTap: () async {
-                                  final pickedDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: controller.visitDate,
-                                    firstDate: DateTime(2000),
-                                    lastDate: DateTime(2100),
-                                  );
-
-                                  if (pickedDate != null) {
-                                    controller.visitDate = pickedDate;
-                                    controller.update();
-                                  }
-                                },
-                                child: Container(
-                                  height: 50,
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 12,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: const Color(0xFFF8FAFC),
-                                    borderRadius: BorderRadius.circular(14),
-                                    border: Border.all(
-                                      color: const Color(0xFFCBD5E1),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.calendar_today_outlined,
-                                        color: Color(0xFF0F766E),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      DateFormat(
+                                        'yyyy-MM-dd',
+                                      ).format(controller.visitDate),
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                        fontSize: 16,
                                       ),
-                                      const SizedBox(width: 12),
-                                      Text(
-                                        DateFormat(
-                                          'yyyy-MM-dd',
-                                        ).format(controller.visitDate),
-                                        style: const TextStyle(
-                                          color: Color(0xFF334155),
-                                          fontSize: 16,
-                                        ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: 15),
+                            Row(
+                              children: const [
+                                Icon(
+                                  Icons.timelapse,
+                                  color: Color(0xFF0F766E),
+                                  size: 20,
+                                ),
+                                SizedBox(width: 8),
+                                Text(
+                                  "Scaduale Time",
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF1E293B),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: () async {
+                                final pickedTime = await showTimePicker(
+                                  context: context,
+                                  initialTime: controller.visitTime,
+                                );
+
+                                if (pickedTime != null) {
+                                  controller.visitTime = pickedTime;
+                                  controller.update();
+                                }
+                              },
+                              child: Container(
+                                height: 50,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: const Color(0xFFF8FAFC),
+                                  borderRadius: BorderRadius.circular(14),
+                                  border: Border.all(
+                                    color: const Color(0xFFCBD5E1),
+                                  ),
+                                ),
+                                child: Row(
+                                  children: [
+                                    const Icon(
+                                      Icons.access_time,
+                                      color: Color(0xFF0F766E),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Text(
+                                      controller.visitTime.format(context),
+                                      style: const TextStyle(
+                                        color: Color(0xFF334155),
+                                        fontSize: 16,
                                       ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+
+                            SizedBox(
+                              width: double.infinity,
+                              height: 56,
+                              child: DecoratedBox(
+                                decoration: BoxDecoration(
+                                  gradient: const LinearGradient(
+                                    colors: [_primary, _primaryDark],
+                                  ),
+                                  borderRadius: BorderRadius.circular(16),
+                                  boxShadow: const [
+                                    BoxShadow(
+                                      color: Color(0x33155E75),
+                                      blurRadius: 14,
+                                      offset: Offset(0, 8),
+                                    ),
+                                  ],
+                                ),
+                                child: ElevatedButton.icon(
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.transparent,
+                                    shadowColor: Colors.transparent,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    if (!controller.isAddingCase) {
+                                      controller.submitCase();
+                                    }
+                                  },
+                                  icon: Icon(
+                                    controller.isAddingCase
+                                        ? Icons.hourglass_top_rounded
+                                        : Icons.check_circle_outline,
+                                    color: Colors.white,
+                                  ),
+                                  label: Text(
+                                    controller.isAddingCase
+                                        ? "Submitting..."
+                                        : (controller.isEdit
+                                              ? "Save Changes"
+                                              : "Submit Order"),
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w700,
+                                    ),
                                   ),
                                 ),
                               ),
+                            ),
+                            const SizedBox(height: 26),
+                           
                           ],
                         ),
                         const SizedBox(height: 16),
-
-                        SizedBox(
-                          width: double.infinity,
-                          height: 56,
-                          child: DecoratedBox(
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [_primary, _primaryDark],
-                              ),
-                              borderRadius: BorderRadius.circular(16),
-                              boxShadow: const [
-                                BoxShadow(
-                                  color: Color(0x33155E75),
-                                  blurRadius: 14,
-                                  offset: Offset(0, 8),
-                                ),
-                              ],
-                            ),
-                            child: ElevatedButton.icon(
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.transparent,
-                                shadowColor: Colors.transparent,
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                              onPressed: () {
-                                if (!controller.isAddingCase) {
-                                  controller.submitCase();
-                                }
-                              },
-                              icon: Icon(
-                                controller.isAddingCase
-                                    ? Icons.hourglass_top_rounded
-                                    : Icons.check_circle_outline,
-                                color: Colors.white,
-                              ),
-                              label: Text(
-                                controller.isAddingCase
-                                    ? "Submitting..."
-                                    : (controller.isEdit
-                                          ? "Save Changes"
-                                          : "Submit Case"),
-                                style: const TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 26),
                       ],
                     ),
                   ),
@@ -500,76 +345,7 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
     );
   }
 
-  Widget _softInfoTile() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0x80FFFFFF),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFDAEEF2)),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.tips_and_updates_outlined, color: _primaryDark, size: 18),
-          SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              "Use scan to fill VIN quickly, then complete vehicle details.",
-              style: TextStyle(
-                color: _mutedText,
-                fontWeight: FontWeight.w600,
-                fontSize: 12.8,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _heroBanner(CaseController controller) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [_primary, _primaryDark],
-        ),
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: const [
-          BoxShadow(
-            color: Color(0x33155E75),
-            blurRadius: 16,
-            offset: Offset(0, 8),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            controller.isEdit ? "Update Case" : "Create New Case",
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            controller.isEdit
-                ? "Refine vehicle details and keep the case information updated."
-                : "Capture vehicle info in a few simple, clean steps.",
-            style: const TextStyle(color: Color(0xFFE0F2FE), fontSize: 13.5),
-          ),
-        ],
-      ),
-    );
-  }
-
+  
   Widget _sectionTitle(String title, IconData icon) {
     return Align(
       alignment: Alignment.centerLeft,
@@ -612,7 +388,10 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
           ),
         ],
       ),
-      child: Column(children: children),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: children,
+      ),
     );
   }
 

@@ -3,6 +3,7 @@ import 'dart:io';
 import 'package:apx_cars_repair/core/error/Failure.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:dartz/dartz.dart';
@@ -14,7 +15,7 @@ class CaseRepositoryImpl implements CaseRepository {
   CaseRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Either<Failure, CaseModel>> addCase(
+  Future<Either<Failure, GlobalOrderModel>> addCase(
     Map<String, dynamic> caseData,
   ) async {
     try {
@@ -25,8 +26,8 @@ class CaseRepositoryImpl implements CaseRepository {
       final message = e.response?.data is Map<String, dynamic>
           ? (e.response?.data['message']?.toString() ??
                 e.message ??
-                'Failed to add case')
-          : (e.message ?? 'Failed to add case');
+                'Failed to add order')
+          : (e.message ?? 'Failed to add order');
 
       print("DioException: $message");
 
@@ -37,12 +38,12 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, List<CaseModel>>> showCases() async {
+  Future<Either<Failure, List<GlobalOrderModel>>> showCases() async {
     try {
-      List<CaseModel> cases = await remoteDataSource.showCases();
+      List<GlobalOrderModel> cases = await remoteDataSource.showCases();
       return Right(cases);
     } catch (e) {
-      return Left(Failure("Failed to fetch cases"));
+      return Left(Failure("Failed to fetch Orders"));
     }
   }
 
@@ -57,12 +58,12 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, CaseModel>> editCase(
+  Future<Either<Failure, GlobalOrderModel>> editCase(
     int caseId,
     Map<String, dynamic> caseData,
   ) async {
     try {
-      CaseModel model = await remoteDataSource.editCase(caseId, caseData);
+      GlobalOrderModel model = await remoteDataSource.editCase(caseId, caseData);
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to edit case"));
@@ -70,13 +71,13 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, void>> bindImagesWithCase(
+  Future<Either<Failure, List<OrderImage>>> bindImagesWithCase(
     int caseId,
     List<File> images,
   ) async {
     try {
-      await remoteDataSource.bindImagesWithCase(caseId, images);
-      return const Right(null);
+      var result = await remoteDataSource.bindImagesWithCase(caseId, images);
+      return Right(result);
     } on DioException catch (e) {
       final message = e.response?.data is Map<String, dynamic>
           ? (e.response?.data['message']?.toString() ??
@@ -89,12 +90,10 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, CaseService>> addServiceToCase(
-    int caseId,
-    Map<String, dynamic> data,
+  Future<Either<Failure, OrderServiceModel>> addServiceToCase(Map<String, dynamic> data,
   ) async {
     try {
-      CaseService model = await remoteDataSource.addServiceToCase(caseId, data);
+      OrderServiceModel model = await remoteDataSource.addServiceToCase(data);
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to add service to case"));
@@ -102,12 +101,12 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, CaseService>> editServiceToCase(
+  Future<Either<Failure, OrderServiceModel>> editServiceToCase(
     int caseServiceId,
     Map<String, dynamic> data,
   ) async {
     try {
-      CaseService model = await remoteDataSource.editServiceToCase(caseServiceId, data);
+      OrderServiceModel model = await remoteDataSource.editServiceToCase(caseServiceId, data);
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to edit service in case"));
@@ -128,12 +127,12 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, CaseService>> changeCaseServiceStatus(
+  Future<Either<Failure, OrderServiceModel>> changeCaseServiceStatus(
     int caseServiceId,
     Map<String, dynamic> data,
   ) async {
     try {
-      CaseService model = await remoteDataSource.changCaseServiceStatus(caseServiceId, data);
+      OrderServiceModel model = await remoteDataSource.changCaseServiceStatus(caseServiceId, data);
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to change case service status"));
@@ -149,4 +148,13 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to delete case service"));
     }
   }
+  
+  @override
+  Future<Either<Failure, CarInfoModel>> addCarToOrder(Map<String, dynamic> carData) async {
+ try {
+      CarInfoModel response = await remoteDataSource.addCarToOrder(carData);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to delete case service"));
+    }  }
 }

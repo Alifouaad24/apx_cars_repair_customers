@@ -1,6 +1,8 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
+import 'package:apx_cars_repair/features/cases/presentation/pages/orderItemView.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -19,7 +21,7 @@ class _ShowCasesState extends State<ShowCases> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Cases Dashboard'),
+        title: const Text('Orders Dashboard'),
         centerTitle: true,
         foregroundColor: Colors.white,
         backgroundColor: Colors.transparent,
@@ -95,9 +97,19 @@ class _ShowCasesState extends State<ShowCases> {
                           // _buildSearchCard(),
                           // const SizedBox(height: 16),
                           Expanded(
-                            child: ListView(
-                              padding: const EdgeInsets.only(bottom: 8),
-                              children: _buildGroupedCases(controller.cases),
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                              itemCount: controller.cases.length,
+                              itemBuilder: (context, index) {
+                                final order = controller.cases[index];
+                                return OrderListItem(
+                                  order: order,
+                                  onTap: () {
+                                    controller.currentCase = order;
+                                    Get.toNamed(AppRoutes.caseDetailView);
+                                  },
+                                );
+                              },
                             ),
                           ),
                         ],
@@ -158,7 +170,7 @@ class _ShowCasesState extends State<ShowCases> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Cases Overview',
+                      'Orders Overview',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 20,
@@ -175,7 +187,7 @@ class _ShowCasesState extends State<ShowCases> {
             children: [
               _buildMetricChip(
                 icon: Icons.folder_open_outlined,
-                label: 'Cases',
+                label: 'Orders',
                 value: totalCases.toString(),
               ),
               const SizedBox(width: 10),
@@ -315,7 +327,7 @@ class _ShowCasesState extends State<ShowCases> {
               ),
               const SizedBox(height: 22),
               const Text(
-                'No Cases Yet',
+                'No Orders Yet',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 22,
@@ -326,7 +338,7 @@ class _ShowCasesState extends State<ShowCases> {
               const SizedBox(height: 8),
               Text(
                 isFiltered
-                    ? 'No results match your current filter. Clear it to see all cases.'
+                    ? 'No results match your current filter. Clear it to see all Orders.'
                     : 'Start by adding your first case.\nEverything will appear here in a clean, organized view.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
@@ -341,7 +353,7 @@ class _ShowCasesState extends State<ShowCases> {
                 child: ElevatedButton.icon(
                   onPressed: () => Get.toNamed(AppRoutes.addEditCase),
                   icon: const Icon(Icons.add),
-                  label: const Text('Add Case'),
+                  label: const Text('Add Order'),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: _primary,
                     foregroundColor: Colors.white,
@@ -363,7 +375,7 @@ class _ShowCasesState extends State<ShowCases> {
                       controller.update();
                     },
                     icon: const Icon(Icons.list_alt_outlined),
-                    label: const Text('Show All Cases'),
+                    label: const Text('Show All Orders'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: _primary,
                       side: const BorderSide(color: _primary),
@@ -382,8 +394,8 @@ class _ShowCasesState extends State<ShowCases> {
     );
   }
 
-  List<Widget> _buildGroupedCases(List<CaseModel> cases) {
-    final grouped = <int, List<CaseModel>>{};
+  List<Widget> _buildGroupedCases(List<GlobalOrderModel> cases) {
+    final grouped = <int, List<GlobalOrderModel>>{};
 
     for (final caseItem in cases) {
       grouped
@@ -405,13 +417,13 @@ class _ShowCasesState extends State<ShowCases> {
         .toList();
   }
 
-  Widget _customerCasesSection(List<CaseModel> customerCases) {
+  Widget _customerCasesSection(List<GlobalOrderModel> customerCases) {
     final customer = customerCases.first.customer;
     final customerName = customer?.customerName.trim() ?? 'Unnamed Customer';
     final customerInitial = _customerInitial(customerName);
     final totalImages = customerCases.fold<int>(
       0,
-      (sum, caseItem) => sum + (caseItem.images?.length ?? 0),
+      (sum, caseItem) => sum, //  + (caseItem.images?.length ?? 0),
     );
 
     return Container(
@@ -477,6 +489,25 @@ class _ShowCasesState extends State<ShowCases> {
                         color: Colors.grey.shade600,
                       ),
                     ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Text(
+                          customer?.customerMobile ?? 'No Mobile',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                        Text(
+                          customer?.customerMobile ?? 'No Mobile',
+                          style: TextStyle(
+                            fontSize: 13,
+                            color: Colors.grey.shade600,
+                          ),
+                        ),
+                      ],
+                    ),
                   ],
                 ),
               ),
@@ -492,283 +523,283 @@ class _ShowCasesState extends State<ShowCases> {
             ],
           ),
           const SizedBox(height: 14),
-          SizedBox(
-            height: 176,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: customerCases.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final caseItem = customerCases[index];
-                return _caseImageTile(caseItem);
-              },
-            ),
-          ),
+          // SizedBox(
+          //   height: 176,
+          //   child: ListView.separated(
+          //     scrollDirection: Axis.horizontal,
+          //     itemCount: customerCases.length,
+          //     separatorBuilder: (_, __) => const SizedBox(width: 10),
+          //     itemBuilder: (context, index) {
+          //       final caseItem = customerCases[index];
+          //       return _caseImageTile(caseItem);
+          //     },
+          //   ),
+          // ),
         ],
       ),
     );
   }
 
-  void _showCaseImagesDialog(CaseModel caseItem) {
-    final controller = PageController();
-    final title = _caseTitle(caseItem);
+  // void _showCaseImagesDialog(GlobalOrderModel caseItem) {
+  //   final controller = PageController();
+  //   final title = _caseTitle(caseItem);
 
-    Get.dialog(
-      Dialog(
-        backgroundColor: Colors.transparent,
-        insetPadding: const EdgeInsets.all(16),
-        child: Container(
-          constraints: const BoxConstraints(maxHeight: 560),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(28),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.18),
-                blurRadius: 30,
-                offset: const Offset(0, 16),
-              ),
-            ],
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(28),
-            child: Column(
-              children: [
-                Container(
-                  padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [_primary, _secondary],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        height: 44,
-                        width: 44,
-                        decoration: BoxDecoration(
-                          color: Colors.white.withOpacity(0.16),
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        child: const Icon(
-                          Icons.photo_library_outlined,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Swipe through the images attached to this case.',
-                              style: TextStyle(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.8),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.close, color: Colors.white),
-                        onPressed: () => Get.back(),
-                      ),
-                    ],
-                  ),
-                ),
-                Expanded(
-                  child: PageView.builder(
-                    controller: controller,
-                    itemCount: caseItem.images?.length ?? 0,
-                    itemBuilder: (context, index) {
-                      final image = caseItem.images![index];
+  //   Get.dialog(
+  //     Dialog(
+  //       backgroundColor: Colors.transparent,
+  //       insetPadding: const EdgeInsets.all(16),
+  //       child: Container(
+  //         constraints: const BoxConstraints(maxHeight: 560),
+  //         decoration: BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.circular(28),
+  //           boxShadow: [
+  //             BoxShadow(
+  //               color: Colors.black.withOpacity(0.18),
+  //               blurRadius: 30,
+  //               offset: const Offset(0, 16),
+  //             ),
+  //           ],
+  //         ),
+  //         child: ClipRRect(
+  //           borderRadius: BorderRadius.circular(28),
+  //           child: Column(
+  //             children: [
+  //               Container(
+  //                 padding: const EdgeInsets.fromLTRB(16, 16, 8, 16),
+  //                 decoration: const BoxDecoration(
+  //                   gradient: LinearGradient(
+  //                     colors: [_primary, _secondary],
+  //                     begin: Alignment.topLeft,
+  //                     end: Alignment.bottomRight,
+  //                   ),
+  //                 ),
+  //                 child: Row(
+  //                   children: [
+  //                     Container(
+  //                       height: 44,
+  //                       width: 44,
+  //                       decoration: BoxDecoration(
+  //                         color: Colors.white.withOpacity(0.16),
+  //                         borderRadius: BorderRadius.circular(14),
+  //                       ),
+  //                       child: const Icon(
+  //                         Icons.photo_library_outlined,
+  //                         color: Colors.white,
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 12),
+  //                     Expanded(
+  //                       child: Column(
+  //                         crossAxisAlignment: CrossAxisAlignment.start,
+  //                         children: [
+  //                           Text(
+  //                             title,
+  //                             maxLines: 1,
+  //                             overflow: TextOverflow.ellipsis,
+  //                             style: const TextStyle(
+  //                               fontSize: 17,
+  //                               fontWeight: FontWeight.w800,
+  //                               color: Colors.white,
+  //                             ),
+  //                           ),
+  //                           const SizedBox(height: 4),
+  //                           Text(
+  //                             'Swipe through the images attached to this Order.',
+  //                             style: TextStyle(
+  //                               fontSize: 12,
+  //                               color: Colors.white.withOpacity(0.8),
+  //                             ),
+  //                           ),
+  //                         ],
+  //                       ),
+  //                     ),
+  //                     IconButton(
+  //                       icon: const Icon(Icons.close, color: Colors.white),
+  //                       onPressed: () => Get.back(),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //               // Expanded(
+  //               //   child: PageView.builder(
+  //               //     controller: controller,
+  //               //     itemCount: caseItem.images?.length ?? 0,
+  //               //     itemBuilder: (context, index) {
+  //               //       final image = caseItem.images![index];
 
-                      return Padding(
-                        padding: const EdgeInsets.all(14),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(22),
-                          child: Container(
-                            color: Colors.grey.shade100,
-                            child: Image.network(
-                              image.imageUrl,
-                              fit: BoxFit.cover,
-                              width: double.infinity,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: GetBuilder<CaseController>(
-                          builder: (controller) {
-                            return ElevatedButton.icon(
-                              onPressed: () {
-                                controller.takeMultiImages(caseItem.id);
-                              },
-                              icon: const Icon(Icons.camera_alt_outlined),
-                              label: controller.isImagesAdding
-                                  ? const Text('Adding...')
-                                  : const Text('Add Images'),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: _primary,
-                                foregroundColor: Colors.white,
-                                elevation: 0,
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 12,
-                                ),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(16),
-                                ),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: ElevatedButton(
-                          onPressed: () => Get.back(),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.grey.shade200,
-                            foregroundColor: Colors.black87,
-                            elevation: 0,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text('Close'),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  //               //       return Padding(
+  //               //         padding: const EdgeInsets.all(14),
+  //               //         child: ClipRRect(
+  //               //           borderRadius: BorderRadius.circular(22),
+  //               //           child: Container(
+  //               //             color: Colors.grey.shade100,
+  //               //             child: Image.network(
+  //               //               image.imageUrl,
+  //               //               fit: BoxFit.cover,
+  //               //               width: double.infinity,
+  //               //             ),
+  //               //           ),
+  //               //         ),
+  //               //       );
+  //               //     },
+  //               //   ),
+  //               // ),
+  //               Padding(
+  //                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+  //                 child: Row(
+  //                   children: [
+  //                     Expanded(
+  //                       child: GetBuilder<CaseController>(
+  //                         builder: (controller) {
+  //                           return ElevatedButton.icon(
+  //                             onPressed: () {
+  //                               controller.takeMultiImages(caseItem.globalOrderId!);
+  //                             },
+  //                             icon: const Icon(Icons.camera_alt_outlined),
+  //                             label: controller.isImagesAdding
+  //                                 ? const Text('Adding...')
+  //                                 : const Text('Add Images'),
+  //                             style: ElevatedButton.styleFrom(
+  //                               backgroundColor: _primary,
+  //                               foregroundColor: Colors.white,
+  //                               elevation: 0,
+  //                               padding: const EdgeInsets.symmetric(
+  //                                 vertical: 12,
+  //                               ),
+  //                               shape: RoundedRectangleBorder(
+  //                                 borderRadius: BorderRadius.circular(16),
+  //                               ),
+  //                             ),
+  //                           );
+  //                         },
+  //                       ),
+  //                     ),
+  //                     const SizedBox(width: 12),
+  //                     Expanded(
+  //                       child: ElevatedButton(
+  //                         onPressed: () => Get.back(),
+  //                         style: ElevatedButton.styleFrom(
+  //                           backgroundColor: Colors.grey.shade200,
+  //                           foregroundColor: Colors.black87,
+  //                           elevation: 0,
+  //                           padding: const EdgeInsets.symmetric(vertical: 12),
+  //                           shape: RoundedRectangleBorder(
+  //                             borderRadius: BorderRadius.circular(16),
+  //                           ),
+  //                         ),
+  //                         child: const Text('Close'),
+  //                       ),
+  //                     ),
+  //                   ],
+  //                 ),
+  //               ),
+  //             ],
+  //           ),
+  //         ),
+  //       ),
+  //     ),
+  //   );
+  // }
 
-  Widget _caseImageTile(CaseModel caseItem) {
-    final firstImage = (caseItem.images != null && caseItem.images!.isNotEmpty)
-        ? caseItem.images!.first.imageUrl
-        : (caseItem.carInfo?.carModel?.carModelName != null &&
-              caseItem.carInfo!.carBrand!.carBrandImgUrl!.isNotEmpty)
-        ? caseItem.carInfo?.carBrand?.carBrandImgUrl
-        : null;
+  // Widget _caseImageTile(CaseModel caseItem) {
+  //   final firstImage = (caseItem.images != null && caseItem.images!.isNotEmpty)
+  //       ? caseItem.images!.first.imageUrl
+  //       : (caseItem.carInfo?.carModel?.carModelName != null &&
+  //             caseItem.carInfo!.carBrand!.carBrandImgUrl!.isNotEmpty)
+  //       ? caseItem.carInfo?.carBrand?.carBrandImgUrl
+  //       : null;
 
-    final title = _caseTitle(caseItem);
+  //   final title = _caseTitle(caseItem);
 
-    return GetBuilder<CaseController>(
-      builder: (controller) {
-        return InkWell(
-          onTap: () {
-            controller.currentCase = caseItem;
-            Get.toNamed(AppRoutes.caseDetailView);
-            //_showCaseImagesDialog(caseItem);
-          },
-          child: Container(
-            width: 158,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(18),
-              color: Colors.white,
-              border: Border.all(color: Colors.grey.shade100),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
-                  blurRadius: 14,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(18),
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  if (firstImage == null)
-                    Container(
-                      color: Colors.grey.shade100,
-                      child: const Icon(
-                        Icons.image_not_supported_outlined,
-                        color: Colors.grey,
-                        size: 34,
-                      ),
-                    ),
-                  if (firstImage != null)
-                    Image.network(firstImage, fit: BoxFit.cover),
-                  Align(
-                    alignment: Alignment.bottomCenter,
-                    child: Container(
-                      padding: const EdgeInsets.fromLTRB(10, 18, 10, 10),
-                      decoration: const BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [Colors.transparent, Color(0xCC0F172A)],
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                        ),
-                      ),
-                      child: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Colors.white,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${caseItem.images?.length ?? 0} images',
-                            style: TextStyle(
-                              color: Colors.white.withOpacity(0.78),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+  //   return GetBuilder<CaseController>(
+  //     builder: (controller) {
+  //       return InkWell(
+  //         onTap: () {
+  //           controller.currentCase = caseItem;
+  //           Get.toNamed(AppRoutes.caseDetailView);
+  //           //_showCaseImagesDialog(caseItem);
+  //         },
+  //         child: Container(
+  //           width: 158,
+  //           decoration: BoxDecoration(
+  //             borderRadius: BorderRadius.circular(18),
+  //             color: Colors.white,
+  //             border: Border.all(color: Colors.grey.shade100),
+  //             boxShadow: [
+  //               BoxShadow(
+  //                 color: Colors.black.withOpacity(0.05),
+  //                 blurRadius: 14,
+  //                 offset: const Offset(0, 8),
+  //               ),
+  //             ],
+  //           ),
+  //           child: ClipRRect(
+  //             borderRadius: BorderRadius.circular(18),
+  //             child: Stack(
+  //               fit: StackFit.expand,
+  //               children: [
+  //                 if (firstImage == null)
+  //                   Container(
+  //                     color: Colors.grey.shade100,
+  //                     child: const Icon(
+  //                       Icons.image_not_supported_outlined,
+  //                       color: Colors.grey,
+  //                       size: 34,
+  //                     ),
+  //                   ),
+  //                 if (firstImage != null)
+  //                   Image.network(firstImage, fit: BoxFit.cover),
+  //                 Align(
+  //                   alignment: Alignment.bottomCenter,
+  //                   child: Container(
+  //                     padding: const EdgeInsets.fromLTRB(10, 18, 10, 10),
+  //                     decoration: const BoxDecoration(
+  //                       gradient: LinearGradient(
+  //                         colors: [Colors.transparent, Color(0xCC0F172A)],
+  //                         begin: Alignment.topCenter,
+  //                         end: Alignment.bottomCenter,
+  //                       ),
+  //                     ),
+  //                     child: Column(
+  //                       mainAxisSize: MainAxisSize.min,
+  //                       crossAxisAlignment: CrossAxisAlignment.start,
+  //                       children: [
+  //                         Text(
+  //                           title,
+  //                           maxLines: 1,
+  //                           overflow: TextOverflow.ellipsis,
+  //                           style: const TextStyle(
+  //                             color: Colors.white,
+  //                             fontWeight: FontWeight.w700,
+  //                             fontSize: 13,
+  //                           ),
+  //                         ),
+  //                         const SizedBox(height: 2),
+  //                         Text(
+  //                           '${caseItem.images?.length ?? 0} images',
+  //                           style: TextStyle(
+  //                             color: Colors.white.withOpacity(0.78),
+  //                             fontSize: 11,
+  //                           ),
+  //                         ),
+  //                       ],
+  //                     ),
+  //                   ),
+  //                 ),
+  //               ],
+  //             ),
+  //           ),
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
-  String _caseTitle(CaseModel caseItem) {
-    final title = '${caseItem.carInfo!.carBrand!.carBrandName} ${caseItem.carInfo!.carModel?.carModelName}'.trim();
-    return title.isEmpty ? 'Case' : title;
-  }
+  // String _caseTitle(GlobalOrderModel caseItem) {
+  //   final title = '${caseItem.carInfo!.carBrand!.carBrandName} ${caseItem.carInfo!.carModel?.carModelName}'.trim();
+  //   return title.isEmpty ? 'Case' : title;
+  // }
 
   String _customerInitial(String customerName) {
     final trimmed = customerName.trim();

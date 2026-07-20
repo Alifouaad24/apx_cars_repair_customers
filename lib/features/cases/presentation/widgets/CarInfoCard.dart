@@ -1,11 +1,26 @@
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:flutter/material.dart';
 
 class CarInfoCard extends StatelessWidget {
-  const CarInfoCard({required this.currentCase});
-  final dynamic currentCase;
+  const CarInfoCard({
+    super.key,
+    required this.carInfo,
+    this.customer,
+    this.scheduleDate,
+  });
+
+  final CarInfoModel carInfo;
+  final CustomerModel? customer;
+  // مرر currentCase.scheduleDt من الطلب اذا تحب تعرض شارة التاريخ
+  final String? scheduleDate;
 
   @override
   Widget build(BuildContext context) {
+    final brand = carInfo.carBrand?.carBrandName ?? '';
+    final model = carInfo.carModel?.carModelName ?? '';
+    final title = '$brand $model'.trim();
+
     return Container(
       margin: const EdgeInsets.fromLTRB(16, 16, 16, 0),
       padding: const EdgeInsets.all(18),
@@ -43,24 +58,47 @@ class CarInfoCard extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '${currentCase.carInfo.carBrand.carBrandName} ${currentCase.carInfo.carModel.carModelName}',
+                      title.isEmpty ? 'بدون معلومات سيارة' : title,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
                     ),
-                    Text(
-                      currentCase.carInfo.carModel.carYear.carYearNumber,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey.shade500,
+                    if (carInfo.carYear?.carYearNumber != null)
+                      Text(
+                        carInfo.carYear!.carYearNumber,
+                        style: TextStyle(
+                          fontSize: 13,
+                          color: Colors.grey.shade500,
+                        ),
                       ),
-                    ),
+                    // اسم الزبون - صار متاح لأننا نستقبله كباراميتر مستقل الآن
+                    if (customer?.customerName != null)
+                      Padding(
+                        padding: const EdgeInsets.only(top: 2),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.person_outline_rounded,
+                              size: 13,
+                              color: Colors.grey.shade400,
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              customer!.customerName,
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.grey.shade500,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                   ],
                 ),
               ),
-              if (currentCase.date != null)
+              if (scheduleDate != null && scheduleDate!.isNotEmpty)
                 Container(
                   padding: const EdgeInsets.symmetric(
                     horizontal: 10,
@@ -71,7 +109,7 @@ class CarInfoCard extends StatelessWidget {
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(
-                    currentCase.date!.toString().split('T').first,
+                    scheduleDate!.split('T').first,
                     style: const TextStyle(
                       fontSize: 11,
                       color: Color(0xFF0E7490),
@@ -98,7 +136,7 @@ class CarInfoCard extends StatelessWidget {
               ),
               Expanded(
                 child: Text(
-                  currentCase.carInfo.vinNumber,
+                  carInfo.vinNumber ?? 'غير محدد',
                   style: const TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
