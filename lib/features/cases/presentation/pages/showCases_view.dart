@@ -86,8 +86,16 @@ class _ShowCasesState extends State<ShowCases> {
                             totalCases: controller.cases.length,
                             totalCustomers: totalCustomers,
                             isFiltered: isFiltered,
-                            onAddPressed: () =>
-                                Get.toNamed(AppRoutes.addEditCase),
+                            onAddPressed: () {
+                              controller.isUpdate = true;
+                              controller.currentOrderId = null;
+                              controller.selectedCustomer = null;
+                              controller.notesController.clear();
+                              controller.visitDate = DateTime.now();
+                              controller.visitTime = TimeOfDay.now();
+                              Get.toNamed(AppRoutes.addEditCase);
+                              Get.toNamed(AppRoutes.addEditCase);
+                            },
                             onResetPressed: () {
                               controller.cases = controller.allCases;
                               controller.update();
@@ -339,7 +347,7 @@ class _ShowCasesState extends State<ShowCases> {
               Text(
                 isFiltered
                     ? 'No results match your current filter. Clear it to see all Orders.'
-                    : 'Start by adding your first case.\nEverything will appear here in a clean, organized view.',
+                    : 'Start by adding your first order.\nEverything will appear here in a clean, organized view.',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 14,

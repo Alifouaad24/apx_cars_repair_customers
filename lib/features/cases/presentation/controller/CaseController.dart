@@ -42,11 +42,12 @@ class CaseController extends GetxController {
   List<CustomerModel> customers = [];
   CustomerModel? selectedCustomer;
   bool isLoading = false;
+  bool isUpdate = false;
   bool isEdit = false;
   GlobalOrderModel? currentCase;
   List<ServiceModel> Services = [];
   bool isEditService = false;
-
+  int? currentOrderId;
   /// ================= FORM =================
   final formKey = GlobalKey<FormState>();
 
@@ -378,6 +379,42 @@ class CaseController extends GetxController {
 
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
       Get.snackbar("Success", "Order added successfully");
+
+      getCases();
+      clearForm();
+
+      Get.offNamed(AppRoutes.showCases);
+    });
+    isAddingCase = false;
+    update();
+  }
+
+  Future<void> editCase() async {
+    if (!(formKey.currentState?.validate() ?? false)) return;
+
+    final customerId = selectedCustomer?.globalCustomerId;
+
+    if (customerId == null) {
+      Get.snackbar("Error", "Please select customer");
+      return;
+    }
+
+    isAddingCase = true;
+    update();
+    final data = {
+      "globalCustomerId": selectedCustomer!.globalCustomerId,
+      "business_id": 40,
+      "notes": notesController.text.trim(),
+      "status": "",
+      "schedule_time":
+          "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
+      "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
+    };
+
+    final result = await editCaseUseCase(currentOrderId!, data);
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      Get.snackbar("Success", "Order updated successfully");
 
       getCases();
       clearForm();

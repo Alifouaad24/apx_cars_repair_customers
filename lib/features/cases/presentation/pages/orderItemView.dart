@@ -1,4 +1,8 @@
+import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:flutter/material.dart';
+import 'package:get/get.dart';
+import 'package:get/get_core/src/get_main.dart';
 
 /// عنصر قائمة عصري لعرض طلب واحد (Order/Case).
 /// استبدل النوع `dynamic order` بنوع الموديل الحقيقي عندك (مثلاً OrderModel).
@@ -27,13 +31,10 @@ class OrderListItem extends StatelessWidget {
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(
-                color: colors.outlineVariant.withOpacity(0.4),
-              ),
+              border: Border.all(color: colors.outlineVariant.withOpacity(0.4)),
             ),
             child: Row(
               children: [
-                // أيقونة دائرية بخلفية ملونة
                 Container(
                   width: 48,
                   height: 48,
@@ -41,10 +42,71 @@ class OrderListItem extends StatelessWidget {
                     color: colors.primaryContainer,
                     borderRadius: BorderRadius.circular(14),
                   ),
-                  child: Icon(
-                    Icons.build_circle_outlined,
-                    color: colors.onPrimaryContainer,
-                    size: 26,
+                  child: GetBuilder<CaseController>(
+                    builder: (controller) => InkWell(
+                      onLongPress: () {
+                        Get.defaultDialog(
+                          title: 'خيارات',
+                          content: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: [
+                              ElevatedButton(
+                                onPressed: () {
+                                  controller.isUpdate = true;
+                                  controller.currentOrderId =  order.globalOrderId;
+                                  controller.selectedCustomer = controller
+                                      .customers
+                                      .firstWhere(
+                                        (c) =>
+                                            c.globalCustomerId ==
+                                            order.customer.globalCustomerId,
+                                      );
+                                  controller.notesController.text = order.notes;
+                                  controller.visitDate =
+                                      order.scheduleDt != null
+                                      ? DateTime.parse(order.scheduleDt!)
+                                      : DateTime.now();
+                                  controller.visitTime = TimeOfDay(
+                                    hour: int.parse(
+                                      order.scheduleTime.split(':')[0],
+                                    ),
+                                    minute: int.parse(
+                                      order.scheduleTime.split(':')[1],
+                                    ),
+                                  );
+                                  Get.back();
+                                  Get.toNamed(AppRoutes.addEditCase);
+                                },
+                                child: const Text('Edit'),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  Get.back();
+
+                                  Get.defaultDialog(
+                                    title: 'Delete confirmation',
+                                    middleText: 'Are you sure to delete ?',
+                                    textConfirm: 'Delete',
+                                    textCancel: 'Cancel',
+                                    onConfirm: () {
+
+                                      
+                                      
+                                    },
+                                  );
+                                },
+                                child: const Text('Delete'),
+                              ),
+                            ],
+                          ),
+                        );
+                      },
+                      child: Icon(
+                        Icons.build_circle_outlined,
+                        color: colors.onPrimaryContainer,
+                        size: 26,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -71,8 +133,11 @@ class OrderListItem extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          Icon(Icons.calendar_today_outlined,
-                              size: 14, color: colors.onSurfaceVariant),
+                          Icon(
+                            Icons.calendar_today_outlined,
+                            size: 14,
+                            color: colors.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             "${order.scheduleDt}",
@@ -81,8 +146,11 @@ class OrderListItem extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 12),
-                          Icon(Icons.access_time_outlined,
-                              size: 14, color: colors.onSurfaceVariant),
+                          Icon(
+                            Icons.access_time_outlined,
+                            size: 14,
+                            color: colors.onSurfaceVariant,
+                          ),
                           const SizedBox(width: 4),
                           Text(
                             "${order.scheduleTime}",
@@ -106,4 +174,3 @@ class OrderListItem extends StatelessWidget {
     );
   }
 }
-
