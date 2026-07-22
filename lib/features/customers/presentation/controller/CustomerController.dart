@@ -385,7 +385,7 @@ class CustomerController extends GetxController {
       "customerMobile": phoneController.text,
       "customerEmail": emailController.text,
       "country_id": 3,
-      "businessId": 40,
+      "businessesIds": [40],
       "address": {
         "line_1": line1Controller.text,
         "line_2": line2Controller.text,
@@ -408,7 +408,7 @@ class CustomerController extends GetxController {
       (_) {
         Get.snackbar("Success", "Customer added successfully");
         getCustomers();
-        Get.toNamed(AppRoutes.home);
+        Get.toNamed(AppRoutes.main);
       },
     );
 
@@ -425,7 +425,7 @@ class CustomerController extends GetxController {
       "customerMobile": phoneController.text,
       "customerEmail": emailController.text,
       "country_id": 3,
-      "businessId": 40,
+      "businessesIds": [40],
       "address": {
         "line_1": line1Controller.text,
         "line_2": line2Controller.text,
@@ -448,7 +448,7 @@ class CustomerController extends GetxController {
       (_) {
         Get.snackbar("Success", "Customer edited successfully");
         getCustomers();
-        Get.toNamed(AppRoutes.home);
+        Get.toNamed(AppRoutes.main);
       },
     );
 

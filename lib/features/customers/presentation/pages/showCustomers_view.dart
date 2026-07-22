@@ -204,10 +204,8 @@ class _ShowCustomersState extends State<ShowCustomers> {
 
   /// ================= CUSTOMER CARD =================
   Widget _customerCard(dynamic c) {
-    final address = c.address;
-    final firstAddress = address != null && address!.isNotEmpty
-        ? address!.first
-        : null;
+    final address = c.address[0];
+    final firstAddress = address != null ? address : null;
     final controller = Get.find<CustomerController>();
     return Container(
       margin: const EdgeInsets.only(bottom: 12),
@@ -492,7 +490,7 @@ class _ShowCustomersState extends State<ShowCustomers> {
                   controller.currentCustomerId = c.globalCustomerId;
                   controller.line1Controller.text = address?.line1 ?? "";
                   controller.line2Controller.text = address?.line2 ?? "";
-                  controller.cityController.text = address?.usCity ?? "";
+                  controller.cityController.text = address.usCity ?? "";
                   controller.zipController.text = address?.postCode ?? "";
                   controller.firstNameController.text = c.customerName
                       .split(" ")
