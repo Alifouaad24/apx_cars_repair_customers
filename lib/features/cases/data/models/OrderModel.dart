@@ -1,8 +1,6 @@
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 
-
-
 class GlobalOrderModel {
   final int? globalOrderId;
   final int? globalCustomerId;
@@ -99,13 +97,11 @@ class CarBrandModel {
   final int carBrandId;
   final String carBrandName;
   final String? carBrandImgUrl;
-  final List<CarModel>? carModels;
 
   CarBrandModel({
     required this.carBrandId,
     required this.carBrandName,
     this.carBrandImgUrl,
-    this.carModels,
   });
 
   factory CarBrandModel.fromJson(Map<String, dynamic> json) {
@@ -113,11 +109,6 @@ class CarBrandModel {
       carBrandId: json['carBrandId'],
       carBrandName: json['carBrandName'],
       carBrandImgUrl: json['carBrandImgUrl'],
-      carModels: json['carModels'] != null
-          ? List<CarModel>.from(
-              json['carModels'].map((x) => CarModel.fromJson(x)),
-            )
-          : null,
     );
   }
 }
@@ -126,13 +117,11 @@ class CarModel {
   final int carModelId;
   final String carModelName;
   final int carBrandId;
-  final CarBrandModel? carBrand;
 
   CarModel({
     required this.carModelId,
     required this.carModelName,
     required this.carBrandId,
-    this.carBrand,
   });
 
   factory CarModel.fromJson(Map<String, dynamic> json) {
@@ -140,9 +129,6 @@ class CarModel {
       carModelId: json['carModelId'],
       carModelName: json['carModelName'],
       carBrandId: json['carBrandId'],
-      carBrand: json['carBrand'] != null
-          ? CarBrandModel.fromJson(json['carBrand'])
-          : null,
     );
   }
 }
@@ -199,9 +185,9 @@ class CarInfoModel {
 
   factory CarInfoModel.fromJson(Map<String, dynamic> json) {
     return CarInfoModel(
-      carInfoTblId: json['carInfoTblId'],
+      carInfoTblId: json['carInfoTblId'] ?? 0,
       vinNumber: json['vinNumber'],
-      globalCustomerId: json['globalCustomerId'],
+      globalCustomerId: json['globalCustomerId'] ?? 0,
       carYearId: json['carYearId'],
       carBrandId: json['carBrandId'],
       carModelId: json['carModelId'],
@@ -215,7 +201,7 @@ class CarInfoModel {
           ? CarModel.fromJson(json['carModel'])
           : null,
       images: json['images'] != null
-          ? List<CarImage>.from(json['images'].map((x) => CarImage.fromJson(x)))
+          ? (json['images'] as List).map((x) => CarImage.fromJson(x)).toList()
           : null,
     );
   }

@@ -1,10 +1,12 @@
 import 'dart:io';
-import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
+    hide CarBrandModel;
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
 import 'package:intl/intl.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
-import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
@@ -20,7 +22,6 @@ import 'package:apx_cars_repair/features/customers/presentation/controller/Custo
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:image_picker/image_picker.dart';
-import 'package:dio/dio.dart';
 
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
@@ -28,6 +29,7 @@ class CaseController extends GetxController {
   ShowCasesUsecase showCasesUsecase;
   AddCarToOrderUseCase addCarToOrderUseCase;
   ChangeCaseServiceStatus changeCaseServiceStatus;
+  GetCarInfoUsecase getCarInfoUsecase;
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
   GetAllServiceUseCase getAllServiceUseCase;
@@ -40,6 +42,16 @@ class CaseController extends GetxController {
   List<GlobalOrderModel> cases = [];
   List<GlobalOrderModel> allCases = [];
   List<CustomerModel> customers = [];
+
+  List<CarBrandModel> brands = [];
+  List<CarModel> models = [];
+  List<CarModel> allModels = [];
+  List<CarYearModel> years = [];
+
+  CarBrandModel? selectedBrand;
+  CarModel? selectedModel;
+  CarYearModel? selectedYear;
+
   CustomerModel? selectedCustomer;
   bool isLoading = false;
   bool isUpdate = false;
@@ -48,6 +60,7 @@ class CaseController extends GetxController {
   List<ServiceModel> Services = [];
   bool isEditService = false;
   int? currentOrderId;
+
   /// ================= FORM =================
   final formKey = GlobalKey<FormState>();
 
@@ -90,13 +103,19 @@ class CaseController extends GetxController {
     this.changeCaseServiceStatus,
     this.deletecaseserviceUsecase,
     this.addCarToOrderUseCase,
+    this.getCarInfoUsecase,
   );
 
   @override
   void onInit() async {
     super.onInit();
 
-    Future.wait([getCases(), getAllServices(), loadCustomers()]);
+    Future.wait([
+      getCases(),
+      getAllServices(),
+      loadCustomers(),
+      getAllCarsData(),
+    ]);
   }
 
   Future<void> getAllServices() async {
@@ -136,6 +155,30 @@ class CaseController extends GetxController {
     update();
   }
 
+  Future<void> getAllCarsData() async {
+    var result = await getCarInfoUsecase();
+
+    result.fold(
+      (error) {
+        // معالجة الخطأ
+      },
+      (data) {
+        print("Brands Count = ${data.brands.length}");
+        print("Models Count = ${data.models.length}");
+        print("Years Count = ${data.years.length}");
+
+        brands = data.brands;
+        models = data.models;
+        allModels = data.models;
+        years = data.years;
+
+        print("Controller Models Count = ${models.length}");
+
+        update();
+      },
+    );
+  }
+
   bool isImagesAdding = false;
   Future<void> takeMultiImages(int caseId) async {
     try {
@@ -150,7 +193,9 @@ class CaseController extends GetxController {
 
       final result = await bindImagesWithCaseUseCase(caseId, selectedImages);
 
-      result.fold((failure) => Get.snackbar("Error", failure.message), (success) async {
+      result.fold((failure) => Get.snackbar("Error", failure.message), (
+        success,
+      ) async {
         Get.snackbar(
           "Success",
           "${selectedImages.length} images added successfully",
@@ -580,21 +625,23 @@ class CaseController extends GetxController {
 
   bool addCarToOrder = false;
 
-  Future<void> addCarToCase(Map<String, dynamic> data) async {
+  Future<bool> addCarToCase(Map<String, dynamic> data) async {
+    var isSuccess = false;
     addCarToOrder = true;
     update();
     var result = await addCarToOrderUseCase(data);
     result.fold(
       (error) {
-        print("Error: $error");
         addCarToOrder = false;
         update();
       },
       (carInfo) {
-        currentCase!.oredesServices![0].carInfo = carInfo;
+        Get.offAndToNamed(AppRoutes.main);
         addCarToOrder = false;
         update();
+        isSuccess = true;
       },
     );
+    return isSuccess;
   }
 }

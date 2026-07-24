@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -26,6 +27,14 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     return (response.data as List)
         .map((json) => GlobalOrderModel.fromJson(json))
         .toList();
+  }
+
+  @override
+  Future<CarsDataModel> getAllCarsData() async {
+    final response = await client.dio.get("/Car");
+    print(response.data);
+    print(response.data['models']);
+    return CarsDataModel.fromJson(response.data);
   }
 
   @override
@@ -150,6 +159,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
       data: carData,
       options: Options(contentType: "application/json"),
     );
-    return response.data;
+
+    return CarInfoModel.fromJson(response.data);
   }
 }

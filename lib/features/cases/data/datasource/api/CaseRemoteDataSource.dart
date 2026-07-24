@@ -1,5 +1,6 @@
 import 'dart:io';
 
+import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -17,4 +18,5 @@ abstract class CaseRemoteDataSource {
   Future<Map<String, dynamic>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data);
   Future<OrderServiceModel> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> deleteCaseService(int caseServiceId);
+  Future<CarsDataModel> getAllCarsData();
 }

@@ -874,11 +874,12 @@
 // }
 
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
-import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
+    hide CarBrandModel;
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/EmptyCarCard.dart';
-import 'package:apx_cars_repair/features/cases/presentation/pages/case_detail_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/ActionButton.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/CarInfoCard.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/EmptyServices.dart';
@@ -886,8 +887,6 @@ import 'package:apx_cars_repair/features/cases/presentation/widgets/ServiceCard.
 import 'package:apx_cars_repair/main.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_state_manager/src/simple/get_state.dart';
 
 class CaseDetailView extends StatefulWidget {
   const CaseDetailView({super.key});
@@ -899,10 +898,6 @@ class CaseDetailView extends StatefulWidget {
 class _CaseDetailViewState extends State<CaseDetailView> {
   int _currentImageIndex = 0;
   late final PageController _pageController;
-  static const Color _primary = Color(0xFF0E7490);
-  static const Color _primaryDark = Color(0xFF155E75);
-  static const Color _surface = Color(0xFFF8FAFC);
-  static const Color _mutedText = Color(0xFF475569);
 
   @override
   void initState() {
@@ -925,8 +920,6 @@ class _CaseDetailViewState extends State<CaseDetailView> {
           return const Scaffold(body: Center(child: Text('No Order selected')));
         }
 
-        // نحسب السيارة والصور محليًا بدون أي "!" غير محمي، حتى لو الطلب
-        // جديد بدون سيارة ولا خدمات ولا صور - هذا هو مصدر الكراش الأصلي.
         final CarInfoModel? primaryCarInfo = controller.currentCase?.carInfo;
         final List<OrderImage> carImages =
             controller.currentCase?.orderImages ?? const [];
@@ -1338,27 +1331,121 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    modernField(
-                      controller: brandController,
-                      label: 'Brand (e.g. Honda)',
-                      icon: Icons.directions_car_filled_rounded,
-                      onChanged: () => setDState(() {}),
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<CarBrandModel>(
+                        value: controller.selectedBrand,
+                        decoration: modernDropdownDecoration(
+                          label: 'Brand',
+                          icon: Icons.directions_car_filled_rounded,
+                        ),
+                        items: controller.brands.map((brand) {
+                          return DropdownMenuItem(
+                            value: brand,
+                            child: Text(brand.carBrandName),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDState(() {
+                            controller.selectedBrand = value;
+                            controller.selectedModel = null;
+                            controller.models = controller.allModels;
+                            controller.models = controller.allModels
+                                .where((e) => e.carBrandId == value?.carBrandId)
+                                .toList();
+                            controller.update();
+                          });
+                          controller.update();
+                        },
+                      ),
                     ),
+
                     const SizedBox(height: 12),
-                    modernField(
-                      controller: modelController,
-                      label: 'Model (e.g. Odyssey)',
-                      icon: Icons.category_rounded,
-                      onChanged: () => setDState(() {}),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<CarModel>(
+                        value: controller.selectedModel,
+                        decoration: modernDropdownDecoration(
+                          label: 'Model',
+                          icon: Icons.category_rounded,
+                        ),
+                        items: controller.models
+                            .where(
+                              (m) =>
+                                  m.carBrandId ==
+                                  controller.selectedBrand?.carBrandId,
+                            )
+                            .map((model) {
+                              return DropdownMenuItem<CarModel>(
+                                value: model, // <-- هنا التعديل
+                                child: Text(model.carModelName),
+                              );
+                            })
+                            .toList(),
+                        onChanged: controller.selectedBrand == null
+                            ? null
+                            : (value) {
+                                setDState(() {
+                                  controller.selectedModel = value;
+                                  controller.update();
+                                });
+                              },
+                      ),
                     ),
+
                     const SizedBox(height: 12),
-                    modernField(
-                      controller: yearController,
-                      label: 'Year (e.g. 2020)',
-                      icon: Icons.calendar_today_rounded,
-                      keyboardType: TextInputType.number,
-                      onChanged: () => setDState(() {}),
+
+                    Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(18),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 12,
+                            offset: const Offset(0, 4),
+                          ),
+                        ],
+                      ),
+                      child: DropdownButtonFormField<CarYearModel>(
+                        value: controller.selectedYear,
+                        decoration: modernDropdownDecoration(
+                          label: 'Year',
+                          icon: Icons.calendar_month_rounded,
+                        ),
+                        items: controller.years.map((year) {
+                          return DropdownMenuItem<CarYearModel>(
+                            value: year,
+                            child: Text(year.carYearNumber),
+                          );
+                        }).toList(),
+                        onChanged: (value) {
+                          setDState(() {
+                            controller.selectedYear = value;
+                            controller.update();
+                          });
+                        },
+                      ),
                     ),
+
                     const SizedBox(height: 12),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1446,49 +1533,73 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                       child: ElevatedButton(
                         onPressed:
                             isSubmitting ||
-                                brandController.text.trim().isEmpty ||
-                                modelController.text.trim().isEmpty ||
-                                vinController.text.trim().isEmpty ||
-                                yearController.text.trim().isEmpty
+                                controller.selectedBrand == null ||
+                                controller.selectedModel == null ||
+                                controller.selectedYear == null
                             ? null
                             : () async {
-                                setDState(() => isSubmitting = true);
-                                final data = {
-                                  "customerId": currentCase?.globalCustomerId,
-                                  "orderId": currentCase?.globalOrderId,
-                                  "brand": brandController.text.trim(),
-                                  "model": modelController.text.trim(),
-                                  "year": yearController.text.trim(),
-                                  "vinNumber": vinController.text.trim().isEmpty
-                                      ? null
-                                      : vinController.text.trim(),
-                                };
-                                // final newCarId = 0;
-                                await controller.addCarToCase(data);
-                                Get.back();
-                                // نفتح منتقي الصور فورًا بعد إنشاء السيارة
-                                // if (newCarId != null) {
-                                //   controller.showImagePickerOptions(newCarId);
-                                // }
+                                try {
+                                  setDState(() => isSubmitting = true);
+
+                                  final data = {
+                                    "customerId": currentCase?.globalCustomerId,
+                                    "orderId": currentCase?.globalOrderId,
+                                    "brand":
+                                        controller.selectedBrand!.carBrandId,
+                                    "model":
+                                        controller.selectedModel!.carModelId,
+                                    "year": controller.selectedYear!.carYearId,
+                                    "vinNumber":
+                                        vinController.text.trim().isEmpty
+                                        ? null
+                                        : vinController.text.trim(),
+                                  };
+
+                                  final success = await controller.addCarToCase(
+                                    data,
+                                  );
+
+                                  if (success) {
+                                    Get.back();
+                                    controller.getCases();
+                                    Get.back();
+                                  }
+                                } finally {
+                                  if (Get.isDialogOpen ?? false) {
+                                    setDState(() => isSubmitting = false);
+                                  }
+                                }
                               },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: primary,
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        child: isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 250),
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  key: ValueKey('loading'),
+                                  width: 22,
+                                  height: 22,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white,
+                                  ),
+                                )
+                              : const Text(
+                                  'Confirm',
+                                  key: ValueKey('text'),
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                 ),
-                              )
-                            : const Text('Confirm'),
+                        ),
                       ),
                     ),
                   ],
@@ -1820,6 +1931,31 @@ Widget modernField({
       filled: true,
       fillColor: Colors.white,
       contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+    ),
+  );
+}
+
+InputDecoration modernDropdownDecoration({
+  required String label,
+  required IconData icon,
+}) {
+  return InputDecoration(
+    labelText: label,
+    prefixIcon: Icon(icon),
+    filled: true,
+    fillColor: Colors.grey.shade50,
+    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide.none,
+    ),
+    enabledBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: BorderSide(color: Colors.grey.shade300),
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(18),
+      borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5),
     ),
   );
 }

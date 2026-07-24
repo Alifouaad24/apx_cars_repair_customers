@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:apx_cars_repair/core/error/Failure.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -63,7 +64,10 @@ class CaseRepositoryImpl implements CaseRepository {
     Map<String, dynamic> caseData,
   ) async {
     try {
-      GlobalOrderModel model = await remoteDataSource.editCase(caseId, caseData);
+      GlobalOrderModel model = await remoteDataSource.editCase(
+        caseId,
+        caseData,
+      );
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to edit case"));
@@ -90,7 +94,8 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, OrderServiceModel>> addServiceToCase(Map<String, dynamic> data,
+  Future<Either<Failure, OrderServiceModel>> addServiceToCase(
+    Map<String, dynamic> data,
   ) async {
     try {
       OrderServiceModel model = await remoteDataSource.addServiceToCase(data);
@@ -106,7 +111,10 @@ class CaseRepositoryImpl implements CaseRepository {
     Map<String, dynamic> data,
   ) async {
     try {
-      OrderServiceModel model = await remoteDataSource.editServiceToCase(caseServiceId, data);
+      OrderServiceModel model = await remoteDataSource.editServiceToCase(
+        caseServiceId,
+        data,
+      );
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to edit service in case"));
@@ -119,7 +127,10 @@ class CaseRepositoryImpl implements CaseRepository {
     Map<String, dynamic> data,
   ) async {
     try {
-      Map<String, dynamic> response = await remoteDataSource.addCaseServiceNote(caseServiceId, data);
+      Map<String, dynamic> response = await remoteDataSource.addCaseServiceNote(
+        caseServiceId,
+        data,
+      );
       return Right(response);
     } catch (e) {
       return Left(Failure("Failed to add note to case service"));
@@ -132,7 +143,10 @@ class CaseRepositoryImpl implements CaseRepository {
     Map<String, dynamic> data,
   ) async {
     try {
-      OrderServiceModel model = await remoteDataSource.changCaseServiceStatus(caseServiceId, data);
+      OrderServiceModel model = await remoteDataSource.changCaseServiceStatus(
+        caseServiceId,
+        data,
+      );
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to change case service status"));
@@ -140,21 +154,38 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, Map<String, dynamic>>> deleteCaseService(int caseServiceId) async {
+  Future<Either<Failure, Map<String, dynamic>>> deleteCaseService(
+    int caseServiceId,
+  ) async {
     try {
-      Map<String, dynamic> response = await remoteDataSource.deleteCaseService(caseServiceId);
+      Map<String, dynamic> response = await remoteDataSource.deleteCaseService(
+        caseServiceId,
+      );
       return Right(response);
     } catch (e) {
       return Left(Failure("Failed to delete case service"));
     }
   }
-  
+
   @override
-  Future<Either<Failure, CarInfoModel>> addCarToOrder(Map<String, dynamic> carData) async {
- try {
+  Future<Either<Failure, CarInfoModel>> addCarToOrder(
+    Map<String, dynamic> carData,
+  ) async {
+    try {
       CarInfoModel response = await remoteDataSource.addCarToOrder(carData);
       return Right(response);
     } catch (e) {
       return Left(Failure("Failed to delete case service"));
-    }  }
+    }
+  }
+
+  @override
+  Future<Either<Failure, CarsDataModel>> getAllCarsData() async {
+    try {
+      CarsDataModel response = await remoteDataSource.getAllCarsData();
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to add car"));
+    }
+  }
 }
