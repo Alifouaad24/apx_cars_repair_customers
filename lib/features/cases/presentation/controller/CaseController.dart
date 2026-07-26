@@ -308,19 +308,83 @@ class CaseController extends GetxController {
     final year = _pickValue(data, const ['year', 'manufactureYear']);
     final brand = _pickValue(data, const ['brand', 'make', 'manufacturer']);
     final model = _pickValue(data, const ['model', 'vehicleModel']);
-    final scannedValue = _pickValue(data, const ['scannedValue']);
+    final scannedValue = _pickValue(data, const ['Vin']);
 
-    if (vin.isNotEmpty) {
-      vinNumberController.text = vin;
-    }
-    if (year.isNotEmpty) {
-      yearController.text = year;
-    }
+    // ===== Brand =====
     if (brand.isNotEmpty) {
-      brandController.text = brand;
+      CarBrandModel? foundBrand;
+
+      try {
+        foundBrand = brands.firstWhere(
+          (e) => e.carBrandName.toLowerCase() == brand.toLowerCase(),
+        );
+      } catch (_) {}
+
+      if (foundBrand == null) {
+        foundBrand = CarBrandModel(
+          carBrandId: -(DateTime.now().millisecondsSinceEpoch),
+          carBrandName: brand,
+        );
+
+        brands.add(foundBrand);
+      }
+
+      selectedBrand = foundBrand;
     }
-    if (model.isNotEmpty) {
-      modelController.text = model;
+
+    // ===== Model =====
+    if (model.isNotEmpty && selectedBrand != null) {
+      CarModel? foundModel;
+
+      try {
+        foundModel = allModels.firstWhere(
+          (e) =>
+              e.carModelName.toLowerCase() == model.toLowerCase() &&
+              e.carBrandId == selectedBrand!.carBrandId,
+        );
+      } catch (_) {}
+
+      if (foundModel == null) {
+        foundModel = CarModel(
+          carModelId: -(DateTime.now().millisecondsSinceEpoch),
+          carBrandId: selectedBrand!.carBrandId,
+          carModelName: model,
+        );
+
+        allModels.add(foundModel);
+      }
+
+      selectedModel = foundModel;
+    }
+
+    // تحديث موديلات البراند المختار
+    if (selectedBrand != null) {
+      models = allModels
+          .where((e) => e.carBrandId == selectedBrand!.carBrandId)
+          .toList();
+    }
+
+    // ===== Year =====
+    CarYearModel? foundYear;
+
+    try {
+      foundYear = years.firstWhere((e) => e.carYearNumber == year);
+    } catch (_) {}
+
+    selectedYear =
+        foundYear ??
+        CarYearModel(
+          carYearId: -(DateTime.now().millisecondsSinceEpoch),
+          carYearNumber: year,
+        );
+
+    if (!years.any((e) => e.carYearNumber == year)) {
+      years.add(selectedYear!);
+    }
+
+    // ===== VIN =====
+    if (vin.isNotEmpty) {
+      vinController.text = vin;
     }
 
     if (scannedValue.isNotEmpty) {
@@ -330,6 +394,7 @@ class CaseController extends GetxController {
     update();
   }
 
+final vinController = TextEditingController();
   String _pickValue(Map<String, dynamic> source, List<String> keys) {
     final direct = _pickValueFromSingleMap(source, keys);
     if (direct.isNotEmpty) return direct;

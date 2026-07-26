@@ -59,10 +59,14 @@ class _ShowCasesState extends State<ShowCases> {
             );
           }
 
-          final totalCustomers = controller.cases
-              .map((caseItem) => caseItem.customer?.globalCustomerId ?? 0)
-              .toSet()
-              .length;
+          final now = DateTime.now();
+          final totalTodayTasks = controller.cases.where((caseItem) {
+            final date = DateTime.parse(caseItem.scheduleDt);
+            return date.year == now.year &&
+                date.month == now.month &&
+                date.day == now.day;
+          }).length;
+
           final isFiltered =
               controller.cases.length != controller.allCases.length;
 
@@ -84,7 +88,7 @@ class _ShowCasesState extends State<ShowCases> {
                         children: [
                           _buildHeaderCard(
                             totalCases: controller.cases.length,
-                            totalCustomers: totalCustomers,
+                            totalTodayTasks: totalTodayTasks,
                             isFiltered: isFiltered,
                             onAddPressed: () {
                               controller.isUpdate = true;
@@ -132,7 +136,7 @@ class _ShowCasesState extends State<ShowCases> {
 
   Widget _buildHeaderCard({
     required int totalCases,
-    required int totalCustomers,
+    required int totalTodayTasks,
     required bool isFiltered,
     required VoidCallback onAddPressed,
     required VoidCallback onResetPressed,
@@ -197,12 +201,34 @@ class _ShowCasesState extends State<ShowCases> {
                 icon: Icons.folder_open_outlined,
                 label: 'Orders',
                 value: totalCases.toString(),
+                onTab: () {},
               ),
               const SizedBox(width: 10),
               _buildMetricChip(
-                icon: Icons.people_outline,
-                label: 'Customers',
-                value: totalCustomers.toString(),
+                icon: Icons.map_outlined,
+                label: 'My today tasks',
+                value: totalTodayTasks.toString(),
+                onTab: () => totalTodayTasks > 0
+                    ? Get.toNamed(
+                        AppRoutes.map,
+                        arguments: {
+                          "todayTasks": Get.find<CaseController>().cases.where((
+                            caseItem,
+                          ) {
+                            final now = DateTime.now();
+                            final date = DateTime.tryParse(
+                              caseItem.scheduleDt ?? '',
+                            );
+
+                            return date != null &&
+                                date.year == now.year &&
+                                date.month == now.month &&
+                                date.day == now.day;
+                          }).toList(),
+                          "showTodayTasks": true,
+                        },
+                      )
+                    : null,
               ),
             ],
           ),
@@ -215,39 +241,46 @@ class _ShowCasesState extends State<ShowCases> {
     required IconData icon,
     required String label,
     required String value,
+    required VoidCallback onTab,
   }) {
     return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.16),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: Colors.white.withOpacity(0.12)),
-        ),
-        child: Row(
-          children: [
-            Icon(icon, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
+      child: InkWell(
+        onTap: onTab,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.16),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: Colors.white.withOpacity(0.12)),
+          ),
+          child: Row(
+            children: [
+              Icon(icon, color: Colors.white, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                  ),
-                  Text(
-                    label,
-                    style: const TextStyle(color: Colors.white70, fontSize: 12),
-                  ),
-                ],
+                    Text(
+                      label,
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

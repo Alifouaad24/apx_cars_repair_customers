@@ -26,7 +26,7 @@ class CustomerController extends GetxController {
   final DeleteCustomerUseCase deleteCustomerUseCase;
   final BindCustomerWithImageUseCase bindCustomerWithImageUseCase;
   final formKey = GlobalKey<FormState>();
-
+  List<dynamic> todayTasks = [];
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final phoneController = TextEditingController();
@@ -60,8 +60,42 @@ class CustomerController extends GetxController {
   @override
   void onInit() {
     super.onInit();
-    getCustomers();
+    final args = Get.arguments;
+
+    if (args != null && args["showTodayTasks"] == true) {
+      todayTasks = args["todayTasks"] ?? [];
+      loadTodayTaskMarkers();
+    } else {
+      getCustomers();
+    }
+
     getCurrentLocation();
+  }
+
+  void loadTodayTaskMarkers() {
+    markers.clear();
+
+    for (var task in todayTasks) {
+      final customer = task.globalCustomer;
+
+      if (customer?.latitude != null && customer?.longitude != null) {
+        markers.add(
+          Marker(
+            markerId: MarkerId(task.globalOrderId.toString()),
+            position: LatLng(customer.latitude, customer.longitude),
+            infoWindow: InfoWindow(
+              title: customer.name ?? "Customer",
+              snippet: "Today Task",
+            ),
+            icon: BitmapDescriptor.defaultMarkerWithHue(
+              BitmapDescriptor.hueRed,
+            ),
+          ),
+        );
+      }
+    }
+
+    update();
   }
 
   pickCustomerImage({int? customerId, bool fromCamera = false}) async {

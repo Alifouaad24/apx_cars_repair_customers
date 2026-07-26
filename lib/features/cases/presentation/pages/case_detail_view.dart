@@ -1290,7 +1290,7 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
   final brandController = TextEditingController();
   final modelController = TextEditingController();
   final yearController = TextEditingController();
-  final vinController = TextEditingController();
+  
 
   Get.dialog(
     Dialog(
@@ -1452,7 +1452,7 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                       children: [
                         Expanded(
                           child: modernField(
-                            controller: vinController,
+                            controller: controller.vinController,
                             label: "VIN Number",
                             icon: Icons.pin_outlined,
                             // ⬇️ هذا كان السبب: بدون هذا السطر، الزر ما يتفعّل
@@ -1484,8 +1484,6 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
 
                               if (result is Map<String, dynamic>) {
                                 controller.fillFromScannedCarData(result);
-                                // ⬇️ نفس المشكلة: بدون هذا السطر الزر ما يتفعّل
-                                // إذا عبّيت الحقول عن طريق السكان.
                                 setDState(() {});
                                 return;
                               }
@@ -1512,7 +1510,7 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
-                          vinController.clear();
+                          controller.vinController.clear();
                           brandController.clear();
                           modelController.clear();
                           yearController.clear();
@@ -1545,14 +1543,14 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                                     "customerId": currentCase?.globalCustomerId,
                                     "orderId": currentCase?.globalOrderId,
                                     "brand":
-                                        controller.selectedBrand!.carBrandId,
+                                        controller.selectedBrand!.carBrandName,
                                     "model":
-                                        controller.selectedModel!.carModelId,
-                                    "year": controller.selectedYear!.carYearId,
+                                        controller.selectedModel!.carModelName,
+                                    "year": controller.selectedYear!.carYearNumber,
                                     "vinNumber":
-                                        vinController.text.trim().isEmpty
+                                        controller.vinController.text.trim().isEmpty
                                         ? null
-                                        : vinController.text.trim(),
+                                        : controller.vinController.text.trim(),
                                   };
 
                                   final success = await controller.addCarToCase(
