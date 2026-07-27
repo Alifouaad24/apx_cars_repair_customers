@@ -3,6 +3,7 @@ import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/orderItemView.dart';
+import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
@@ -204,31 +205,63 @@ class _ShowCasesState extends State<ShowCases> {
                 onTab: () {},
               ),
               const SizedBox(width: 10),
+              // _buildMetricChip(
+              //   icon: Icons.map_outlined,
+              //   label: 'My today tasks',
+              //   value: totalTodayTasks.toString(),
+              //   onTab: () => totalTodayTasks > 0
+              //       ? Get.toNamed(
+              //           AppRoutes.map,
+              //           arguments: {
+              //             "todayTasks": Get.find<CaseController>().cases.where((
+              //               caseItem,
+              //             ) {
+              //               final now = DateTime.now();
+              //               final date = DateTime.tryParse(
+              //                 caseItem.scheduleDt ?? '',
+              //               );
+
+              //               return date != null &&
+              //                   date.year == now.year &&
+              //                   date.month == now.month &&
+              //                   date.day == now.day;
+              //             }).toList(),
+              //             "showTodayTasks": true,
+              //           },
+              //         )
+              //       : null,
+              // ),
               _buildMetricChip(
                 icon: Icons.map_outlined,
                 label: 'My today tasks',
                 value: totalTodayTasks.toString(),
-                onTab: () => totalTodayTasks > 0
-                    ? Get.toNamed(
-                        AppRoutes.map,
-                        arguments: {
-                          "todayTasks": Get.find<CaseController>().cases.where((
-                            caseItem,
-                          ) {
-                            final now = DateTime.now();
-                            final date = DateTime.tryParse(
-                              caseItem.scheduleDt ?? '',
-                            );
+                onTab: () {
+                  if (totalTodayTasks == 0) return;
 
-                            return date != null &&
-                                date.year == now.year &&
-                                date.month == now.month &&
-                                date.day == now.day;
-                          }).toList(),
-                          "showTodayTasks": true,
-                        },
-                      )
-                    : null,
+                  final now = DateTime.now();
+                  final todayTasksList = Get.find<CaseController>().cases.where(
+                    (caseItem) {
+                      final date = DateTime.tryParse(caseItem.scheduleDt ?? '');
+                      return date != null &&
+                          date.year == now.year &&
+                          date.month == now.month &&
+                          date.day == now.day;
+                    },
+                  ).toList();
+
+                  // NEW: حدّث الماركرز فوراً قبل الانتقال، بدل انتظار onInit
+                  final customerController = Get.find<CustomerController>();
+                  customerController.todayTasks = todayTasksList;
+                  customerController.loadTodayTaskMarkers();
+
+                  Get.toNamed(
+                    AppRoutes.map,
+                    arguments: {
+                      "todayTasks": todayTasksList,
+                      "showTodayTasks": true,
+                    },
+                  );
+                },
               ),
             ],
           ),

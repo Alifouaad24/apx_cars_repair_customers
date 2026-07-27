@@ -72,32 +72,65 @@ class CustomerController extends GetxController {
     getCurrentLocation();
   }
 
-  void loadTodayTaskMarkers() {
-    markers.clear();
+ Future<void> loadTodayTaskMarkers() async {
+  markers.clear();
+  update();
 
-    for (var task in todayTasks) {
-      final customer = task.globalCustomer;
+  print('DEBUG: todayTasks count = ${todayTasks.length}'); // NEW
 
-      if (customer?.latitude != null && customer?.longitude != null) {
-        markers.add(
-          Marker(
-            markerId: MarkerId(task.globalOrderId.toString()),
-            position: LatLng(customer.latitude, customer.longitude),
-            infoWindow: InfoWindow(
-              title: customer.name ?? "Customer",
-              snippet: "Today Task",
-            ),
-            icon: BitmapDescriptor.defaultMarkerWithHue(
-              BitmapDescriptor.hueRed,
-            ),
-          ),
-        );
-      }
+  for (var task in todayTasks) {
+    final customer = task.customer;
+
+    print('DEBUG: order=${task.globalOrderId} customer=$customer'); // NEW
+
+    if (customer == null ||
+        customer.address == null ||
+        customer.address!.isEmpty) {
+      print('DEBUG: skipped - no customer or address'); // NEW
+      continue;
     }
 
-    update();
+    print('DEBUG: address = ${customer.address!.first.line1}, '
+        '${customer.address!.first.usCity}, '
+        '${customer.address!.first.postCode}'); // NEW
+
+    try {
+      final latLng = await _getLatLngFromAddress(customer);
+
+      print('DEBUG: latLng = $latLng'); // NEW
+
+      if (latLng == null) continue;
+
+      BitmapDescriptor markerIcon;
+      try {
+        markerIcon = await _getMarkerIconWithLabel(customer.customerName);
+      } catch (_) {
+        markerIcon = BitmapDescriptor.defaultMarkerWithHue(
+          BitmapDescriptor.hueRed,
+        );
+      }
+
+      markers.add(
+        Marker(
+          markerId: MarkerId(task.globalOrderId.toString()),
+          position: latLng,
+          icon: markerIcon,
+          anchor: const Offset(0.5, 1.0),
+          infoWindow: InfoWindow(
+            title: customer.customerName,
+            snippet: "Today Task",
+          ),
+        ),
+      );
+    } catch (e) {
+      print('Today task marker error for order ${task.globalOrderId}: $e');
+      continue;
+    }
   }
 
+  print('DEBUG: final markers count = ${markers.length}'); // NEW
+  update();
+}
   pickCustomerImage({int? customerId, bool fromCamera = false}) async {
     var picked = await ImagePicker().pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,

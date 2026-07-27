@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controllers/scan_chaseh_controller.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
@@ -35,10 +36,27 @@ class _CameraScanViewState extends State<CameraScanView>
   String? _cameraErrorMessage;
   String _text = 'اضغط وابدأ التحدث';
 
+  double _frameWidth = 260;
+  double _frameHeight = 200;
+  static const double _minFrameSize = 100;
+  static const double _maxFrameSize = 340;
+
   bool get _returnResultToCaller {
     final args = Get.arguments;
     if (args is! Map) return false;
     return args['returnResult'] == true;
+  }
+
+  Size _rotatedPreviewSize() {
+    final ps = _cameraController!.value.previewSize!;
+    return Size(ps.height, ps.width);
+  }
+
+  double _coverScale(Size box, Size preview) {
+    final boxRatio = box.width / box.height;
+    final previewRatio = preview.width / preview.height;
+    final s = previewRatio / boxRatio;
+    return s < 1 ? 1 / s : s;
   }
 
   @override
@@ -303,8 +321,62 @@ class _CameraScanViewState extends State<CameraScanView>
   Future<void> _extractTextFromImage(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final recognized = await _textRecognizer.processImage(inputImage);
-    final extractedText = recognized.text.trim();
-    _showCapturedImageDialog(imagePath, extractedText);
+
+    final bytes = await File(imagePath).readAsBytes();
+    final codec = await ui.instantiateImageCodec(bytes);
+    final frame = await codec.getNextFrame();
+    final imageSize = Size(
+      frame.image.width.toDouble(),
+      frame.image.height.toDouble(),
+    );
+
+    final frameRect = _visibleFrameRectInImage(imageSize);
+
+    final buffer = StringBuffer();
+    for (final block in recognized.blocks) {
+      for (final line in block.lines) {
+        if (frameRect == null || frameRect.overlaps(line.boundingBox)) {
+          buffer.writeln(line.text);
+        }
+      }
+    }
+
+    _showCapturedImageDialog(imagePath, buffer.toString().trim());
+  }
+
+  String? _extractFixedLengthCode(String rawText, {int length = 17}) {
+    final tokens = rawText.split(RegExp(r'\s+'));
+    final pattern = RegExp('^[A-Za-z0-9]{$length}\$');
+
+    for (final token in tokens) {
+      if (pattern.hasMatch(token)) {
+        return token;
+      }
+    }
+    return null;
+  }
+
+  Rect? _visibleFrameRectInImage(Size imageSize) {
+    if (_cameraController == null) return null;
+
+    final box = Size(_frameWidth, _frameHeight); // NEW: حجم متغير
+    final rotated = _rotatedPreviewSize();
+    final scale = _coverScale(box, rotated);
+
+    final dispW = rotated.width * scale;
+    final dispH = rotated.height * scale;
+    final offX = (dispW - box.width) / 2;
+    final offY = (dispH - box.height) / 2;
+
+    final left = offX / scale;
+    final top = offY / scale;
+    final right = (offX + box.width) / scale;
+    final bottom = (offY + box.height) / scale;
+
+    final sx = imageSize.width / rotated.width;
+    final sy = imageSize.height / rotated.height;
+
+    return Rect.fromLTRB(left * sx, top * sy, right * sx, bottom * sy);
   }
 
   void _showCapturedImageDialog(String imagePath, String extractedText) {
@@ -572,26 +644,7 @@ class _CameraScanViewState extends State<CameraScanView>
       body: Stack(
         children: [
           // ── Camera / Scanner Feed ──────────────────────────
-          Positioned.fill(
-            child: _isBarcodeMode
-                ? MobileScanner(
-                    controller: _barcodeController,
-                    onDetect: _onDetect,
-                  )
-                : _isCameraReady
-                ? CameraPreview(_cameraController!)
-                : _cameraErrorMessage != null
-                ? _CameraErrorView(
-                    message: _cameraErrorMessage!,
-                    onRetry: _initCamera,
-                  )
-                : const ColoredBox(
-                    color: Colors.black,
-                    child: Center(
-                      child: CircularProgressIndicator(color: Colors.white),
-                    ),
-                  ),
-          ),
+          Positioned.fill(child: Container(color: Colors.black)),
 
           // ── Dark gradient top ──────────────────────────────
           Positioned(
@@ -666,21 +719,100 @@ class _CameraScanViewState extends State<CameraScanView>
           ),
 
           // ── Scan frame overlay ─────────────────────────────
+          // ── Scan frame overlay (resizable) ─────────────────
           Center(
-            child: SizedBox(
-              width: 260,
-              height: _isBarcodeMode ? 260 : 200,
-              child: Stack(
-                children: [
-                  // Corner decorations
-                  _Corner(Alignment.topLeft),
-                  _Corner(Alignment.topRight),
-                  _Corner(Alignment.bottomLeft),
-                  _Corner(Alignment.bottomRight),
-                ],
-              ),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  width: _frameWidth,
+                  height: _frameHeight,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.white, width: 1.5),
+                  ),
+                  child: ClipRect(
+                    child: _isBarcodeMode
+                        ? MobileScanner(
+                            controller: _barcodeController,
+                            fit: BoxFit.cover,
+                            onDetect: _onDetect,
+                          )
+                        : _isCameraReady
+                        ? FittedBox(
+                            fit: BoxFit.cover,
+                            child: SizedBox(
+                              width: _rotatedPreviewSize().width,
+                              height: _rotatedPreviewSize().height,
+                              child: CameraPreview(_cameraController!),
+                            ),
+                          )
+                        : _cameraErrorMessage != null
+                        ? _CameraErrorView(
+                            message: _cameraErrorMessage!,
+                            onRetry: _initCamera,
+                          )
+                        : const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+                ),
+
+                // زوايا الديكور
+                Positioned(top: 0, left: 0, child: _Corner(Alignment.topLeft)),
+                Positioned(
+                  top: 0,
+                  right: 0,
+                  child: _Corner(Alignment.topRight),
+                ),
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  child: _Corner(Alignment.bottomLeft),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: _Corner(Alignment.bottomRight),
+                ),
+
+                // مقبض تغيير الحجم
+                Positioned(
+                  right: -14,
+                  bottom: -14,
+                  child: GestureDetector(
+                    onPanUpdate: (details) {
+                      setState(() {
+                        _frameWidth = (_frameWidth + details.delta.dx).clamp(
+                          _minFrameSize,
+                          _maxFrameSize,
+                        );
+                        _frameHeight = (_frameHeight + details.delta.dy).clamp(
+                          _minFrameSize,
+                          _maxFrameSize,
+                        );
+                      });
+                    },
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(
+                        Icons.open_in_full_rounded,
+                        size: 16,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
+
           // ── Bottom controls ────────────────────────────────
           Positioned(
             bottom: 0,

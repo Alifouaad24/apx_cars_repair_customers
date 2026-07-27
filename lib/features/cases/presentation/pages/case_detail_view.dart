@@ -1510,6 +1510,9 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                     Expanded(
                       child: OutlinedButton(
                         onPressed: () {
+                          controller.selectedBrand = null;
+                          controller.selectedModel = null;
+                          controller.selectedYear = null;
                           controller.vinController.clear();
                           brandController.clear();
                           modelController.clear();
