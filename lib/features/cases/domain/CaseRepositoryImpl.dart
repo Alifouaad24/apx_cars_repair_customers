@@ -5,6 +5,7 @@ import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDat
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:dartz/dartz.dart';
@@ -186,6 +187,16 @@ class CaseRepositoryImpl implements CaseRepository {
       return Right(response);
     } catch (e) {
       return Left(Failure("Failed to add car"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<OrderStatusModel>>> getOrderStatus() async {
+    try {
+      List<OrderStatusModel> response = await remoteDataSource.getOrderStatus();
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to load status"));
     }
   }
 }

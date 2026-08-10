@@ -1,4 +1,6 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 import 'package:flutter/material.dart';
@@ -38,7 +40,7 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
               ),
             ),
             title: Text(
-              controller.isEdit ? "Edit Order" : "Add Order",
+              controller.isUpdate ? "Edit Order" : "Add Order",
               style: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w700,
@@ -276,7 +278,48 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                               ),
                             ),
                             const SizedBox(height: 16),
-
+                            DropdownButtonFormField<ServiceModel>(
+                              value: controller.selectedService,
+                              decoration: _inputDecoration(
+                                label: "Select Service",
+                                icon: Icons.design_services,
+                              ),
+                              items: controller.Services.map((se) {
+                                return DropdownMenuItem<ServiceModel>(
+                                  value: se,
+                                  child: Text(se.description),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                controller.selectedService = value;
+                                controller.update();
+                              },
+                            ),
+                            const SizedBox(height: 15),
+                            DropdownButtonFormField<OrderStatusModel>(
+                              value: controller.selectedStatus,
+                              decoration: _inputDecoration(
+                                label: "Select Status",
+                                icon: Icons.cases,
+                              ),
+                              items: controller.OrderStatus.map((status) {
+                                return DropdownMenuItem<OrderStatusModel>(
+                                  value: status,
+                                  child: Text(status.statusAr),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                controller.selectedStatus = value;
+                                controller.update();
+                              },
+                              validator: (value) {
+                                if (value == null) {
+                                  return "Please select Status";
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 15),
                             SizedBox(
                               width: double.infinity,
                               height: 56,
@@ -304,6 +347,7 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                   ),
                                   onPressed: () {
                                     if (!controller.isAddingCase) {
+                                      controller.isUpdate ? controller.editCase() :
                                       controller.submitCase();
                                     }
                                   },
@@ -329,7 +373,6 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                               ),
                             ),
                             const SizedBox(height: 26),
-                           
                           ],
                         ),
                         const SizedBox(height: 16),
@@ -345,7 +388,6 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
     );
   }
 
-  
   Widget _sectionTitle(String title, IconData icon) {
     return Align(
       alignment: Alignment.centerLeft,

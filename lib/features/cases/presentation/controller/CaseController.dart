@@ -1,10 +1,13 @@
 import 'dart:io';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
     hide CarBrandModel;
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
 import 'package:intl/intl.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -27,6 +30,7 @@ class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
 
   ShowCasesUsecase showCasesUsecase;
+  GetorderstatusUsecase getorderstatusUsecase;
   AddCarToOrderUseCase addCarToOrderUseCase;
   ChangeCaseServiceStatus changeCaseServiceStatus;
   GetCarInfoUsecase getCarInfoUsecase;
@@ -58,8 +62,11 @@ class CaseController extends GetxController {
   bool isEdit = false;
   GlobalOrderModel? currentCase;
   List<ServiceModel> Services = [];
+  List<OrderStatusModel> OrderStatus = [];
+  OrderStatusModel? selectedStatus;
   bool isEditService = false;
   int? currentOrderId;
+  int? editingOrderDetailId;
 
   /// ================= FORM =================
   final formKey = GlobalKey<FormState>();
@@ -95,6 +102,7 @@ class CaseController extends GetxController {
     this.showCasesUsecase,
     this.addCaseUseCase,
     this.editCaseUseCase,
+    this.getorderstatusUsecase,
     this.bindImagesWithCaseUseCase,
     this.getAllServiceUseCase,
     this.addServiceToCaseUseCase,
@@ -113,6 +121,7 @@ class CaseController extends GetxController {
     Future.wait([
       getCases(),
       getAllServices(),
+      getOrderStatus(),
       loadCustomers(),
       getAllCarsData(),
     ]);
@@ -148,6 +157,25 @@ class CaseController extends GetxController {
       (data) {
         cases = data;
         allCases = data;
+      },
+    );
+
+    isLoading = false;
+    update();
+  }
+
+  Future<void> getOrderStatus() async {
+    isLoading = true;
+    update();
+
+    final result = await getorderstatusUsecase();
+
+    result.fold(
+      (failure) {
+        Get.snackbar("Error", failure.message);
+      },
+      (data) {
+        OrderStatus = data;
       },
     );
 
@@ -394,7 +422,7 @@ class CaseController extends GetxController {
     update();
   }
 
-final vinController = TextEditingController();
+  final vinController = TextEditingController();
   String _pickValue(Map<String, dynamic> source, List<String> keys) {
     final direct = _pickValueFromSingleMap(source, keys);
     if (direct.isNotEmpty) return direct;
@@ -479,10 +507,11 @@ final vinController = TextEditingController();
       "globalCustomerId": selectedCustomer!.globalCustomerId,
       "business_id": 40,
       "notes": notesController.text.trim(),
-      "status": "",
+      "OrderStatusId": selectedStatus?.orderStatusId,
       "schedule_time":
           "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
       "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
+      "service_id": selectedService?.serviceId,
     };
 
     final result = await addCaseUseCase(data);
@@ -498,6 +527,7 @@ final vinController = TextEditingController();
     isAddingCase = false;
     update();
   }
+
 
   Future<void> editCase() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
@@ -515,7 +545,8 @@ final vinController = TextEditingController();
       "globalCustomerId": selectedCustomer!.globalCustomerId,
       "business_id": 40,
       "notes": notesController.text.trim(),
-      "status": "",
+      "OrderStatusId": selectedStatus?.orderStatusId,
+      "service_id": selectedService?.serviceId,
       "schedule_time":
           "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
       "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
@@ -547,7 +578,32 @@ final vinController = TextEditingController();
 
   bool isEditingCase = false;
 
-  Future<void> addServiceToOrder(Map<String, dynamic> data) async {
+  // Future<void> addDetailToOrder(Map<String, dynamic> data) async {
+  //   update();
+
+  //   try {
+  //     final result = await addServiceToCaseUseCase(data);
+
+  //     await result.fold(
+  //       (failure) async {
+  //         Get.snackbar("Error", failure.message);
+  //         print(failure);
+  //       },
+  //       (data) async {
+  //         Get.snackbar("Success", "Service edited successfully");
+  //         await getCases();
+  //         print(data);
+  //       },
+  //     );
+  //   } finally {
+  //     isEditingCaseService = false;
+  //     update();
+  //     Get.toNamed(AppRoutes.main);
+  //   }
+  // }
+
+  Future<void> addDetailToOrder(Map<String, dynamic> data) async {
+    isEditingCaseService = true;
     update();
 
     try {
@@ -559,14 +615,32 @@ final vinController = TextEditingController();
         },
         (data) async {
           Get.snackbar("Success", "Service edited successfully");
-          currentCase?.oredesServices?.add(data);
+
+          // Reload cases from API
           await getCases();
+
+          // Refresh current case from the newly loaded list
+          if (currentCase != null) {
+            final updatedCase = cases.firstWhereOrNull(
+              (e) => e.globalOrderId == currentCase!.globalOrderId,
+            );
+
+            if (updatedCase != null) {
+              currentCase = updatedCase;
+            }
+          }
+
+          update();
+
+          print("Service added successfully");
+          print(data);
         },
       );
     } finally {
       isEditingCaseService = false;
       update();
-      Get.toNamed(AppRoutes.main);
+
+      Get.offAllNamed(AppRoutes.main);
     }
   }
 
@@ -574,7 +648,7 @@ final vinController = TextEditingController();
   bool isEditingCaseService = false;
   TextEditingController serviceNoteController = TextEditingController();
 
-  Future<bool> editService(Map<String, dynamic> data) async {
+  Future<bool> editDetail(Map<String, dynamic> data) async {
     if (editingServiceId == null) {
       Get.snackbar("Error", "No service selected for editing");
       return false;
@@ -595,13 +669,12 @@ final vinController = TextEditingController();
           isSuccess = true;
           Get.snackbar("Success", "Service edited successfully");
           await getCases();
+          isEditingCaseService = false;
+          update();
+          Get.toNamed(AppRoutes.main);
         },
       );
-    } finally {
-      isEditingCaseService = false;
-      update();
-      Get.toNamed(AppRoutes.main);
-    }
+    } finally {}
 
     return isSuccess;
   }
@@ -610,7 +683,8 @@ final vinController = TextEditingController();
   Future<bool> deleteCaseService(int serviceId) async {
     isDeletingCaseService = true;
     update();
-    var isSuccess = false;
+
+    bool isSuccess = false;
 
     try {
       final result = await deletecaseserviceUsecase(serviceId);
@@ -621,10 +695,12 @@ final vinController = TextEditingController();
         },
         (data) async {
           isSuccess = true;
-          Get.snackbar("Success", "Service deleted successfully");
-          currentCase?.oredesServices?.removeWhere(
-            (s) => s.oredesServicesId == serviceId,
+          currentCase!.orderDetails!.removeWhere(
+            (el) => el.globalOrderDetailId == serviceId,
           );
+
+          Get.snackbar("Success", "Service deleted successfully");
+
           await getCases();
         },
       );
@@ -662,13 +738,6 @@ final vinController = TextEditingController();
     final result = await changeCaseServiceStatus(serviceId, data);
 
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      final service = currentCase?.oredesServices?.firstWhere(
-        (e) => e.oredesServicesId == serviceId,
-      );
-
-      if (service != null) {
-        service.resolved = resolved;
-      }
       Get.snackbar("Success", "Service status updated successfully");
       getCases();
     });

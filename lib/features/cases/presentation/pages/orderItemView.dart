@@ -1,4 +1,5 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -7,7 +8,7 @@ import 'package:get/get_core/src/get_main.dart';
 /// عنصر قائمة عصري لعرض طلب واحد (Order/Case).
 /// استبدل النوع `dynamic order` بنوع الموديل الحقيقي عندك (مثلاً OrderModel).
 class OrderListItem extends StatelessWidget {
-  final dynamic order;
+  final GlobalOrderModel order;
   final VoidCallback? onTap;
 
   const OrderListItem({super.key, required this.order, this.onTap});
@@ -17,7 +18,6 @@ class OrderListItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
-    final String? status = order.status as String?;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
@@ -59,9 +59,9 @@ class OrderListItem extends StatelessWidget {
                                       .firstWhere(
                                         (c) =>
                                             c.globalCustomerId ==
-                                            order.customer.globalCustomerId,
+                                            order.customer!.globalCustomerId,
                                       );
-                                  controller.notesController.text = order.notes;
+                                  controller.notesController.text = order.notes ?? '';
                                   controller.visitDate =
                                       order.scheduleDt != null
                                       ? DateTime.parse(order.scheduleDt!)
@@ -74,6 +74,16 @@ class OrderListItem extends StatelessWidget {
                                       order.scheduleTime.split(':')[1],
                                     ),
                                   );
+                                  controller.selectedStatus = controller.OrderStatus.firstWhere(
+                                        (c) =>
+                                            c.orderStatusId ==
+                                            order.status!.orderStatusId,
+                                      );
+                                  controller.selectedService = order.service != null ? controller.Services.firstWhere(
+                                        (c) =>
+                                            c.serviceId ==
+                                            order.service?.serviceId,
+                                      ) : null;
                                   Get.back();
                                   Get.toNamed(AppRoutes.addEditCase);
                                 },
@@ -90,8 +100,7 @@ class OrderListItem extends StatelessWidget {
                                     textCancel: 'Cancel',
                                     onConfirm: () {
 
-                                      
-                                      
+                            
                                     },
                                   );
                                 },

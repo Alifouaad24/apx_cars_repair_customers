@@ -204,7 +204,7 @@ class _ShowCustomersState extends State<ShowCustomers> {
 
   /// ================= CUSTOMER CARD =================
   Widget _customerCard(dynamic c) {
-    final address = c.address[0];
+    final address = c.address.length > 0 ? c.address[0] : null;
     final firstAddress = address != null ? address : null;
     final controller = Get.find<CustomerController>();
     return Container(
@@ -263,7 +263,7 @@ class _ShowCustomersState extends State<ShowCustomers> {
                   Get.toNamed(AppRoutes.addEditCase);
                 },
                 icon: const Icon(Icons.add, size: 16),
-                label: const Text("New Case"),
+                label: const Text("New Order"),
               ),
             ],
           ),

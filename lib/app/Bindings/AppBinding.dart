@@ -15,6 +15,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseService
 import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSource.dart';
@@ -91,8 +92,10 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => DeletecaseserviceUsecase(Get.find()));
     Get.lazyPut(() => AddCarToOrderUseCase(Get.find()));
     Get.lazyPut(() => GetCarInfoUsecase(Get.find()));
+    Get.lazyPut(() => GetorderstatusUsecase(Get.find()));
     Get.lazyPut<CaseController>(
       () => CaseController(
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

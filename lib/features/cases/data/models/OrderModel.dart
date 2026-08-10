@@ -1,3 +1,5 @@
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
 
@@ -11,10 +13,11 @@ class GlobalOrderModel {
   final String scheduleDt;
   final String scheduleTime;
   CarInfoModel? carInfo;
-  final String status;
+  final OrderStatusModel? status;
   final String? notes;
-  final List<OrderServiceModel>? oredesServices;
+  final ServiceModel? service;
   List<OrderImage>? orderImages;
+  List<GlobalOrderDetailModel>? orderDetails;
 
   GlobalOrderModel({
     this.globalOrderId,
@@ -29,7 +32,8 @@ class GlobalOrderModel {
     this.orderImages,
     this.customer,
     this.notes,
-    this.oredesServices,
+    this.service,
+    this.orderDetails,
   });
 
   factory GlobalOrderModel.fromJson(Map<String, dynamic> json) {
@@ -46,18 +50,26 @@ class GlobalOrderModel {
       insertDate: json['insertDate'] ?? '',
       scheduleDt: json['schedule_dt'] ?? '',
       scheduleTime: json['schedule_time'] ?? '',
-      status: json['status'] ?? '',
+      status: json['orderStatus'] != null ? OrderStatusModel.fromJson(json['orderStatus'] ) : null,
       carInfo: json['carInfoTbl'] != null
           ? CarInfoModel.fromJson(json['carInfoTbl'])
           : null,
-      notes: json['notes'],
+      notes: json['notes'] ?? "",
       customer: json['customer'] != null
           ? CustomerModel.fromJson(json['customer'])
           : null,
-      oredesServices: json['oredesServicess'] != null
-          ? List<OrderServiceModel>.from(
-              json['oredesServicess'].map((x) => OrderServiceModel.fromJson(x)),
-            )
+      service: json['service'] != null
+          ? ServiceModel.fromJson(json['service'])
+          : null,
+
+      orderDetails: json['globalOrderDetail'] != null
+          ? (json['globalOrderDetail'] as List)
+                .map(
+                  (el) => GlobalOrderDetailModel.fromJson(
+                    el
+                  ),
+                )
+                .toList()
           : null,
     );
   }
@@ -79,19 +91,19 @@ class GlobalOrderModel {
 /// الطلب نفسه لا يحتوي سيارة مباشرة (تصميم عام: قد يكون شحن/توصيل بلا سيارة).
 /// السيارة موجودة داخل كل OrderServiceModel. هذا الـ extension يجيب لك
 /// "السيارة الرئيسية" لعرضها بأعلى صفحة تفاصيل الطلب (أول خدمة مرتبطة بسيارة).
-extension GlobalOrderCarInfo on GlobalOrderModel {
-  CarInfoModel? get primaryCarInfo {
-    final services = oredesServices;
-    if (services == null) return null;
-    for (final s in services) {
-      if (s.carInfo != null) return s.carInfo;
-    }
-    return null;
-  }
+// extension GlobalOrderCarInfo on GlobalOrderModel {
+//   CarInfoModel? get primaryCarInfo {
+//     final services = oredesServices;
+//     if (services == null) return null;
+//     for (final s in services) {
+//       if (s.carInfo != null) return s.carInfo;
+//     }
+//     return null;
+//   }
 
-  bool get hasCarImages =>
-      primaryCarInfo?.images != null && primaryCarInfo!.images!.isNotEmpty;
-}
+//   bool get hasCarImages =>
+//       primaryCarInfo?.images != null && primaryCarInfo!.images!.isNotEmpty;
+// }
 
 class CarBrandModel {
   final int carBrandId;

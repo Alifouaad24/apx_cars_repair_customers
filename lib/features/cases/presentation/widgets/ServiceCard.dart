@@ -1,3 +1,5 @@
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/case_detail_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/widgets/FinanceChip.dart';
@@ -8,12 +10,11 @@ import 'package:get/get_state_manager/src/simple/get_state.dart';
 
 class ServiceCard extends StatelessWidget {
   const ServiceCard({required this.service});
-  final dynamic service;
+  final GlobalOrderDetailModel service;
 
   @override
   Widget build(BuildContext context) {
-    final isResolved = service.resolved == true;
-    final statusColor = isResolved ? Colors.green : Colors.orange;
+    final statusColor = Colors.green;
 
     return GetBuilder<CaseController>(
       builder: (controller) {
@@ -54,6 +55,7 @@ class ServiceCard extends StatelessWidget {
                         borderRadius: BorderRadius.circular(10),
                       ),
                       child: InkWell(
+                        child: Text("lll"),
                         onTap: () {
                           Get.dialog(
                             Dialog(
@@ -118,14 +120,15 @@ class ServiceCard extends StatelessWidget {
                                       child: ElevatedButton.icon(
                                         onPressed: () {
                                           Get.back();
+                                          controller.editingServiceId = service.globalOrderDetailId;
                                           controller.isEditService = true;
                                           controller.selectedService =
                                               controller.Services.firstWhere(
                                                 (s) =>
                                                     s.serviceId ==
-                                                    service.service.serviceId,
+                                                    service.service?.serviceId,
                                               );
-      
+
                                           controller.costController.text =
                                               service.cost?.toString() ?? '';
                                           controller.paidController.text =
@@ -133,14 +136,15 @@ class ServiceCard extends StatelessWidget {
                                           controller.discountController.text =
                                               service.discount?.toString() ??
                                               '';
-                                            controller.editingServiceId = service.oredesServicesId;
+                                          controller.editingOrderDetailId =
+                                              service.globalOrderDetailId;
                                           controller.notesController.text =
                                               service.notes ?? '';
 
-                                          controller.resolved =
-                                              service.resolved;
-
-                                          showAddServiceDialog(controller, controller.currentCase);
+                                          showAddServiceDialog(
+                                            controller,
+                                            controller.currentCase!,
+                                          );
                                         },
                                         icon: const Icon(Icons.edit_rounded),
                                         label: const Text(
@@ -228,7 +232,7 @@ class ServiceCard extends StatelessWidget {
                                                                   await controller
                                                                       .deleteCaseService(
                                                                         service
-                                                                            .oredesServicesId,
+                                                                            .globalOrderDetailId,
                                                                       );
 
                                                               if (deleted &&
@@ -240,6 +244,7 @@ class ServiceCard extends StatelessWidget {
                                                                       true,
                                                                 ).pop();
                                                               }
+                                                              
                                                             },
                                                       child:
                                                           controller
@@ -308,13 +313,6 @@ class ServiceCard extends StatelessWidget {
                             ),
                           );
                         },
-                        child: Icon(
-                          isResolved
-                              ? Icons.check_circle_rounded
-                              : Icons.pending_rounded,
-                          color: statusColor,
-                          size: 20,
-                        ),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -328,35 +326,28 @@ class ServiceCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        color: statusColor.withOpacity(0.12),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: InkWell(
-                        onTap: () {
-                          print(
-                            "Status tapped for service ${service.oredesServicesId}",
-                          );
-                          controller.changeServiceStatus(
-                            service.oredesServicesId,
-                            !isResolved,
-                          );
-                        },
-                        child: Text(
-                          isResolved ? 'Resolved' : 'Pending',
-                          style: TextStyle(
-                            color: statusColor.shade700,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                      ),
-                    ),
+                    // Container(
+                    //   padding: const EdgeInsets.symmetric(
+                    //     horizontal: 10,
+                    //     vertical: 4,
+                    //   ),
+                    //   decoration: BoxDecoration(
+                    //     color: statusColor.withOpacity(0.12),
+                    //     borderRadius: BorderRadius.circular(20),
+                    //   ),
+                    //   child: InkWell(
+                    //     onTap: () {
+                    //       // print(
+                    //       //   "Status tapped for service ${service.globalOrderDetailId}",
+                    //       // );
+                    //       // controller.changeServiceStatus(
+                    //       //   service.globalOrderDetailId,
+                    //       //   !isResolved,
+                    //       // );
+                    //     },
+
+                    //   ),
+                    // ),
                   ],
                 ),
               ),
@@ -599,7 +590,7 @@ class ServiceCard extends StatelessWidget {
                                             );
                                             final data = {"notes": note};
                                             controller.addNoteToCaseService(
-                                              service.caseServiceId,
+                                              service.globalOrderDetailId,
                                               data,
                                             );
                                           },

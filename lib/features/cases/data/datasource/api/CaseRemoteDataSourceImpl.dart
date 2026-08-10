@@ -4,6 +4,7 @@ import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDat
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:dio/dio.dart';
 
@@ -97,8 +98,9 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
 
   @override
   Future<OrderServiceModel> addServiceToCase(Map<String, dynamic> data) async {
+    int globalOrderId = data['globalOrderId'];
     final response = await client.dio.post(
-      "/Orders/AddServiceToGlobalOrder",
+      "/Orders/AddDetailForOrder?orderId=${globalOrderId}",
       data: data,
       options: Options(contentType: "application/json"),
     );
@@ -111,7 +113,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     Map<String, dynamic> data,
   ) async {
     final response = await client.dio.put(
-      "/Orders/EditOrderService?orderServicId=$orderServicId",
+      "/Orders/EditDetailForOrder?orderDetailId=$orderServicId",
       data: data,
       options: Options(contentType: "application/json"),
     );
@@ -147,7 +149,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   @override
   Future<Map<String, dynamic>> deleteCaseService(int caseServiceId) async {
     final response = await client.dio.delete(
-      "/Orders/DeletetCaseService?caseServicId=$caseServiceId",
+      "/Orders/DeleteOrderDetail?orderDetailId=$caseServiceId",
     );
     return response.data;
   }
@@ -162,4 +164,18 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
 
     return CarInfoModel.fromJson(response.data);
   }
+
+  @override
+Future<List<OrderStatusModel>> getOrderStatus() async {
+  final response = await client.dio.get(
+    "/UniversalOrder/40",
+    options: Options(
+      contentType: "application/json",
+    ),
+  );
+
+  return (response.data as List)
+      .map((el) => OrderStatusModel.fromJson(el))
+      .toList();
+}
 }

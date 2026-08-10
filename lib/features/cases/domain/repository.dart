@@ -2,6 +2,7 @@ import 'package:apx_cars_repair/core/error/Failure.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:dartz/dartz.dart';
 import 'dart:io';
@@ -9,6 +10,7 @@ import 'dart:io';
 abstract class CaseRepository {
   Future<Either<Failure, GlobalOrderModel>> addCase(Map<String, dynamic> caseData);
   Future<Either<Failure, CarInfoModel>> addCarToOrder(Map<String, dynamic> caseData);
+  Future<Either<Failure, List<OrderStatusModel>>> getOrderStatus();
   Future<Either<Failure, List<GlobalOrderModel>>> showCases();
   Future<Either<Failure, CarsDataModel>> getAllCarsData();
   Future<Either<Failure, OrderServiceModel>> editServiceToCase(int caseServiceId, Map<String, dynamic> data);

@@ -1,4 +1,3 @@
-import 'package:apx_cars_repair/features/cases/presentation/pages/addEditCase_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/showCases_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/showSchadualCases.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
@@ -6,8 +5,6 @@ import 'package:apx_cars_repair/features/customers/presentation/pages/map_view.d
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:get/get_core/src/get_main.dart';
-import 'package:get/get_state_manager/src/simple/get_controllers.dart';
 
 class MainNavBarController extends GetxController {
   int currentIndex = 0;

@@ -16,6 +16,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseService
 import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
@@ -85,6 +86,7 @@ class CaseBinding extends Bindings {
         Get.find<ShowCasesUsecase>(),
         Get.find<AddCaseUseCase>(),
         Get.find<EditCaseUseCase>(),
+        Get.find<GetorderstatusUsecase>(),
         Get.find<BindImagesWithCaseUseCase>(),
         Get.find<GetAllServiceUseCase>(),
         Get.find<AddServiceToCaseUseCase>(),
