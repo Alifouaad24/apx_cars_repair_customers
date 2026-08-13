@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:apx_cars_repair/core/services/MultiOrderInvoices.dart';
 import 'package:apx_cars_repair/core/services/ServiceItem.dart';
 import 'package:apx_cars_repair/core/services/invoiceService.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
@@ -721,11 +722,18 @@ class CaseController extends GetxController {
     addingNoteToService = true;
     update();
     final result = await addCaseServiceNote(serviceId, data);
-    var detail = currentCase!.orderDetails!.firstWhere((e) => e.globalOrderDetailId == serviceId);
-    detail.caseServiceNotes?.add(new CaseServiceNotesModel(caseServiceNotesId: DateTime.now().microsecond,  notes: data['notes'][0], oredesServicesId: serviceId));
+    var detail = currentCase!.orderDetails!.firstWhere(
+      (e) => e.globalOrderDetailId == serviceId,
+    );
+    detail.caseServiceNotes?.add(
+      new CaseServiceNotesModel(
+        caseServiceNotesId: DateTime.now().microsecond,
+        notes: data['notes'][0],
+        oredesServicesId: serviceId,
+      ),
+    );
     update();
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      
       getCases();
       addingNoteToService = false;
 
@@ -938,6 +946,128 @@ class CaseController extends GetxController {
     }
   }
 
+  Future<bool> sendMultiOrderInvoiceEmail() async {
+    if (ordersToSendInvoice.isEmpty) {
+      Get.snackbar(
+        'تنبيه',
+        'لم يتم اختيار أي طلب لإرسال الفاتورة',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    isSendingRecipt = true;
+    update();
+
+    try {
+      // 1️⃣ كل الطلبات لنفس الزبون (متأكد أصلاً من toggleListOrders) -> نأخذ بيانات الزبون من أول طلب
+      final firstOrder = ordersToSendInvoice.first;
+      final customerName = firstOrder.customer?.customerName ?? '';
+      final customerEmail = firstOrder.customer?.customerEmail ?? '';
+      final customerPhone = firstOrder.customer?.customerMobile ?? '';
+
+      // 2️⃣ حوّل كل طلب إلى صف بالجدول (VIN / QTY / AMOUNT)
+      final orderRows = ordersToSendInvoice.map((order) {
+        final details = order.orderDetails ?? [];
+        final totalAmount = details.fold<double>(
+          0,
+          (sum, d) => sum + (d.cost ?? 0).toDouble(),
+        );
+
+        return InvoiceOrderRow(
+          vin: order.carInfo?.vinNumber ?? '',
+          qty: details.length,
+          amount: totalAmount,
+        );
+      }).toList();
+
+      // 3️⃣ احسب نطاق التاريخ (أقدم -> أحدث) اعتماداً على تاريخ كل طلب
+      // عدّل "scheduleDt" لو عندك حقل تاريخ إنشاء مختلف (مثل createdAt)
+      final orderDates =
+          ordersToSendInvoice
+              .map(
+                (o) => o.scheduleDt != null
+                    ? DateTime.tryParse(o.scheduleDt!)
+                    : null,
+              )
+              .whereType<DateTime>()
+              .toList()
+            ..sort();
+
+      final dateFormat = DateFormat('MM/dd/yyyy');
+      final dateFrom = orderDates.isNotEmpty
+          ? dateFormat.format(orderDates.first)
+          : dateFormat.format(DateTime.now());
+      final dateTo = orderDates.isNotEmpty
+          ? dateFormat.format(orderDates.last)
+          : dateFormat.format(DateTime.now());
+
+      // 4️⃣ رقم فاتورة مؤقت (عدّله حسب نظام الترقيم عندك، مثلاً من السيرفر)
+      final invoiceNumber = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // 5️⃣ ابنِ بيانات الفاتورة المجمّعة
+      final invoiceData = MultiOrderInvoiceData(
+        invoiceNumber: invoiceNumber,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        customerEmail: customerEmail,
+        customerAddress: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+        orders: orderRows,
+        technicianNotes: '',
+      );
+
+      // 6️⃣ ولّد الـ PDF
+      final pdfBytes = await generateMultiOrderInvoicePdf(invoiceData);
+
+      // 7️⃣ جهّز الإيميل وأرسله (نفس منطقك الأصلي)
+      final smtpServer = gmail('alifouaad24@gmail.com', 'tdhhwaczycgqemmh');
+
+      final message = Message()
+        ..from = const Address('alifouaad24@gmail.com', 'The Giest')
+        ..recipients.add(customerEmail)
+        ..subject = 'Invoice #$invoiceNumber'
+        ..text = 'مرفق فاتورتك يا $customerName'
+        ..attachments = [
+          StreamAttachment(
+            Stream.fromIterable([pdfBytes]),
+            'application/pdf',
+            fileName: 'invoice_$invoiceNumber.pdf',
+          ),
+        ];
+
+      final sendReport = await send(message, smtpServer);
+      print('تم الإرسال: $sendReport');
+      Get.snackbar(
+        'نجاح',
+        'تم ارسال الفاتورة بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: const Color.fromARGB(255, 86, 164, 1),
+        colorText: Colors.white,
+      );
+      // 8️⃣ نظّف القائمة بعد نجاح الإرسال
+      ordersToSendInvoice.clear();
+
+      return true;
+    } on MailerException catch (e) {
+      print('فشل الإرسال: $e');
+      for (var p in e.problems) {
+        print('المشكلة: ${p.code}: ${p.msg}');
+      }
+      return false;
+    } finally {
+      isSendingRecipt = false;
+      update();
+    }
+  }
+
   void toggleListOrders(GlobalOrderModel model) {
     final index = ordersToSendInvoice.indexWhere(
       (o) => o.globalOrderId == model.globalOrderId,
@@ -967,7 +1097,6 @@ class CaseController extends GetxController {
         return;
       }
     }
-
     ordersToSendInvoice.add(model);
     update();
   }

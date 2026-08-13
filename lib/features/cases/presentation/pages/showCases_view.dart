@@ -20,126 +20,163 @@ class _ShowCasesState extends State<ShowCases> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Orders Dashboard'),
-        centerTitle: true,
-        foregroundColor: Colors.white,
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        flexibleSpace: Container(
-          decoration: const BoxDecoration(
-            gradient: LinearGradient(
-              colors: [_primary, _secondary],
-              begin: Alignment.topLeft,
-              end: Alignment.bottomRight,
+    return GetBuilder<CaseController>(
+      init: Get.isRegistered<CaseController>()
+          ? null
+          : CaseController(
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+              Get.find(),
+            ),
+      builder: (controller) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Orders Dashboard'),
+          centerTitle: true,
+          foregroundColor: Colors.white,
+          backgroundColor: Colors.transparent,
+          elevation: 0,
+          flexibleSpace: Container(
+            decoration: const BoxDecoration(
+              gradient: LinearGradient(
+                colors: [_primary, _secondary],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
             ),
           ),
+          actions: [
+            if (controller.ordersToSendInvoice.length == 0)
+              IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => Get.toNamed(AppRoutes.addEditCase),
+              ),
+            if (controller.ordersToSendInvoice.length > 0)
+              controller.isSendingRecipt
+                  ? Container(
+                      margin: EdgeInsetsGeometry.all(2),
+                      child: CircularProgressIndicator(color: Colors.white),
+                    )
+                  : IconButton(
+                      icon: const Icon(Icons.send),
+                      onPressed: () {
+                        controller.sendMultiOrderInvoiceEmail();
+                      },
+                    ),
+          ],
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () => Get.toNamed(AppRoutes.addEditCase),
-          ),
-        ],
-      ),
-      body: GetBuilder<CaseController>(
-        builder: (controller) {
-          if (controller.isLoading) {
+        body: GetBuilder<CaseController>(
+          builder: (controller) {
+            if (controller.isLoading) {
+              return Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFFF5FBFC), Color(0xFFEAF4F7)],
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                  ),
+                ),
+                child: const Center(
+                  child: CircularProgressIndicator(color: _primary),
+                ),
+              );
+            }
+
+            final now = DateTime.now();
+            final totalTodayTasks = controller.cases.where((caseItem) {
+              final date = DateTime.parse(caseItem.scheduleDt);
+              return date.year == now.year &&
+                  date.month == now.month &&
+                  date.day == now.day;
+            }).length;
+
+            final isFiltered =
+                controller.cases.length != controller.allCases.length;
+
             return Container(
               decoration: const BoxDecoration(
                 gradient: LinearGradient(
-                  colors: [Color(0xFFF5FBFC), Color(0xFFEAF4F7)],
+                  colors: [Color(0xFFF8FCFD), Color(0xFFEAF5F8)],
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
                 ),
               ),
-              child: const Center(
-                child: CircularProgressIndicator(color: _primary),
-              ),
-            );
-          }
-
-          final now = DateTime.now();
-          final totalTodayTasks = controller.cases.where((caseItem) {
-            final date = DateTime.parse(caseItem.scheduleDt);
-            return date.year == now.year &&
-                date.month == now.month &&
-                date.day == now.day;
-          }).length;
-
-          final isFiltered =
-              controller.cases.length != controller.allCases.length;
-
-          return Container(
-            decoration: const BoxDecoration(
-              gradient: LinearGradient(
-                colors: [Color(0xFFF8FCFD), Color(0xFFEAF5F8)],
-                begin: Alignment.topCenter,
-                end: Alignment.bottomCenter,
-              ),
-            ),
-            child: SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-                child: controller.cases.isEmpty
-                    ? _buildEmptyState(controller, isFiltered)
-                    : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          _buildHeaderCard(
-                            totalCases: controller.cases.length,
-                            totalTodayTasks: totalTodayTasks,
-                            isFiltered: isFiltered,
-                            onAddPressed: () {
-                              controller.isUpdate = true;
-                              controller.currentOrderId = null;
-                              controller.selectedCustomer = null;
-                              controller.notesController.clear();
-                              controller.visitDate = DateTime.now();
-                              controller.visitTime = TimeOfDay.now();
-                              Get.toNamed(AppRoutes.addEditCase);
-                              Get.toNamed(AppRoutes.addEditCase);
-                            },
-                            onResetPressed: () {
-                              controller.cases = controller.allCases;
-                              controller.update();
-                            },
-                          ),
-                          const SizedBox(height: 16),
-                          // _buildSearchCard(),
-                          // const SizedBox(height: 16),
-                          Expanded(
-                            child: ListView.builder(
-                              padding: const EdgeInsets.symmetric(vertical: 8),
-                              itemCount: controller.cases.length,
-                              itemBuilder: (context, index) {
-                                final order = controller.cases[index];
-                                return OrderListItem(
-                                  order: order,
-                                  onLongPress: () {
-                                    controller.toggleListOrders(order);
-                                  },
-                                  onTap: () {
-                                    if (controller.ordersToSendInvoice.contains(
-                                      order,
-                                    )) {
-                                      controller.toggleListOrders(order);
-                                    } else {
-                                      controller.currentCase = order;
-                                      Get.toNamed(AppRoutes.caseDetailView);
-                                    }
-                                  },
-                                );
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
+                  child: controller.cases.isEmpty
+                      ? _buildEmptyState(controller, isFiltered)
+                      : Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildHeaderCard(
+                              totalCases: controller.cases.length,
+                              totalTodayTasks: totalTodayTasks,
+                              isFiltered: isFiltered,
+                              onAddPressed: () {
+                                controller.isUpdate = true;
+                                controller.currentOrderId = null;
+                                controller.selectedCustomer = null;
+                                controller.notesController.clear();
+                                controller.visitDate = DateTime.now();
+                                controller.visitTime = TimeOfDay.now();
+                                Get.toNamed(AppRoutes.addEditCase);
+                                Get.toNamed(AppRoutes.addEditCase);
+                              },
+                              onResetPressed: () {
+                                controller.cases = controller.allCases;
+                                controller.update();
                               },
                             ),
-                          ),
-                        ],
-                      ),
+                            const SizedBox(height: 16),
+                            // _buildSearchCard(),
+                            // const SizedBox(height: 16),
+                            Expanded(
+                              child: ListView.builder(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                ),
+                                itemCount: controller.cases.length,
+                                itemBuilder: (context, index) {
+                                  final order = controller.cases[index];
+                                  return OrderListItem(
+                                    order: order,
+                                    onLongPress: () {
+                                      controller.toggleListOrders(order);
+                                    },
+                                    onTap: () {
+                                      if (controller.ordersToSendInvoice
+                                          .contains(order)) {
+                                        controller.toggleListOrders(order);
+                                      } else if (controller
+                                          .ordersToSendInvoice
+                                          .isNotEmpty) {
+                                        controller.toggleListOrders(order);
+                                      } else {
+                                        controller.currentCase = order;
+                                        Get.toNamed(AppRoutes.caseDetailView);
+                                      }
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ),
+                ),
               ),
-            ),
-          );
-        },
+            );
+          },
+        ),
       ),
     );
   }

@@ -82,7 +82,6 @@ class AppBinding extends Bindings {
 
     Get.lazyPut(() => ShowCasesUsecase(Get.find()));
     Get.lazyPut(() => EditCaseUseCase(Get.find()));
-    Get.lazyPut(() => AddCaseUseCase(Get.find()));
     Get.lazyPut(() => BindImagesWithCaseUseCase(Get.find()));
     Get.lazyPut(() => GetAllServiceUseCase(Get.find()));
     Get.lazyPut(() => AddServiceToCaseUseCase(Get.find()));

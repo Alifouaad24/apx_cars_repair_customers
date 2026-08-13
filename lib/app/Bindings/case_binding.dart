@@ -28,58 +28,69 @@ class CaseBinding extends Bindings {
   @override
   void dependencies() {
     CustomerBinding().dependencies();
-    Get.lazyPut<TokenService>(() => TokenService(Get.find()));
-
-    Get.lazyPut<DioClient>(() => DioClient(Get.find<TokenService>()));
+    Get.lazyPut<TokenService>(() => TokenService(Get.find()), fenix: true);
+    Get.lazyPut<DioClient>(
+      () => DioClient(Get.find<TokenService>()),
+      fenix: true,
+    );
 
     Get.lazyPut<CaseRemoteDataSource>(
       () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
+      fenix: true,
     );
-
-    Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
-
+    Get.lazyPut<CaseRepository>(
+      () => CaseRepositoryImpl(Get.find()),
+      fenix: true,
+    );
     Get.lazyPut<ShowCasesUsecase>(
       () => ShowCasesUsecase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
-    Get.lazyPut<AddCaseUseCase>(
-      () => AddCaseUseCase(Get.find<CaseRepository>()),
-    );
-
     Get.lazyPut<EditCaseUseCase>(
       () => EditCaseUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
     Get.lazyPut<BindImagesWithCaseUseCase>(
       () => BindImagesWithCaseUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
     Get.lazyPut<GetAllServiceUseCase>(
       () => GetAllServiceUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
     Get.lazyPut<AddServiceToCaseUseCase>(
       () => AddServiceToCaseUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
     Get.lazyPut<EditServiceToCaseUseCase>(
       () => EditServiceToCaseUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
     Get.lazyPut<AddCaseServiceNote>(
       () => AddCaseServiceNote(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
     Get.lazyPut<ChangeCaseServiceStatus>(
       () => ChangeCaseServiceStatus(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
     Get.lazyPut<DeletecaseserviceUsecase>(
       () => DeletecaseserviceUsecase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-
+    Get.lazyPut<AddCaseUseCase>(
+      () => AddCaseUseCase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
     Get.lazyPut<AddCarToOrderUseCase>(
       () => AddCarToOrderUseCase(Get.find<CaseRepository>()),
+      fenix: true,
     );
-    Get.lazyPut(() => GetCarInfoUsecase(Get.find()));
+    Get.lazyPut(() => GetCarInfoUsecase(Get.find()), fenix: true);
+    Get.lazyPut<GetorderstatusUsecase>(
+      () => GetorderstatusUsecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
 
     Get.lazyPut<CaseController>(
       () => CaseController(
@@ -97,6 +108,7 @@ class CaseBinding extends Bindings {
         Get.find<AddCarToOrderUseCase>(),
         Get.find<GetCarInfoUsecase>(),
       ),
+      fenix: true, // ✅ يمنع الحذف الدائم، يعيد الإنشاء تلقائياً عند الحاجة
     );
   }
 }
