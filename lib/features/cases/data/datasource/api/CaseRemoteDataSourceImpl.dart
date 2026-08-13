@@ -126,7 +126,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     Map<String, dynamic> data,
   ) async {
     final response = await client.dio.post(
-      "/Case/AddServiceCaseNote?caseServicId=$caseServiceId",
+      "/Orders/AddServiceCaseNote?caseServicId=$caseServiceId",
       data: data,
       options: Options(contentType: "application/json"),
     );

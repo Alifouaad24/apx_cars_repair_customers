@@ -1,4 +1,6 @@
 import 'dart:io';
+import 'package:apx_cars_repair/core/services/ServiceItem.dart';
+import 'package:apx_cars_repair/core/services/invoiceService.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
@@ -25,6 +27,8 @@ import 'package:apx_cars_repair/features/customers/presentation/controller/Custo
 import 'package:flutter/material.dart';
 import 'package:get/get.dart' hide FormData, MultipartFile;
 import 'package:image_picker/image_picker.dart';
+import 'package:mailer/mailer.dart';
+import 'package:mailer/smtp_server/gmail.dart';
 
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
@@ -46,16 +50,14 @@ class CaseController extends GetxController {
   List<GlobalOrderModel> cases = [];
   List<GlobalOrderModel> allCases = [];
   List<CustomerModel> customers = [];
-
+  List<GlobalOrderModel> ordersToSendInvoice = [];
   List<CarBrandModel> brands = [];
   List<CarModel> models = [];
   List<CarModel> allModels = [];
   List<CarYearModel> years = [];
-
   CarBrandModel? selectedBrand;
   CarModel? selectedModel;
   CarYearModel? selectedYear;
-
   CustomerModel? selectedCustomer;
   bool isLoading = false;
   bool isUpdate = false;
@@ -528,7 +530,6 @@ class CaseController extends GetxController {
     update();
   }
 
-
   Future<void> editCase() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
@@ -720,11 +721,17 @@ class CaseController extends GetxController {
     addingNoteToService = true;
     update();
     final result = await addCaseServiceNote(serviceId, data);
-
+    var detail = currentCase!.orderDetails!.firstWhere((e) => e.globalOrderDetailId == serviceId);
+    detail.caseServiceNotes?.add(new CaseServiceNotesModel(caseServiceNotesId: DateTime.now().microsecond,  notes: data['notes'][0], oredesServicesId: serviceId));
+    update();
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      Get.snackbar("Success", "Note added successfully");
+      
       getCases();
+      addingNoteToService = false;
+
+      update();
       Get.back();
+      Get.snackbar("Success", "Note added successfully");
     });
     addingNoteToService = false;
     update();
@@ -777,5 +784,191 @@ class CaseController extends GetxController {
       },
     );
     return isSuccess;
+  }
+
+  bool isSendingInvoice = false;
+  Future<bool> sendReceiptEmail({
+    required String toEmail,
+    required String customerName,
+    required String orderId,
+    required GlobalOrderModel order,
+  }) async {
+    isSendingInvoice = true;
+    update();
+
+    try {
+      // 1️⃣ جهّز بيانات الفاتورة من بيانات الطلب
+      final invoiceData = ReciptData(
+        invoiceNumber: orderId,
+        date: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+
+        customerName: customerName,
+        customerPhone: order.customer?.customerMobile ?? '',
+        customerEmail: toEmail,
+        customerAddress: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+
+        vehicleMakeModel:
+            '${order.carInfo?.carBrand?.carBrandName ?? ''} ${order.carInfo?.carModel!.carModelName ?? ''}'
+                .trim(),
+        vehicleYear: order.carInfo?.carYear?.carYearNumber.toString() ?? '',
+        vin: order.carInfo?.vinNumber ?? '',
+        plate: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+        mileage: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+
+        services: (order.orderDetails ?? [])
+            .map(
+              (d) => ServiceItem(
+                description: d.service?.description ?? '',
+                qty: 1,
+                rate: (d.cost ?? 0).toDouble(),
+              ),
+            )
+            .toList(),
+
+        technicianNotes: order.notes ?? '',
+      );
+
+      // 2️⃣ ولّد الـ PDF بالتصميم الجديد
+      final pdfBytes = await generateInvoicePdf(invoiceData);
+
+      // 3️⃣ جهّز الإيميل وأرسله (نفس منطقك الأصلي بدون تغيير)
+      final smtpServer = gmail('alifouaad24@gmail.com', 'tdhhwaczycgqemmh');
+
+      final message = Message()
+        ..from = const Address('alifouaad24@gmail.com', 'The Giest')
+        ..recipients.add(toEmail)
+        ..subject = 'Invoice #$orderId'
+        ..text = 'مرفق فاتورتك يا $customerName'
+        ..attachments = [
+          StreamAttachment(
+            Stream.fromIterable([pdfBytes]),
+            'application/pdf',
+            fileName: 'invoice_$orderId.pdf',
+          ),
+        ];
+
+      final sendReport = await send(message, smtpServer);
+      print('تم الإرسال: $sendReport');
+      return true;
+    } on MailerException catch (e) {
+      print('فشل الإرسال: $e');
+      for (var p in e.problems) {
+        print('المشكلة: ${p.code}: ${p.msg}');
+      }
+      return false;
+    } finally {
+      isSendingInvoice = false;
+      update();
+    }
+  }
+
+  bool isSendingRecipt = false;
+  Future<bool> sendInvoiceEmail({
+    required String toEmail,
+    required String customerName,
+    required String orderId,
+    required GlobalOrderModel order,
+  }) async {
+    isSendingRecipt = true;
+    update();
+
+    try {
+      // 1️⃣ جهّز بيانات الفاتورة من بيانات الطلب
+      final invoiceData = InvoiceData(
+        invoiceNumber: orderId,
+        date: DateFormat('MM/dd/yyyy').format(DateTime.now()),
+
+        customerName: customerName,
+        customerPhone: order.customer?.customerMobile ?? '',
+        customerEmail: toEmail,
+        customerAddress: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+
+        vehicleMakeModel:
+            '${order.carInfo?.carBrand?.carBrandName ?? ''} ${order.carInfo?.carModel!.carModelName ?? ''}'
+                .trim(),
+        vehicleYear: order.carInfo?.carYear?.carYearNumber.toString() ?? '',
+        vin: order.carInfo?.vinNumber ?? '',
+        plate: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+        mileage: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
+
+        services: (order.orderDetails ?? [])
+            .map(
+              (d) => InvoiceItem(
+                description: d.service?.description ?? '',
+                qty: 1,
+                rate: (d.cost ?? 0).toDouble(),
+              ),
+            )
+            .toList(),
+
+        technicianNotes: order.notes ?? '',
+      );
+
+      // 2️⃣ ولّد الـ PDF بالتصميم الجديد
+      final pdfBytes = await generateInvoiceeePdf(invoiceData);
+
+      // 3️⃣ جهّز الإيميل وأرسله (نفس منطقك الأصلي بدون تغيير)
+      final smtpServer = gmail('alifouaad24@gmail.com', 'tdhhwaczycgqemmh');
+
+      final message = Message()
+        ..from = const Address('alifouaad24@gmail.com', 'The Giest')
+        ..recipients.add(toEmail)
+        ..subject = 'Invoice #$orderId'
+        ..text = 'مرفق فاتورتك يا $customerName'
+        ..attachments = [
+          StreamAttachment(
+            Stream.fromIterable([pdfBytes]),
+            'application/pdf',
+            fileName: 'invoice_$orderId.pdf',
+          ),
+        ];
+
+      final sendReport = await send(message, smtpServer);
+      print('تم الإرسال: $sendReport');
+      return true;
+    } on MailerException catch (e) {
+      print('فشل الإرسال: $e');
+      for (var p in e.problems) {
+        print('المشكلة: ${p.code}: ${p.msg}');
+      }
+      return false;
+    } finally {
+      isSendingRecipt = false;
+      update();
+    }
+  }
+
+  void toggleListOrders(GlobalOrderModel model) {
+    final index = ordersToSendInvoice.indexWhere(
+      (o) => o.globalOrderId == model.globalOrderId,
+    );
+
+    if (index != -1) {
+      ordersToSendInvoice.removeAt(index);
+      update();
+      return;
+    }
+
+    if (ordersToSendInvoice.isNotEmpty) {
+      final currentCustomerId =
+          ordersToSendInvoice.first.customer?.globalCustomerId;
+      final newCustomerId = model.customer?.globalCustomerId;
+
+      if (currentCustomerId != newCustomerId) {
+        Get.snackbar(
+          'تنبيه',
+          'لا يمكنك اختيار طلبات لأكثر من زبون واحد في نفس الفاتورة',
+          snackPosition: SnackPosition.BOTTOM,
+          margin: const EdgeInsets.all(16),
+          borderRadius: 12,
+          backgroundColor: const Color.fromARGB(255, 220, 92, 13),
+          colorText: Colors.white,
+        );
+        return;
+      }
+    }
+
+    ordersToSendInvoice.add(model);
+    update();
   }
 }

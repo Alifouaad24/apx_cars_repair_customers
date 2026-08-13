@@ -85,7 +85,7 @@ class CaseServiceNotesModel {
     return CaseServiceNotesModel(
       caseServiceNotesId: json['case_ServiceNotesId'] ?? 0,
       notes: json['notes'],
-      oredesServicesId: json['oredesServicesId'],
+      oredesServicesId: json['globalOrderDetailId'],
     );
   }
 }

@@ -541,95 +541,99 @@ class ServiceCard extends StatelessWidget {
 
                     InkWell(
                       onTap: () {
+                        controller.serviceNoteController.clear();
                         Get.dialog(
-                          Dialog(
-                            backgroundColor: Colors.transparent,
-                            child: Container(
-                              padding: const EdgeInsets.all(24),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(28),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.08),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 10),
-                                  ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  TextField(
-                                    controller:
-                                        controller.serviceNoteController,
-                                    maxLines: 5,
-                                    minLines: 1,
-                                    decoration: InputDecoration(
-                                      hintText: "Add note for this service",
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(16),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                      filled: true,
-                                      fillColor: Colors.grey.shade100,
+                          GetBuilder<CaseController>(
+                            builder: (controller) => 
+                             Dialog(
+                              backgroundColor: Colors.transparent,
+                              child: Container(
+                                padding: const EdgeInsets.all(24),
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(28),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.08),
+                                      blurRadius: 20,
+                                      offset: const Offset(0, 10),
                                     ),
-                                  ),
-                                  SizedBox(height: 20),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ElevatedButton(
-                                          onPressed: () {
-                                            List<String> note = [];
-                                            note.add(
-                                              controller
-                                                  .serviceNoteController
-                                                  .text
-                                                  .trim(),
-                                            );
-                                            final data = {"notes": note};
-                                            controller.addNoteToCaseService(
-                                              service.globalOrderDetailId,
-                                              data,
-                                            );
-                                          },
-                                          child: Text(
-                                            controller.addingNoteToService
-                                                ? "Adding Note..."
-                                                : "Add Note",
-                                          ),
-                                          style: ElevatedButton.styleFrom(
-                                            backgroundColor: Colors.blue,
-                                            foregroundColor: Colors.white,
-                                            elevation: 0,
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
+                                  ],
+                                ),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    TextField(
+                                      controller:
+                                          controller.serviceNoteController,
+                                      maxLines: 5,
+                                      minLines: 1,
+                                      decoration: InputDecoration(
+                                        hintText: "Add note for this service",
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(16),
+                                          borderSide: BorderSide.none,
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.grey.shade100,
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: ElevatedButton(
+                                            onPressed: () {
+                                              List<String> note = [];
+                                              note.add(
+                                                controller
+                                                    .serviceNoteController
+                                                    .text
+                                                    .trim(),
+                                              );
+                                              final data = {"notes": note};
+                                              controller.addNoteToCaseService(
+                                                service.globalOrderDetailId,
+                                                data,
+                                              );
+                                            },
+                                            child: Text(
+                                              controller.addingNoteToService
+                                                  ? "Adding..."
+                                                  : "Add Note",
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                              backgroundColor: Colors.blue,
+                                              foregroundColor: Colors.white,
+                                              elevation: 0,
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                      const SizedBox(width: 12),
-                                      Expanded(
-                                        child: OutlinedButton(
-                                          onPressed: () => Get.back(),
-                                          child: Text("Cancel"),
-                                          style: OutlinedButton.styleFrom(
-                                            foregroundColor: Colors.blueGrey,
-                                            side: BorderSide(
-                                              color: Colors.blueGrey.shade200,
-                                            ),
-                                            shape: RoundedRectangleBorder(
-                                              borderRadius:
-                                                  BorderRadius.circular(16),
+                                        const SizedBox(width: 12),
+                                        Expanded(
+                                          child: OutlinedButton(
+                                            onPressed: () => Get.back(),
+                                            child: Text("Cancel"),
+                                            style: OutlinedButton.styleFrom(
+                                              foregroundColor: Colors.blueGrey,
+                                              side: BorderSide(
+                                                color: Colors.blueGrey.shade200,
+                                              ),
+                                              shape: RoundedRectangleBorder(
+                                                borderRadius:
+                                                    BorderRadius.circular(16),
+                                              ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
+                                      ],
+                                    ),
+                                  ],
+                                ),
                               ),
                             ),
                           ),

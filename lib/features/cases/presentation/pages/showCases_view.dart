@@ -117,9 +117,18 @@ class _ShowCasesState extends State<ShowCases> {
                                 final order = controller.cases[index];
                                 return OrderListItem(
                                   order: order,
+                                  onLongPress: () {
+                                    controller.toggleListOrders(order);
+                                  },
                                   onTap: () {
-                                    controller.currentCase = order;
-                                    Get.toNamed(AppRoutes.caseDetailView);
+                                    if (controller.ordersToSendInvoice.contains(
+                                      order,
+                                    )) {
+                                      controller.toggleListOrders(order);
+                                    } else {
+                                      controller.currentCase = order;
+                                      Get.toNamed(AppRoutes.caseDetailView);
+                                    }
                                   },
                                 );
                               },
