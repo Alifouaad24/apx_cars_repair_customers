@@ -36,10 +36,9 @@ class _CameraScanViewState extends State<CameraScanView>
   String? _cameraErrorMessage;
   String _text = 'اضغط وابدأ التحدث';
 
-  double _frameWidth = 260;
-  double _frameHeight = 200;
-  static const double _minFrameSize = 100;
-  static const double _maxFrameSize = 340;
+  double _frameHeight = 110;
+  static const double _minFrameHeight = 60;
+  static const double _maxFrameHeight = 220;
 
   bool get _returnResultToCaller {
     final args = Get.arguments;
@@ -318,6 +317,32 @@ class _CameraScanViewState extends State<CameraScanView>
     setState(() => _isProcessing = false);
   }
 
+  // Future<void> _extractTextFromImage(String imagePath) async {
+  //   final inputImage = InputImage.fromFilePath(imagePath);
+  //   final recognized = await _textRecognizer.processImage(inputImage);
+
+  //   final bytes = await File(imagePath).readAsBytes();
+  //   final codec = await ui.instantiateImageCodec(bytes);
+  //   final frame = await codec.getNextFrame();
+  //   final imageSize = Size(
+  //     frame.image.width.toDouble(),
+  //     frame.image.height.toDouble(),
+  //   );
+
+  //   final frameRect = _visibleFrameRectInImage(imageSize);
+
+  //   final buffer = StringBuffer();
+  //   for (final block in recognized.blocks) {
+  //     for (final line in block.lines) {
+  //       if (frameRect == null || frameRect.overlaps(line.boundingBox)) {
+  //         buffer.writeln(line.text);
+  //       }
+  //     }
+  //   }
+
+  //   _showCapturedImageDialog(imagePath, buffer.toString().trim());
+  // }
+
   Future<void> _extractTextFromImage(String imagePath) async {
     final inputImage = InputImage.fromFilePath(imagePath);
     final recognized = await _textRecognizer.processImage(inputImage);
@@ -330,7 +355,10 @@ class _CameraScanViewState extends State<CameraScanView>
       frame.image.height.toDouble(),
     );
 
-    final frameRect = _visibleFrameRectInImage(imageSize);
+    final frameRect = _visibleFrameRectInImage(
+      imageSize,
+      MediaQuery.of(context).size.width,
+    );
 
     final buffer = StringBuffer();
     for (final block in recognized.blocks) {
@@ -341,25 +369,16 @@ class _CameraScanViewState extends State<CameraScanView>
       }
     }
 
-    _showCapturedImageDialog(imagePath, buffer.toString().trim());
+    // فلترة النص: الإبقاء فقط على الكلمات بطول 16-18 حرف (بدون فراغات) + trim
+    final filteredText = _filterByLengthRange(buffer.toString());
+
+    _showCapturedImageDialog(imagePath, filteredText);
   }
 
-  String? _extractFixedLengthCode(String rawText, {int length = 17}) {
-    final tokens = rawText.split(RegExp(r'\s+'));
-    final pattern = RegExp('^[A-Za-z0-9]{$length}\$');
-
-    for (final token in tokens) {
-      if (pattern.hasMatch(token)) {
-        return token;
-      }
-    }
-    return null;
-  }
-
-  Rect? _visibleFrameRectInImage(Size imageSize) {
+  Rect? _visibleFrameRectInImage(Size imageSize, double frameWidth) {
     if (_cameraController == null) return null;
 
-    final box = Size(_frameWidth, _frameHeight); // NEW: حجم متغير
+    final box = Size(frameWidth, _frameHeight); // NEW: حجم متغير
     final rotated = _rotatedPreviewSize();
     final scale = _coverScale(box, rotated);
 
@@ -377,6 +396,51 @@ class _CameraScanViewState extends State<CameraScanView>
     final sy = imageSize.height / rotated.height;
 
     return Rect.fromLTRB(left * sx, top * sy, right * sx, bottom * sy);
+  }
+
+  Offset? _frameCenterNormalized(double frameWidth) {
+    if (_cameraController == null) return null;
+
+    final box = Size(frameWidth, _frameHeight);
+    final rotated = _rotatedPreviewSize();
+    final scale = _coverScale(box, rotated);
+
+    final dispW = rotated.width * scale;
+    final dispH = rotated.height * scale;
+    final offX = (dispW - box.width) / 2;
+    final offY = (dispH - box.height) / 2;
+
+    final left = offX / scale;
+    final top = offY / scale;
+    final right = (offX + box.width) / scale;
+    final bottom = (offY + box.height) / scale;
+
+    final centerX = (left + right) / 2 / rotated.width;
+    final centerY = (top + bottom) / 2 / rotated.height;
+
+    // تأكد أن القيمة ضمن النطاق المسموح 0.0 - 1.0
+    return Offset(centerX.clamp(0.0, 1.0), centerY.clamp(0.0, 1.0));
+  }
+
+  Future<void> _focusOnFrame() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    final frameWidth = MediaQuery.of(context).size.width;
+    final point = _frameCenterNormalized(frameWidth);
+    if (point == null) return;
+
+    try {
+      // تفعيل التركيز التلقائي المستمر ثم تثبيته على نقطة مركز المستطيل
+      await controller.setFocusMode(FocusMode.auto);
+      await controller.setFocusPoint(point);
+
+      // (اختياري) ضبط التعريض الضوئي على نفس النقطة أيضاً لتحسين وضوح النص
+      await controller.setExposureMode(ExposureMode.auto);
+      await controller.setExposurePoint(point);
+    } catch (e) {
+      debugPrint('Focus set error: $e');
+    }
   }
 
   void _showCapturedImageDialog(String imagePath, String extractedText) {
@@ -489,8 +553,37 @@ class _CameraScanViewState extends State<CameraScanView>
     final code = capture.barcodes.first.rawValue;
     if (code == null) return;
 
+    final trimmed = code.trim();
+
+    // تحقق من طول الباركود: يجب أن يكون 17 محرفاً بالضبط
+    if (trimmed.length != 17) {
+      _showInvalidBarcodeToast();
+      return; // لا نوقف المسح، نستمر بالانتظار لباركود صحيح
+    }
+
     _barcodeController.stop();
-    _showResultDialog(code, "From Barcode");
+    _showResultDialog(trimmed, "From Barcode");
+  }
+
+  DateTime? _lastInvalidToastTime;
+
+  void _showInvalidBarcodeToast() {
+    final now = DateTime.now();
+    // نمنع تكرار التوستر أكثر من مرة كل ثانيتين لتفادي الإزعاج
+    if (_lastInvalidToastTime != null &&
+        now.difference(_lastInvalidToastTime!) < const Duration(seconds: 2)) {
+      return;
+    }
+    _lastInvalidToastTime = now;
+
+    Get.rawSnackbar(
+      message: 'Not valid barcode.',
+      duration: const Duration(seconds: 2),
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: const ui.Color.fromARGB(221, 241, 7, 7),
+      margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+      borderRadius: 10,
+    );
   }
 
   // ================= UI =================
@@ -626,6 +719,14 @@ class _CameraScanViewState extends State<CameraScanView>
     }
   }
 
+  Rect _barcodeScanWindow(Size screenSize) {
+    return Rect.fromCenter(
+      center: screenSize.center(Offset.zero),
+      width: screenSize.width,
+      height: _frameHeight,
+    );
+  }
+
   @override
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
@@ -644,7 +745,50 @@ class _CameraScanViewState extends State<CameraScanView>
       body: Stack(
         children: [
           // ── Camera / Scanner Feed ──────────────────────────
-          Positioned.fill(child: Container(color: Colors.black)),
+          // ── Camera / Scanner Feed (full screen) ────────────
+          Positioned.fill(
+            child: _isBarcodeMode
+                ? MobileScanner(
+                    controller: _barcodeController,
+                    fit: BoxFit.cover,
+                    scanWindow: _barcodeScanWindow(MediaQuery.of(context).size),
+                    onDetect: _onDetect,
+                  )
+                : _isCameraReady
+                ? FittedBox(
+                    fit: BoxFit.cover,
+                    child: SizedBox(
+                      width: _rotatedPreviewSize().width,
+                      height: _rotatedPreviewSize().height,
+                      child: CameraPreview(_cameraController!),
+                    ),
+                  )
+                : Container(
+                    color: Colors.black,
+                    child: _cameraErrorMessage != null
+                        ? _CameraErrorView(
+                            message: _cameraErrorMessage!,
+                            onRetry: _initCamera,
+                          )
+                        : const Center(
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                            ),
+                          ),
+                  ),
+          ),
+
+          // ── Overlay بدرجة سواد 50% مع فتحة بحجم المستطيل ────
+          Positioned.fill(
+            child: IgnorePointer(
+              child: CustomPaint(
+                painter: _ScannerOverlayPainter(
+                  frameWidth: MediaQuery.of(context).size.width,
+                  frameHeight: _frameHeight,
+                ),
+              ),
+            ),
+          ),
 
           // ── Dark gradient top ──────────────────────────────
           Positioned(
@@ -721,95 +865,58 @@ class _CameraScanViewState extends State<CameraScanView>
           // ── Scan frame overlay ─────────────────────────────
           // ── Scan frame overlay (resizable) ─────────────────
           Center(
-            child: Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  width: _frameWidth,
-                  height: _frameHeight,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.white, width: 1.5),
-                  ),
-                  child: ClipRect(
-                    child: _isBarcodeMode
-                        ? MobileScanner(
-                            controller: _barcodeController,
-                            fit: BoxFit.cover,
-                            onDetect: _onDetect,
-                          )
-                        : _isCameraReady
-                        ? FittedBox(
-                            fit: BoxFit.cover,
-                            child: SizedBox(
-                              width: _rotatedPreviewSize().width,
-                              height: _rotatedPreviewSize().height,
-                              child: CameraPreview(_cameraController!),
-                            ),
-                          )
-                        : _cameraErrorMessage != null
-                        ? _CameraErrorView(
-                            message: _cameraErrorMessage!,
-                            onRetry: _initCamera,
-                          )
-                        : const Center(
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                            ),
-                          ),
-                  ),
-                ),
-
-                // زوايا الديكور
-                Positioned(top: 0, left: 0, child: _Corner(Alignment.topLeft)),
-                Positioned(
-                  top: 0,
-                  right: 0,
-                  child: _Corner(Alignment.topRight),
-                ),
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  child: _Corner(Alignment.bottomLeft),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: _Corner(Alignment.bottomRight),
-                ),
-
-                // مقبض تغيير الحجم
-                Positioned(
-                  right: -14,
-                  bottom: -14,
-                  child: GestureDetector(
-                    onPanUpdate: (details) {
-                      setState(() {
-                        _frameWidth = (_frameWidth + details.delta.dx).clamp(
-                          _minFrameSize,
-                          _maxFrameSize,
-                        );
-                        _frameHeight = (_frameHeight + details.delta.dy).clamp(
-                          _minFrameSize,
-                          _maxFrameSize,
-                        );
-                      });
-                    },
-                    child: Container(
-                      width: 30,
-                      height: 30,
-                      decoration: const BoxDecoration(
-                        color: Colors.white,
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.open_in_full_rounded,
-                        size: 16,
-                        color: Colors.black87,
+            child: Builder(
+              builder: (context) {
+                final screenWidth = MediaQuery.of(context).size.width;
+                return Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    Container(
+                      width: screenWidth,
+                      height: _frameHeight,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.white, width: 1.5),
                       ),
                     ),
-                  ),
-                ),
-              ],
+
+                    // زوايا الديكور
+                    Positioned(top: 0, left: 0, child: _Corner(Alignment.topLeft)),
+                    Positioned(top: 0, right: 0, child: _Corner(Alignment.topRight)),
+                    Positioned(bottom: 0, left: 0, child: _Corner(Alignment.bottomLeft)),
+                    Positioned(bottom: 0, right: 0, child: _Corner(Alignment.bottomRight)),
+
+                    // مقبض تغيير الارتفاع فقط (في المنتصف أسفل الشريط)
+                    Positioned(
+                      bottom: -14,
+                      left: screenWidth / 2 - 15,
+                      child: GestureDetector(
+                        onPanUpdate: (details) {
+                          setState(() {
+                            _frameHeight = (_frameHeight + details.delta.dy).clamp(
+                              _minFrameHeight,
+                              _maxFrameHeight,
+                            );
+                          });
+                          _focusOnFrame();
+                        },
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: const BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            Icons.height_rounded,
+                            size: 16,
+                            color: Colors.black87,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                );
+              },
             ),
           ),
 
@@ -922,6 +1029,67 @@ class _CameraScanViewState extends State<CameraScanView>
       ),
     );
   }
+}
+
+class _ScannerOverlayPainter extends CustomPainter {
+  final double frameWidth;
+  final double frameHeight;
+
+  _ScannerOverlayPainter({required this.frameWidth, required this.frameHeight});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final overlayPaint = Paint()
+      ..color = Colors.black
+          .withOpacity(0.5) // <-- هنا درجة الشفافية 50%
+      ..style = PaintingStyle.fill;
+
+    final center = Offset(size.width / 2, size.height / 2);
+    final holeRect = Rect.fromCenter(
+      center: center,
+      width: frameWidth,
+      height: frameHeight,
+    );
+
+    final path = Path()
+      ..addRect(Rect.fromLTWH(0, 0, size.width, size.height))
+      ..addRect(holeRect)
+      ..fillType = PathFillType.evenOdd; // يفرّغ منطقة المستطيل
+
+    canvas.drawPath(path, overlayPaint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _ScannerOverlayPainter oldDelegate) {
+    return oldDelegate.frameWidth != frameWidth ||
+        oldDelegate.frameHeight != frameHeight;
+  }
+}
+
+/// يفلتر النص المستخرج ويُبقي فقط الكلمات التي طولها بين 16 و18 حرفاً
+/// (بدون فراغات) بعد عمل trim، ويحذف أي نص آخر.
+String _filterByLengthRange(
+  String rawText, {
+  int minLength = 16,
+  int maxLength = 18,
+}) {
+  // نقسّم النص إلى كلمات بناءً على أي نوع من الفراغات (مسافة، سطر جديد...)
+  final tokens = rawText
+      .split(RegExp(r'\s+'))
+      .map((t) => t.trim())
+      .where((t) => t.isNotEmpty);
+
+  final matched = <String>[];
+
+  for (final token in tokens) {
+    final length =
+        token.length; // الطول بدون فراغات لأن التوكن أصلاً بدون فراغات
+    if (length >= minLength && length <= maxLength) {
+      matched.add(token);
+    }
+  }
+
+  return matched.join('\n').trim();
 }
 
 // ── Corner decoration widget ───────────────────────────────────────────────

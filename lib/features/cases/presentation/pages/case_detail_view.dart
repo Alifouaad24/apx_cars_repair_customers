@@ -395,9 +395,10 @@ CarInfoModel? _resolvePrimaryCarInfo(List<OrderServiceModel>? services) {
 // ═══════════════════════════════════════════════════════════════════════
 void showAddCarDialog(CaseController controller, dynamic currentCase) {
   bool isSubmitting = false;
-  final brandController = TextEditingController();
-  final modelController = TextEditingController();
-  final yearController = TextEditingController();
+  final brandController = TextEditingController(text: '');
+  final modelController = TextEditingController(text: '');
+  final yearController = TextEditingController(text: '');
+  controller.vinController.text = '';
 
   Get.dialog(
     Dialog(
