@@ -357,6 +357,7 @@ class _CameraScanViewState extends State<CameraScanView>
 
     final frameRect = _visibleFrameRectInImage(
       imageSize,
+      MediaQuery.of(context).size,
       MediaQuery.of(context).size.width,
     );
 
@@ -375,73 +376,80 @@ class _CameraScanViewState extends State<CameraScanView>
     _showCapturedImageDialog(imagePath, filteredText);
   }
 
-  Rect? _visibleFrameRectInImage(Size imageSize, double frameWidth) {
+  Rect? _visibleFrameRectInImage(
+    Size imageSize,
+    Size screenSize,
+    double frameWidth,
+  ) {
     if (_cameraController == null) return null;
 
-    final box = Size(frameWidth, _frameHeight); // NEW: حجم متغير
     final rotated = _rotatedPreviewSize();
-    final scale = _coverScale(box, rotated);
+
+    // كيف يغطي الفيديو الشاشة بالكامل (BoxFit.cover) - نفس المنطق المستخدم في العرض
+    final scale = _coverScale(screenSize, rotated);
 
     final dispW = rotated.width * scale;
     final dispH = rotated.height * scale;
-    final offX = (dispW - box.width) / 2;
-    final offY = (dispH - box.height) / 2;
+    final offX = (dispW - screenSize.width) / 2;
+    final offY = (dispH - screenSize.height) / 2;
 
-    final left = offX / scale;
-    final top = offY / scale;
-    final right = (offX + box.width) / scale;
-    final bottom = (offY + box.height) / scale;
+    // موقع المستطيل على الشاشة (بالنسبة لمنتصف الشاشة تماماً)
+    final frameLeftScreen = (screenSize.width - frameWidth) / 2;
+    final frameTopScreen = (screenSize.height - _frameHeight) / 2;
+    final frameRightScreen = frameLeftScreen + frameWidth;
+    final frameBottomScreen = frameTopScreen + _frameHeight;
 
+    // تحويل من إحداثيات الشاشة إلى إحداثيات الفيديو (preview)
+    final left = (frameLeftScreen + offX) / scale;
+    final top = (frameTopScreen + offY) / scale;
+    final right = (frameRightScreen + offX) / scale;
+    final bottom = (frameBottomScreen + offY) / scale;
+
+    // تحويل من إحداثيات الـ preview إلى إحداثيات الصورة الملتقطة الفعلية
     final sx = imageSize.width / rotated.width;
     final sy = imageSize.height / rotated.height;
 
     return Rect.fromLTRB(left * sx, top * sy, right * sx, bottom * sy);
   }
 
-  Offset? _frameCenterNormalized(double frameWidth) {
+  Offset? _frameCenterNormalized(Size screenSize, double frameWidth) {
     if (_cameraController == null) return null;
 
-    final box = Size(frameWidth, _frameHeight);
     final rotated = _rotatedPreviewSize();
-    final scale = _coverScale(box, rotated);
+    final scale = _coverScale(screenSize, rotated);
 
     final dispW = rotated.width * scale;
     final dispH = rotated.height * scale;
-    final offX = (dispW - box.width) / 2;
-    final offY = (dispH - box.height) / 2;
+    final offX = (dispW - screenSize.width) / 2;
+    final offY = (dispH - screenSize.height) / 2;
 
-    final left = offX / scale;
-    final top = offY / scale;
-    final right = (offX + box.width) / scale;
-    final bottom = (offY + box.height) / scale;
+    final frameCenterXScreen = screenSize.width / 2;
+    final frameCenterYScreen =
+        screenSize.height / 2; // المستطيل بمنتصف الشاشة دائماً
 
-    final centerX = (left + right) / 2 / rotated.width;
-    final centerY = (top + bottom) / 2 / rotated.height;
+    final centerX = (frameCenterXScreen + offX) / scale / rotated.width;
+    final centerY = (frameCenterYScreen + offY) / scale / rotated.height;
 
-    // تأكد أن القيمة ضمن النطاق المسموح 0.0 - 1.0
     return Offset(centerX.clamp(0.0, 1.0), centerY.clamp(0.0, 1.0));
   }
 
   Future<void> _focusOnFrame() async {
-    final controller = _cameraController;
-    if (controller == null || !controller.value.isInitialized) return;
+  final controller = _cameraController;
+  if (controller == null || !controller.value.isInitialized) return;
 
-    final frameWidth = MediaQuery.of(context).size.width;
-    final point = _frameCenterNormalized(frameWidth);
-    if (point == null) return;
+  final screenSize = MediaQuery.of(context).size;
+  final point = _frameCenterNormalized(screenSize, screenSize.width);
+  if (point == null) return;
 
-    try {
-      // تفعيل التركيز التلقائي المستمر ثم تثبيته على نقطة مركز المستطيل
-      await controller.setFocusMode(FocusMode.auto);
-      await controller.setFocusPoint(point);
-
-      // (اختياري) ضبط التعريض الضوئي على نفس النقطة أيضاً لتحسين وضوح النص
-      await controller.setExposureMode(ExposureMode.auto);
-      await controller.setExposurePoint(point);
-    } catch (e) {
-      debugPrint('Focus set error: $e');
-    }
+  try {
+    await controller.setFocusMode(FocusMode.auto);
+    await controller.setFocusPoint(point);
+    await controller.setExposureMode(ExposureMode.auto);
+    await controller.setExposurePoint(point);
+  } catch (e) {
+    debugPrint('Focus set error: $e');
   }
+}
 
   void _showCapturedImageDialog(String imagePath, String extractedText) {
     showDialog(
@@ -880,10 +888,26 @@ class _CameraScanViewState extends State<CameraScanView>
                     ),
 
                     // زوايا الديكور
-                    Positioned(top: 0, left: 0, child: _Corner(Alignment.topLeft)),
-                    Positioned(top: 0, right: 0, child: _Corner(Alignment.topRight)),
-                    Positioned(bottom: 0, left: 0, child: _Corner(Alignment.bottomLeft)),
-                    Positioned(bottom: 0, right: 0, child: _Corner(Alignment.bottomRight)),
+                    Positioned(
+                      top: 0,
+                      left: 0,
+                      child: _Corner(Alignment.topLeft),
+                    ),
+                    Positioned(
+                      top: 0,
+                      right: 0,
+                      child: _Corner(Alignment.topRight),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      left: 0,
+                      child: _Corner(Alignment.bottomLeft),
+                    ),
+                    Positioned(
+                      bottom: 0,
+                      right: 0,
+                      child: _Corner(Alignment.bottomRight),
+                    ),
 
                     // مقبض تغيير الارتفاع فقط (في المنتصف أسفل الشريط)
                     Positioned(
@@ -892,10 +916,8 @@ class _CameraScanViewState extends State<CameraScanView>
                       child: GestureDetector(
                         onPanUpdate: (details) {
                           setState(() {
-                            _frameHeight = (_frameHeight + details.delta.dy).clamp(
-                              _minFrameHeight,
-                              _maxFrameHeight,
-                            );
+                            _frameHeight = (_frameHeight + details.delta.dy)
+                                .clamp(_minFrameHeight, _maxFrameHeight);
                           });
                           _focusOnFrame();
                         },
