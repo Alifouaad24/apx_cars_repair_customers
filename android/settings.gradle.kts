@@ -13,6 +13,13 @@ pluginManagement {
         google()
         mavenCentral()
         gradlePluginPortal()
+        maven {
+        url = uri("https://nexus.scanbot.io/nexus/content/repositories/releases/")
+        }
+
+        maven {
+            url = uri("https://nexus.scanbot.io/nexus/content/repositories/snapshots/")
+        }
     }
 }
 
