@@ -13,7 +13,8 @@ const Color primaryDark = Color(0xFF0A5A6B);
 Color accent = Color(0xFF06B6D4);
 const Color amber = Color(0xFFF59E0B);
 const Color surface = Color(0xFFF8FAFC);
-
+String? scanbotInitError;
+bool scanbotInitSuccess = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const LICENSE_KEY =
@@ -31,14 +32,19 @@ void main() async {
       "e2crjZnTQrvA==\nU2NhbmJvdFNESw" +
       "pjb20uZXhhbXBsZS5hcHhfY2Fyc19y" +
       "ZXBhaXIKMTc4NzYxNTk5OQo4Mzg4Nj" +
-      "A3CjE5\n";
+      "A3CjE5";
 
   final config = SdkConfiguration(
     licenseKey: LICENSE_KEY,
     loggingEnabled: false,
   );
 
-  await ScanbotSdk.initialize(config);
+  try {
+    await ScanbotSdk.initialize(config);
+    scanbotInitSuccess = true;
+  } catch (e) {
+    scanbotInitError = e.toString();
+  }
 
   final prefs = await SharedPreferences.getInstance();
 
@@ -51,6 +57,22 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!scanbotInitSuccess) {
+        Get.dialog(
+          AlertDialog(
+            title: const Text('Scanbot Init Failed'),
+            content: SingleChildScrollView(
+              child: SelectableText(scanbotInitError ?? 'Unknown error'),
+            ),
+            actions: [
+              TextButton(onPressed: () => Get.back(), child: const Text('OK')),
+            ],
+          ),
+          barrierDismissible: false,
+        );
+      }
+    });
     return ScreenUtilInit(
       designSize: const ui.Size(360, 690),
       minTextAdapt: true,
