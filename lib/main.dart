@@ -18,21 +18,20 @@ bool scanbotInitSuccess = false;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   const LICENSE_KEY =
-      "Y6eHbf/P6GM8PIN3GpcjJ34ILGI1j4" +
-      "cfz/QTbkht9TjRQEvR/Nil3fHiqkGQ" +
-      "luxPf8/ie0+jvId+QkpLqitw6DuX+r" +
-      "jXHYjQC3cULH/AaBBVr/HidHRK1Xj5" +
-      "Fnoyv/IiOJkhCTlGiYIZbyJZAQBxfi" +
-      "XNosqE2ktjRJbz797X7RAWySltHlQt" +
-      "Drz5iAUA8oNQKzNLUKr1wkReBh8ZYo" +
-      "fFzech8f1KofvjjyoRbW3JiKVo+9YY" +
-      "gr02DOKoyYp9TFi/EyrQGx0vFq3KjS" +
-      "pmhzRvW4aLzAnHwd0gz9NKwR4p1o3G" +
-      "qWWlgXmzA3j4Ja6wQ8HEo0p4ilq3Ar" +
-      "e2crjZnTQrvA==\nU2NhbmJvdFNESw" +
-      "pjb20uZXhhbXBsZS5hcHhfY2Fyc19y" +
-      "ZXBhaXIKMTc4NzYxNTk5OQo4Mzg4Nj" +
-      "A3CjE5";
+      "CemX21MdG5tx8aXM8Z6LgbQ/jYSUvG" +
+      "6LtzuV2ujvZlbMKczuZyjWVaHrxRTZ" +
+      "HFy0nKCMUsHpA/Deg92ipLdjpLb33w" +
+      "XsOpw9Jz6wbYN5LaraffPYBAao9YP4" +
+      "BbELuunjfWp8w3fRmqjFkhXtjArTrx" +
+      "GTMEyqnpw27KCjiqDswzxtESgy/nJ+" +
+      "X1eq6UUJky5oXN5nuthJveTY7vZO5G" +
+      "1Lik7XMtS3ep2WzHmVU4V6btrx2R3J" +
+      "HOzkCVzzyTOD+s471/bPrwd9FItIPc" +
+      "8JdEbQznTLr9Qt3Kec84G4LyilO7HE" +
+      "Le9dt2XWxJvfIF37Yi/gxujqFw38+j" +
+      "dRiTeMmjjdzw==\nU2NhbmJvdFNESw" +
+      "pjb20uYXB4LmFweENhcnNSZXBhaXIK" +
+      "MTc4NzcwMjM5OQo4Mzg4NjA3CjE5";
 
   final config = SdkConfiguration(
     licenseKey: LICENSE_KEY,
