@@ -23,6 +23,10 @@ class OrderListItem extends StatelessWidget {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
 
+    final CarInfoModel? carInfo = order.carInfo;
+    final bool hasCar = carInfo != null;
+    final String? brandImgUrl = carInfo?.carBrand?.carBrandImgUrl;
+
     return GetBuilder<CaseController>(
       builder: (controller) {
         final isSelected = controller.ordersToSendInvoice.any(
@@ -56,6 +60,7 @@ class OrderListItem extends StatelessWidget {
                         color: colors.primaryContainer,
                         borderRadius: BorderRadius.circular(14),
                       ),
+                      clipBehavior: Clip.antiAlias,
                       child: GetBuilder<CaseController>(
                         builder: (controller) => InkWell(
                           onLongPress: () {
@@ -157,13 +162,13 @@ class OrderListItem extends StatelessWidget {
                                                 order.notes ?? '';
 
                                             controller.visitDate =
-                                                order.scheduleDt != null
+                                                order.scheduleDt.isNotEmpty
                                                 ? DateTime.parse(
-                                                    order.scheduleDt!,
+                                                    order.scheduleDt,
                                                   )
-                                                : DateTime.now();
+                                                : null;
 
-                                            controller.visitTime = TimeOfDay(
+                                            controller.visitTime = order.scheduleTime.isNotEmpty ? TimeOfDay(
                                               hour: int.parse(
                                                 order.scheduleTime.split(
                                                   ':',
@@ -174,7 +179,7 @@ class OrderListItem extends StatelessWidget {
                                                   ':',
                                                 )[1],
                                               ),
-                                            );
+                                            ) : null;
 
                                             controller.selectedStatus =
                                                 controller
@@ -308,38 +313,41 @@ class OrderListItem extends StatelessWidget {
 
                                                       const SizedBox(width: 10),
 
-                                                      Expanded(
-                                                        child: ElevatedButton(
-                                                          onPressed: () {
-                                                            // delete logic هنا
-                                                            // controller.deleteOrder(order.globalOrderId);
-
-                                                            Get.back();
-                                                          },
-                                                          style: ElevatedButton.styleFrom(
-                                                            backgroundColor:
-                                                                Colors.red,
-                                                            foregroundColor:
-                                                                Colors.white,
-                                                            elevation: 0,
-                                                            minimumSize:
-                                                                const Size(
-                                                                  0,
-                                                                  48,
-                                                                ),
-                                                            shape: RoundedRectangleBorder(
-                                                              borderRadius:
-                                                                  BorderRadius.circular(
-                                                                    12,
+                                                      GetBuilder<CaseController>(
+                                                        builder: (controller) => 
+                                                         Expanded(
+                                                          child: ElevatedButton(
+                                                            onPressed: () {
+                                                              // delete logic هنا
+                                                              controller.deleteOrder(order.globalOrderId!);
+                                                        
+                                                              
+                                                            },
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  Colors.red,
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              elevation: 0,
+                                                              minimumSize:
+                                                                  const Size(
+                                                                    0,
+                                                                    48,
                                                                   ),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12,
+                                                                    ),
+                                                              ),
                                                             ),
-                                                          ),
-                                                          child: const Text(
-                                                            'حذف',
-                                                            style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
+                                                            child:  Text(
+                                                              controller.isDeletingOrder ? "جار الحذف" : "حذف",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
                                                             ),
                                                           ),
                                                         ),
@@ -526,17 +534,45 @@ class OrderListItem extends StatelessWidget {
                               ),
                             );
                           },
-                          child: Icon(
-                            Icons.build_circle_outlined,
-                            color: colors.onPrimaryContainer,
-                            size: 26,
-                          ),
+                          child: (hasCar && brandImgUrl != null && brandImgUrl.isNotEmpty)
+                              ? Image.network(
+                                  brandImgUrl,
+                                  width: 48,
+                                  height: 48,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Icon(
+                                      Icons.build_circle_outlined,
+                                      color: colors.onPrimaryContainer,
+                                      size: 26,
+                                    );
+                                  },
+                                  loadingBuilder: (context, child, progress) {
+                                    if (progress == null) return child;
+                                    return Center(
+                                      child: SizedBox(
+                                        width: 18,
+                                        height: 18,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: colors.onPrimaryContainer,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Icon(
+                                  Icons.build_circle_outlined,
+                                  color: colors.onPrimaryContainer,
+                                  size: 26,
+                                ),
                         ),
                       ),
                     ),
                     const SizedBox(width: 14),
 
-                    // اسم الزبون + التاريخ والوقت
+                    // بيانات السيارة (سنة/براند/موديل + الفن) في حال وجود سيارة
+                    // وإلا اسم الزبون، وتحته التاريخ والوقت
                     Expanded(
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
@@ -545,7 +581,16 @@ class OrderListItem extends StatelessWidget {
                             children: [
                               Expanded(
                                 child: Text(
-                                  order.customer?.customerName ?? "بدون اسم",
+                                  hasCar
+                                      ? [
+                                          carInfo.carYear?.carYearNumber,
+                                          carInfo.carBrand?.carBrandName,
+                                          carInfo.carModel?.carModelName,
+                                        ]
+                                            .whereType<String>()
+                                            .where((e) => e.isNotEmpty)
+                                            .join(' ')
+                                      : (order.customer?.customerName ?? "بدون اسم"),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -555,6 +600,19 @@ class OrderListItem extends StatelessWidget {
                               ),
                             ],
                           ),
+                          if (hasCar &&
+                              carInfo.vinNumber != null &&
+                              carInfo.vinNumber!.isNotEmpty) ...[
+                            const SizedBox(height: 2),
+                            Text(
+                              carInfo.vinNumber!,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: colors.onSurfaceVariant,
+                              ),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ],
                           const SizedBox(height: 6),
                           Row(
                             children: [

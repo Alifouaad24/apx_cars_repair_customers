@@ -7,6 +7,7 @@ import 'package:apx_cars_repair/features/cases/domain/CaseRepositoryImpl.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
@@ -87,8 +88,14 @@ class CaseBinding extends Bindings {
       fenix: true,
     );
     Get.lazyPut(() => GetCarInfoUsecase(Get.find()), fenix: true);
+
     Get.lazyPut<GetorderstatusUsecase>(
       () => GetorderstatusUsecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
+
+       Get.lazyPut<DeleteOrderUsecase>(
+      () => DeleteOrderUsecase(Get.find<CaseRepository>()),
       fenix: true,
     );
 
@@ -107,8 +114,9 @@ class CaseBinding extends Bindings {
         Get.find<DeletecaseserviceUsecase>(),
         Get.find<AddCarToOrderUseCase>(),
         Get.find<GetCarInfoUsecase>(),
+        Get.find<DeleteOrderUsecase>(),
       ),
-      fenix: true, // ✅ يمنع الحذف الدائم، يعيد الإنشاء تلقائياً عند الحاجة
+      fenix: true,
     );
   }
 }

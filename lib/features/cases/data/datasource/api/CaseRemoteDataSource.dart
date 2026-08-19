@@ -21,4 +21,5 @@ abstract class CaseRemoteDataSource {
   Future<OrderServiceModel> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> deleteCaseService(int caseServiceId);
   Future<CarsDataModel> getAllCarsData();
+  Future<GlobalOrderModel> deleteOrder(int orderId);
 }

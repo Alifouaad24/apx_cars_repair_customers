@@ -8,6 +8,7 @@ import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
     hide CarBrandModel;
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
@@ -42,8 +43,9 @@ class CaseController extends GetxController {
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
   GetAllServiceUseCase getAllServiceUseCase;
-  TimeOfDay visitTime = TimeOfDay.now();
+  TimeOfDay? visitTime; // = TimeOfDay.now()
   DeletecaseserviceUsecase deletecaseserviceUsecase;
+  DeleteOrderUsecase deleteOrderUsecase;
   AddCaseUseCase addCaseUseCase;
   EditCaseUseCase editCaseUseCase;
   AddCaseServiceNote addCaseServiceNote;
@@ -67,6 +69,7 @@ class CaseController extends GetxController {
   List<ServiceModel> Services = [];
   List<OrderStatusModel> OrderStatus = [];
   OrderStatusModel? selectedStatus;
+  OrderStatusModel? selectedServiseStatus;
   bool isEditService = false;
   int? currentOrderId;
   int? editingOrderDetailId;
@@ -89,7 +92,7 @@ class CaseController extends GetxController {
   final costController = TextEditingController();
   final discountController = TextEditingController();
   final paidController = TextEditingController();
-  var visitDate = DateTime.now();
+  DateTime? visitDate; // = DateTime.now();
   bool sendDateToApi = false;
 
   final List<File> images = [];
@@ -115,6 +118,7 @@ class CaseController extends GetxController {
     this.deletecaseserviceUsecase,
     this.addCarToOrderUseCase,
     this.getCarInfoUsecase,
+    this.deleteOrderUsecase,
   );
 
   @override
@@ -179,6 +183,9 @@ class CaseController extends GetxController {
       },
       (data) {
         OrderStatus = data;
+        selectedStatus = OrderStatus.firstWhere(
+          (t) => t.statusEn == 'Unscheduled',
+        );
       },
     );
 
@@ -511,9 +518,13 @@ class CaseController extends GetxController {
       "business_id": 40,
       "notes": notesController.text.trim(),
       "OrderStatusId": selectedStatus?.orderStatusId,
-      "schedule_time":
-          "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
-      "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
+      "schedule_time": visitTime != null
+          ? "${visitTime!.hour.toString().padLeft(2, '0')}:"
+                "${visitTime!.minute.toString().padLeft(2, '0')}"
+          : null,
+      "schedule_dt": visitDate != null
+          ? DateFormat('yyyy-MM-dd').format(visitDate!)
+          : null,
       "service_id": selectedService?.serviceId,
     };
 
@@ -550,8 +561,10 @@ class CaseController extends GetxController {
       "OrderStatusId": selectedStatus?.orderStatusId,
       "service_id": selectedService?.serviceId,
       "schedule_time":
-          "${visitTime.hour.toString().padLeft(2, '0')}:${visitTime.minute.toString().padLeft(2, '0')}",
-      "schedule_dt": DateFormat('yyyy-MM-dd').format(visitDate),
+          "${visitTime?.hour.toString().padLeft(2, '0')}:${visitTime?.minute.toString().padLeft(2, '0')}",
+      "schedule_dt": visitDate != null
+          ? DateFormat('yyyy-MM-dd').format(visitDate!)
+          : '',
     };
 
     final result = await editCaseUseCase(currentOrderId!, data);
@@ -1099,5 +1112,35 @@ class CaseController extends GetxController {
     }
     ordersToSendInvoice.add(model);
     update();
+  }
+
+  bool isDeletingOrder = false;
+
+  Future<bool> deleteOrder(int orderId) async {
+    isDeletingOrder = true;
+    update();
+
+    try {
+      final result = await deleteOrderUsecase(orderId);
+
+      return await result.fold(
+        (failure) async {
+          Get.snackbar("Error", failure.message);
+
+          return false;
+        },
+        (data) async {
+          cases.removeWhere((el) => el.globalOrderId == orderId);
+          Get.back();
+          Get.snackbar("Success", "Service deleted successfully");
+
+          await getCases();
+          return true;
+        },
+      );
+    } finally {
+      isDeletingOrder = false;
+      update();
+    }
   }
 }

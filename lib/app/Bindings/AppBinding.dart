@@ -6,6 +6,7 @@ import 'package:apx_cars_repair/features/cases/domain/CaseRepositoryImpl.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/AddCascUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
@@ -92,8 +93,10 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => AddCarToOrderUseCase(Get.find()));
     Get.lazyPut(() => GetCarInfoUsecase(Get.find()));
     Get.lazyPut(() => GetorderstatusUsecase(Get.find()));
+    Get.lazyPut(() => DeleteOrderUsecase(Get.find()));
     Get.lazyPut<CaseController>(
       () => CaseController(
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

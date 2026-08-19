@@ -199,4 +199,14 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to load status"));
     }
   }
+
+  @override
+  Future<Either<Failure, GlobalOrderModel>> deleteOrder(int orderId) async {
+    try {
+      GlobalOrderModel response = await remoteDataSource.deleteOrder(orderId);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to load status"));
+    }
+  }
 }

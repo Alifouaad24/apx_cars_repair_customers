@@ -181,6 +181,13 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
 
                                 if (pickedDate != null) {
                                   controller.visitDate = pickedDate;
+                                  if (controller.selectedStatus?.statusEn ==
+                                      "Unscheduled") {
+                                    controller.selectedStatus =
+                                        controller.OrderStatus.firstWhere(
+                                          (t) => t.statusEn == 'Scheduled',
+                                        );
+                                  }
                                   controller.update();
                                 }
                               },
@@ -204,9 +211,11 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      DateFormat(
-                                        'yyyy-MM-dd',
-                                      ).format(controller.visitDate),
+                                      controller.visitDate != null
+                                          ? DateFormat(
+                                              'yyyy-MM-dd',
+                                            ).format(controller.visitDate!)
+                                          : '',
                                       style: const TextStyle(
                                         color: Color(0xFF334155),
                                         fontSize: 16,
@@ -239,11 +248,14 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                               onTap: () async {
                                 final pickedTime = await showTimePicker(
                                   context: context,
-                                  initialTime: controller.visitTime,
+                                  initialTime: controller.visitTime != null
+                                      ? controller.visitTime!
+                                      : TimeOfDay.now(),
                                 );
 
                                 if (pickedTime != null) {
                                   controller.visitTime = pickedTime;
+
                                   controller.update();
                                 }
                               },
@@ -267,7 +279,11 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      controller.visitTime.format(context),
+                                      controller.visitTime != null
+                                          ? controller.visitTime!.format(
+                                              context,
+                                            )
+                                          : '',
                                       style: const TextStyle(
                                         color: Color(0xFF334155),
                                         fontSize: 16,
@@ -347,8 +363,9 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                   ),
                                   onPressed: () {
                                     if (!controller.isAddingCase) {
-                                      controller.isUpdate ? controller.editCase() :
-                                      controller.submitCase();
+                                      controller.isUpdate
+                                          ? controller.editCase()
+                                          : controller.submitCase();
                                     }
                                   },
                                   icon: Icon(

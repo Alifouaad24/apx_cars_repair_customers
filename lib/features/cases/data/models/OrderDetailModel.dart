@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 
 class GlobalOrderDetailModel {
@@ -11,6 +12,7 @@ class GlobalOrderDetailModel {
   final double? paid;
   final ServiceModel? service;
   final ItemModel? item;
+  final OrderStatusModel? status;
   final List<CaseServiceNotesModel>? caseServiceNotes;
 
   GlobalOrderDetailModel({
@@ -24,6 +26,7 @@ class GlobalOrderDetailModel {
     this.paid,
     this.service,
     this.item,
+    this.status,
     // this.globalOrder,
     this.caseServiceNotes,
   });
@@ -52,6 +55,7 @@ class GlobalOrderDetailModel {
                 .map((e) => CaseServiceNotesModel.fromJson(e))
                 .toList()
           : null,
+    status: json['orderStatus'] != null ? OrderStatusModel.fromJson(json['orderStatus'] ) : null,
     );
   }
 }

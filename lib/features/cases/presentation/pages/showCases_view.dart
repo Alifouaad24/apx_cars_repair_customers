@@ -967,6 +967,7 @@ class _ShowCasesState extends State<ShowCases> {
               Get.find(),
               Get.find(),
               Get.find(),
+              Get.find(),
             ),
       builder: (controller) => Scaffold(
         appBar: AppBar(
@@ -990,18 +991,6 @@ class _ShowCasesState extends State<ShowCases> {
                 icon: const Icon(Icons.add),
                 onPressed: () => Get.toNamed(AppRoutes.addEditCase),
               ),
-            if (controller.ordersToSendInvoice.length > 0)
-              controller.isSendingRecipt
-                  ? Container(
-                      margin: EdgeInsetsGeometry.all(2),
-                      child: CircularProgressIndicator(color: Colors.white),
-                    )
-                  : IconButton(
-                      icon: const Icon(Icons.send),
-                      onPressed: () {
-                        controller.sendMultiOrderInvoiceEmail();
-                      },
-                    ),
           ],
         ),
         body: GetBuilder<CaseController>(
@@ -1023,10 +1012,12 @@ class _ShowCasesState extends State<ShowCases> {
 
             final now = DateTime.now();
             final totalTodayTasks = controller.cases.where((caseItem) {
-              final date = DateTime.parse(caseItem.scheduleDt);
-              return date.year == now.year &&
-                  date.month == now.month &&
-                  date.day == now.day;
+              final date = caseItem.scheduleDt.isNotEmpty == true
+                  ? DateTime.tryParse(caseItem.scheduleDt!)
+                  : null;
+              return date?.year == now.year &&
+                  date?.month == now.month &&
+                  date?.day == now.day;
             }).length;
 
             final isFiltered =
@@ -1312,79 +1303,97 @@ class _ShowCasesState extends State<ShowCases> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        return DraggableScrollableSheet(
-          initialChildSize: 0.7,
-          minChildSize: 0.4,
-          maxChildSize: 0.95,
-          expand: false,
-          builder: (context, scrollController) {
-            return Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-              ),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'طلبات $customerName',
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w800,
+        controller.ordersToSendInvoice = [];
+        return GetBuilder<CaseController>(
+          builder: (controller) => DraggableScrollableSheet(
+            initialChildSize: 0.7,
+            minChildSize: 0.4,
+            maxChildSize: 0.95,
+            expand: false,
+            builder: (context, scrollController) {
+              return Container(
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                child: Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'طلبات $customerName',
+                              style: const TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w800,
+                              ),
                             ),
                           ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(sheetContext),
-                        ),
-                      ],
+                          IconButton(
+                            icon: const Icon(Icons.close),
+                            onPressed: () => Navigator.pop(sheetContext),
+                          ),
+
+                          if (controller.ordersToSendInvoice.length > 0)
+                            controller.isSendingRecipt
+                                ? Container(
+                                    margin: EdgeInsetsGeometry.all(2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.send),
+                                    onPressed: () {
+                                      controller.sendMultiOrderInvoiceEmail();
+                                    },
+                                  ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const Divider(height: 1),
-                  Expanded(
-                    child: GetBuilder<CaseController>(
-                      builder: (controller) {
-                        return ListView.builder(
-                          controller: scrollController,
-                          padding: const EdgeInsets.symmetric(vertical: 8),
-                          itemCount: customerOrders.length,
-                          itemBuilder: (context, index) {
-                            final order = customerOrders[index];
-                            return OrderListItem(
-                              order: order,
-                              onLongPress: () {
-                                controller.toggleListOrders(order);
-                              },
-                              onTap: () {
-                                if (controller.ordersToSendInvoice.contains(
-                                  order,
-                                )) {
+                    const Divider(height: 1),
+                    Expanded(
+                      child: GetBuilder<CaseController>(
+                        builder: (controller) {
+                          return ListView.builder(
+                            controller: scrollController,
+                            padding: const EdgeInsets.symmetric(vertical: 8),
+                            itemCount: customerOrders.length,
+                            itemBuilder: (context, index) {
+                              final order = customerOrders[index];
+                              return OrderListItem(
+                                order: order,
+                                onLongPress: () {
                                   controller.toggleListOrders(order);
-                                } else if (controller
-                                    .ordersToSendInvoice
-                                    .isNotEmpty) {
-                                  controller.toggleListOrders(order);
-                                } else {
-                                  controller.currentCase = order;
-                                  Navigator.pop(sheetContext);
-                                  Get.toNamed(AppRoutes.caseDetailView);
-                                }
-                              },
-                            );
-                          },
-                        );
-                      },
+                                },
+                                onTap: () {
+                                  if (controller.ordersToSendInvoice.contains(
+                                    order,
+                                  )) {
+                                    controller.toggleListOrders(order);
+                                  } else if (controller
+                                      .ordersToSendInvoice
+                                      .isNotEmpty) {
+                                    controller.toggleListOrders(order);
+                                  } else {
+                                    controller.currentCase = order;
+                                    Navigator.pop(sheetContext);
+                                    Get.toNamed(AppRoutes.caseDetailView);
+                                  }
+                                },
+                              );
+                            },
+                          );
+                        },
+                      ),
                     ),
-                  ),
-                ],
-              ),
-            );
-          },
+                  ],
+                ),
+              );
+            },
+          ),
         );
       },
     );

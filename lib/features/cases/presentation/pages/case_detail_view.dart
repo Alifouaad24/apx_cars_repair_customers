@@ -2,6 +2,7 @@ import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
     hide CarBrandModel;
+import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/EmptyCarCard.dart';
@@ -268,6 +269,7 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                                     controller.discountController.text = '';
                                     controller.notesController.text = '';
                                     controller.resolved = null;
+                                    controller.selectedServiseStatus = null;
                                     showAddServiceDialog(
                                       controller,
                                       currentCase,
@@ -776,6 +778,32 @@ void showAddServiceDialog(
                   children: [
                     modernDropdown(controller, setDState),
                     const SizedBox(height: 16),
+
+                    const SizedBox(height: 15),
+                            DropdownButtonFormField<OrderStatusModel>(
+                              value: controller.selectedServiseStatus,
+                              decoration: _inputDecoration(
+                                label: "Select Status",
+                                icon: Icons.cases,
+                              ),
+                              items: controller.OrderStatus.map((status) {
+                                return DropdownMenuItem<OrderStatusModel>(
+                                  value: status,
+                                  child: Text(status.statusAr),
+                                );
+                              }).toList(),
+                              onChanged: (value) {
+                                controller.selectedServiseStatus = value;
+                                controller.update();
+                              },
+                              validator: (value) {
+                                if (value == null) {
+                                  return "Please select Status";
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 15),
 
                     modernField(
                       controller: controller.notesController,

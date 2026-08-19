@@ -141,6 +141,12 @@ class ServiceCard extends StatelessWidget {
                                           controller.notesController.text =
                                               service.notes ?? '';
 
+                                          controller.selectedServiseStatus = controller.OrderStatus.firstWhere(
+                                                (s) =>
+                                                    s.orderStatusId ==
+                                                    service.status?.orderStatusId,
+                                              );
+
                                           showAddServiceDialog(
                                             controller,
                                             controller.currentCase!,

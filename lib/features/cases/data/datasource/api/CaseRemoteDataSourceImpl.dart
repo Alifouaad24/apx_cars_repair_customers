@@ -166,16 +166,24 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   }
 
   @override
-Future<List<OrderStatusModel>> getOrderStatus() async {
-  final response = await client.dio.get(
-    "/UniversalOrder/40",
-    options: Options(
-      contentType: "application/json",
-    ),
-  );
+  Future<List<OrderStatusModel>> getOrderStatus() async {
+    final response = await client.dio.get(
+      "/UniversalOrder/40",
+      options: Options(contentType: "application/json"),
+    );
 
-  return (response.data as List)
-      .map((el) => OrderStatusModel.fromJson(el))
-      .toList();
-}
+    return (response.data as List)
+        .map((el) => OrderStatusModel.fromJson(el))
+        .toList();
+  }
+
+  @override
+  Future<GlobalOrderModel> deleteOrder(int orderId) async {
+    final response = await client.dio.delete(
+      "/Orders/${orderId}",
+      options: Options(contentType: "application/json"),
+    );
+
+    return GlobalOrderModel.fromJson(response.data);
+  }
 }
