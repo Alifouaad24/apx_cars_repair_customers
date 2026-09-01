@@ -51,8 +51,8 @@ class GlobalOrderModel {
       scheduleDt: json['schedule_dt'] ?? '',
       scheduleTime: json['schedule_time'] ?? '',
       status: json['orderStatus'] != null ? OrderStatusModel.fromJson(json['orderStatus'] ) : null,
-      carInfo: json['carInfoTbl'] != null
-          ? CarInfoModel.fromJson(json['carInfoTbl'])
+      carInfo: json['item'] != null
+          ? CarInfoModel.fromJson(json['item'])
           : null,
       notes: json['notes'] ?? "",
       customer: json['customer'] != null
@@ -197,7 +197,7 @@ class CarInfoModel {
 
   factory CarInfoModel.fromJson(Map<String, dynamic> json) {
     return CarInfoModel(
-      carInfoTblId: json['carInfoTblId'] ?? 0,
+      carInfoTblId: json['itemId'] ?? 0,
       vinNumber: json['vinNumber'],
       globalCustomerId: json['globalCustomerId'] ?? 0,
       carYearId: json['carYearId'],

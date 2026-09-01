@@ -565,8 +565,6 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                             controller: controller.vinController,
                             label: "VIN Number",
                             icon: Icons.pin_outlined,
-                            // ⬇️ هذا كان السبب: بدون هذا السطر، الزر ما يتفعّل
-                            // إذا كتبت VIN بآخر شي بدون رجوع للحقول الثانية.
                             onChanged: () => setDState(() {}),
                           ),
                         ),
@@ -651,9 +649,9 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                             : () async {
                                 try {
                                   setDState(() => isSubmitting = true);
-
+                                  print(currentCase.toJson());
                                   final data = {
-                                    "customerId": currentCase?.globalCustomerId,
+                                    "customerId": currentCase?.customer?.globalCustomerId,
                                     "orderId": currentCase?.globalOrderId,
                                     "brand":
                                         controller.selectedBrand!.carBrandName,
