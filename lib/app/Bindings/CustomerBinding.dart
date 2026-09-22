@@ -5,8 +5,12 @@ import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerR
 import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSourceImpl.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/AddCustomerUseCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:apx_cars_repair/features/customers/domain/repository.dart';
@@ -22,11 +26,16 @@ class CustomerBinding extends Bindings {
     );
 
     Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
+
     Get.put(AddCustomerUseCase(Get.find()));
     Get.put(ShowCustomersUsecase(Get.find()));
     Get.put(EditCustomerUseCase(Get.find()));
     Get.put(DeleteCustomerUseCase(Get.find()));
     Get.put(BindCustomerWithImageUseCase(Get.find()));
+    Get.put(AddconsumerbusinessUsecase(Get.find()));
+    Get.put(ShowconsumerbusinessUsecase(Get.find()));
+    Get.put(GetAvailableBusinessesUsecase(Get.find()));
+    Get.put(GetAvailableServicesUsecase(Get.find()));
     Get.lazyPut(
       () => CustomerController(
         Get.find<AddCustomerUseCase>(),
@@ -34,6 +43,10 @@ class CustomerBinding extends Bindings {
         Get.find<EditCustomerUseCase>(),
         Get.find<DeleteCustomerUseCase>(),
         Get.find<BindCustomerWithImageUseCase>(),
+        Get.find<ShowconsumerbusinessUsecase>(),
+        Get.find<AddconsumerbusinessUsecase>(),
+        Get.find<GetAvailableBusinessesUsecase>(),
+        Get.find<GetAvailableServicesUsecase>(),
       ),
 
     );

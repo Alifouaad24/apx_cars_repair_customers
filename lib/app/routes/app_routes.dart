@@ -10,4 +10,5 @@ abstract class AppRoutes {
   static const addEditCase = '/add-edit-case';
   static const map = '/map';
   static const schadualCases = '/schadual-cases';
+  static const showConsumerBusinesses = '/sshowConsumerBusinesses';
 }

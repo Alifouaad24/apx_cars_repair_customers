@@ -158,7 +158,6 @@ class _HomePageState extends State<HomePage> {
                     icon: Icons.search,
                     color: Colors.green,
                     onTap: () {
-                      
                       Get.dialog(ResultVinDialog());
                     },
                   ),

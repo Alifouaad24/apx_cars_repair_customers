@@ -1,13 +1,19 @@
 import 'dart:convert';
 import 'dart:ui' as ui;
-
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/core/services/mapService.dart';
+import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/SupplierModel.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/AddCustomerUseCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:flutter/material.dart';
 import 'package:geocoding/geocoding.dart';
@@ -17,15 +23,20 @@ import 'package:google_maps_flutter/google_maps_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:scanbot_sdk/scanbot_sdk.dart' hide ImageSource;
 import 'package:url_launcher/url_launcher.dart';
 
 class CustomerController extends GetxController {
   final AddCustomerUseCase addCustomerUseCase;
   final ShowCustomersUsecase showCustomersUsecase;
+  final ShowconsumerbusinessUsecase showconsumerbusinessUsecase;
+  final AddconsumerbusinessUsecase addconsumerbusinessUsecase;
   final EditCustomerUseCase editCustomerUseCase;
   final DeleteCustomerUseCase deleteCustomerUseCase;
   final BindCustomerWithImageUseCase bindCustomerWithImageUseCase;
   final formKey = GlobalKey<FormState>();
+  final GetAvailableBusinessesUsecase _getAvailableBusinessesUsecase;
+  final GetAvailableServicesUsecase _getAvailableServicesUsecase;
   List<dynamic> todayTasks = [];
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
@@ -41,19 +52,26 @@ class CustomerController extends GetxController {
   final zipController = TextEditingController();
   int? currentCustomerId;
   bool isEdit = false;
-
+  bool fetchingData = false;
   CustomerController(
     this.addCustomerUseCase,
     this.showCustomersUsecase,
     this.editCustomerUseCase,
     this.deleteCustomerUseCase,
     this.bindCustomerWithImageUseCase,
+    this.showconsumerbusinessUsecase,
+    this.addconsumerbusinessUsecase,
+    this._getAvailableBusinessesUsecase,
+    this._getAvailableServicesUsecase
   );
 
   List<CustomerModel> customers = [];
   List<CustomerModel> allCustomers = [];
+  List<BusinessModel> availableBusinesses = [];
+  List<ServiceModel> availableServices = [];
   var isLoading = false;
   Set<Marker> markers = {};
+  List<SupplierFilterModel> consumerBusinesses = [];
   final Map<String, LatLng> _geocodeCache = {};
   final Map<String, BitmapDescriptor> _markerIconCache = {};
 
@@ -70,67 +88,72 @@ class CustomerController extends GetxController {
     }
 
     getCurrentLocation();
+    getAvailableBusinesses();
+    getAvailableServices();
   }
 
- Future<void> loadTodayTaskMarkers() async {
-  markers.clear();
-  update();
+  Future<void> loadTodayTaskMarkers() async {
+    markers.clear();
+    update();
 
-  print('DEBUG: todayTasks count = ${todayTasks.length}'); // NEW
+    print('DEBUG: todayTasks count = ${todayTasks.length}'); // NEW
 
-  for (var task in todayTasks) {
-    final customer = task.customer;
+    for (var task in todayTasks) {
+      final customer = task.customer;
 
-    print('DEBUG: order=${task.globalOrderId} customer=$customer'); // NEW
+      print('DEBUG: order=${task.globalOrderId} customer=$customer'); // NEW
 
-    if (customer == null ||
-        customer.address == null ||
-        customer.address!.isEmpty) {
-      print('DEBUG: skipped - no customer or address'); // NEW
-      continue;
-    }
-
-    print('DEBUG: address = ${customer.address!.first.line1}, '
-        '${customer.address!.first.usCity}, '
-        '${customer.address!.first.postCode}'); // NEW
-
-    try {
-      final latLng = await _getLatLngFromAddress(customer);
-
-      print('DEBUG: latLng = $latLng'); // NEW
-
-      if (latLng == null) continue;
-
-      BitmapDescriptor markerIcon;
-      try {
-        markerIcon = await _getMarkerIconWithLabel(customer.customerName);
-      } catch (_) {
-        markerIcon = BitmapDescriptor.defaultMarkerWithHue(
-          BitmapDescriptor.hueRed,
-        );
+      if (customer == null ||
+          customer.address == null ||
+          customer.address!.isEmpty) {
+        print('DEBUG: skipped - no customer or address'); // NEW
+        continue;
       }
 
-      markers.add(
-        Marker(
-          markerId: MarkerId(task.globalOrderId.toString()),
-          position: latLng,
-          icon: markerIcon,
-          anchor: const Offset(0.5, 1.0),
-          infoWindow: InfoWindow(
-            title: customer.customerName,
-            snippet: "Today Task",
+      print(
+        'DEBUG: address = ${customer.address!.first.line1}, '
+        '${customer.address!.first.usCity}, '
+        '${customer.address!.first.postCode}',
+      ); // NEW
+
+      try {
+        final latLng = await _getLatLngFromAddress(customer);
+
+        print('DEBUG: latLng = $latLng'); // NEW
+
+        if (latLng == null) continue;
+
+        BitmapDescriptor markerIcon;
+        try {
+          markerIcon = await _getMarkerIconWithLabel(customer.customerName);
+        } catch (_) {
+          markerIcon = BitmapDescriptor.defaultMarkerWithHue(
+            BitmapDescriptor.hueRed,
+          );
+        }
+
+        markers.add(
+          Marker(
+            markerId: MarkerId(task.globalOrderId.toString()),
+            position: latLng,
+            icon: markerIcon,
+            anchor: const Offset(0.5, 1.0),
+            infoWindow: InfoWindow(
+              title: customer.customerName,
+              snippet: "Today Task",
+            ),
           ),
-        ),
-      );
-    } catch (e) {
-      print('Today task marker error for order ${task.globalOrderId}: $e');
-      continue;
+        );
+      } catch (e) {
+        print('Today task marker error for order ${task.globalOrderId}: $e');
+        continue;
+      }
     }
+
+    print('DEBUG: final markers count = ${markers.length}'); // NEW
+    update();
   }
 
-  print('DEBUG: final markers count = ${markers.length}'); // NEW
-  update();
-}
   pickCustomerImage({int? customerId, bool fromCamera = false}) async {
     var picked = await ImagePicker().pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
@@ -367,7 +390,7 @@ class CustomerController extends GetxController {
     final totalHeight = bubbleHeight + pointerHeight + (pinRadius * 2);
 
     final bubbleRect = RRect.fromRectAndRadius(
-      Rect.fromLTWH(0, 0, bubbleWidth, bubbleHeight),
+      ui.Rect.fromLTWH(0, 0, bubbleWidth, bubbleHeight),
       const Radius.circular(cornerRadius),
     );
 
@@ -658,5 +681,71 @@ class CustomerController extends GetxController {
       isSearchLoading = false;
       update();
     }
+  }
+
+  Future<void> getConsumerBusinesses() async {
+    fetchingData = true;
+    update();
+
+    final result = await showconsumerbusinessUsecase();
+
+    result.fold(
+      (failure) {
+        fetchingData = false;
+        // handle error
+        update();
+      },
+      (data) {
+        consumerBusinesses = data;
+        fetchingData = false;
+        update();
+      },
+    );
+  }
+
+  bool addingConsumerBusiness = false;
+  Future<void> addConsumerBusiness({int? businessId, int? serviceId}) async {
+    if (businessId == null || serviceId == null) return;
+
+    addingConsumerBusiness = true;
+    update();
+
+    final result = await addconsumerbusinessUsecase.call({
+      'providerId': 40,
+      'consumerId': businessId,
+      'serviceId': serviceId,
+    });
+
+    result.fold(
+      (failure) {
+        addingConsumerBusiness = false;
+        update();
+        Get.snackbar(
+          'خطأ',
+          failure.message,
+        ); // TODO: تأكد إن Failure فيها message
+      },
+      (data) {
+        addingConsumerBusiness = false;
+        getConsumerBusinesses(); // إعادة تحميل القائمة بعد الإضافة بنجاح
+        update();
+      },
+    );
+  }
+
+  Future<void> getAvailableBusinesses() async {
+    final result = await _getAvailableBusinessesUsecase.call();
+    result.fold((failure) => Get.snackbar('خطأ', failure.message), (data) {
+      availableBusinesses = data;
+      update();
+    });
+  }
+
+  Future<void> getAvailableServices() async {
+    final result = await _getAvailableServicesUsecase.call();
+    result.fold((failure) => Get.snackbar('خطأ', failure.message), (data) {
+      availableServices = data;
+      update();
+    });
   }
 }

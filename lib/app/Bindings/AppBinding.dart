@@ -25,8 +25,12 @@ import 'package:apx_cars_repair/features/customers/domain/CustomerRepositoryImpl
 import 'package:apx_cars_repair/features/customers/domain/repository.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/AddCustomerUseCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:get/get.dart';
@@ -52,7 +56,10 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => EditCustomerUseCase(Get.find()));
     Get.lazyPut(() => DeleteCustomerUseCase(Get.find()));
     Get.lazyPut(() => BindCustomerWithImageUseCase(Get.find()));
-
+    Get.put(AddconsumerbusinessUsecase(Get.find()));
+    Get.put(ShowconsumerbusinessUsecase(Get.find()));
+        Get.put(GetAvailableBusinessesUsecase(Get.find()));
+    Get.put(GetAvailableServicesUsecase(Get.find()));
     // ================= CASES =================
 
     Get.lazyPut<CaseRemoteDataSource>(
@@ -70,6 +77,10 @@ class AppBinding extends Bindings {
 
     Get.lazyPut<CustomerController>(
       () => CustomerController(
+        Get.find(),
+        Get.find(),
+        Get.find(),
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),
@@ -94,6 +105,8 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => GetCarInfoUsecase(Get.find()));
     Get.lazyPut(() => GetorderstatusUsecase(Get.find()));
     Get.lazyPut(() => DeleteOrderUsecase(Get.find()));
+
+
     Get.lazyPut<CaseController>(
       () => CaseController(
         Get.find(),

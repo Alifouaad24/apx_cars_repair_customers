@@ -1,6 +1,7 @@
 import 'package:apx_cars_repair/features/cases/presentation/pages/showCases_view.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/showSchadualCases.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
+import 'package:apx_cars_repair/features/customers/presentation/pages/crm_dashboard_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/map_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
 import 'package:flutter/material.dart';
@@ -31,9 +32,9 @@ class MainNavBarController extends GetxController {
       label: 'Schadual',
     ),
     MainNavBarItem(
-      page: const ShowCustomers(),
+      page: const CrmDashboardView(),
       icon: Icons.people_outline,
-      label: 'Customers',
+      label: 'CRM',
     ),
     MainNavBarItem(
       page: MapPage(),

@@ -1,6 +1,9 @@
 import 'package:apx_cars_repair/core/error/Failure.dart';
+import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/CustomerModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/SupplierModel.dart';
 import 'package:apx_cars_repair/features/customers/domain/repository.dart';
 import 'package:dartz/dartz.dart';
 import 'package:image_picker/image_picker.dart';
@@ -72,6 +75,56 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to bind image with customer"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<SupplierFilterModel>>>
+  showconsumerbusiness() async {
+    try {
+      List<SupplierFilterModel> model = await remoteDataSource
+          .showConsumerBusiness();
+      return Right(model);
+    } catch (e) {
+      return Left(Failure("Failed to bind image with customer"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, SupplierFilterModel>> addConsumerBusiness(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      SupplierFilterModel model = await remoteDataSource.addConsumerBusiness(
+        data,
+      );
+      return Right(model);
+    } catch (e) {
+      return Left(Failure("Failed to bind image with customer"));
+    }
+  }
+
+    @override
+  Future<Either<Failure, List<BusinessModel>>> getAvailableBusinesses() async {
+    try {
+      final result = await remoteDataSource.getAvailableBusinesses();
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(Failure(e.toString())); // TODO: تأكد من constructor بتاع Failure
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<ServiceModel>>> getAvailableServices() async {
+    try {
+      final result = await remoteDataSource.getAvailableServices();
+      return Right(result);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(Failure(e.toString()));
     }
   }
 }

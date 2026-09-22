@@ -12,6 +12,7 @@ import 'package:apx_cars_repair/features/cases/presentation/pages/showSchadualCa
 import 'package:apx_cars_repair/features/customers/presentation/pages/addEditCustomes_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/map_view.dart';
 import 'package:apx_cars_repair/features/customers/presentation/pages/showCustomers_view.dart';
+import 'package:apx_cars_repair/features/customers/presentation/pages/show_consumerBusiness_viw.dart';
 import 'package:apx_cars_repair/features/home/presentation/pages/home_page.dart';
 import 'package:apx_cars_repair/features/maim_navBar/views/navbar_view.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/camera_scan_view.dart';
@@ -64,6 +65,11 @@ class AppPages {
     GetPage(
       name: AppRoutes.map,
       page: () => MapPage(),
+      binding: CustomerBinding(),
+    ),
+    GetPage(
+      name: AppRoutes.showConsumerBusinesses,
+      page: () => ShowConsumerbusinessViw(),
       binding: CustomerBinding(),
     ),
     GetPage(
