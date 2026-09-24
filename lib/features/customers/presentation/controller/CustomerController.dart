@@ -705,7 +705,7 @@ class CustomerController extends GetxController {
 
   bool addingConsumerBusiness = false;
   Future<void> addConsumerBusiness({int? businessId, int? serviceId}) async {
-    if (businessId == null || serviceId == null) return;
+    if (businessId == null) return;
 
     addingConsumerBusiness = true;
     update();
@@ -723,11 +723,12 @@ class CustomerController extends GetxController {
         Get.snackbar(
           'خطأ',
           failure.message,
-        ); // TODO: تأكد إن Failure فيها message
+        ); 
       },
       (data) {
         addingConsumerBusiness = false;
-        getConsumerBusinesses(); // إعادة تحميل القائمة بعد الإضافة بنجاح
+        getConsumerBusinesses();
+        Get.back();
         update();
       },
     );

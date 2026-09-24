@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:dio/dio.dart';
 
 class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
@@ -185,5 +188,27 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     );
 
     return GlobalOrderModel.fromJson(response.data);
+  }
+
+  @override
+  Future<List<AssignTypeModel>> getAllAssignTypes() async {
+
+    final response = await client.dio.get(
+      "/Orders/GetAllAssignTypes",
+      options: Options(contentType: "application/json"),
+    );
+
+    return (response.data as List).map((el) => AssignTypeModel.fromJson(el)).toList();
+  }
+
+  @override
+  Future<List<SupplierBusinessModel>> getAllConsumerBusinesses() async {
+
+    final response = await client.dio.get(
+      "/Supplier/GetConsumers/40",
+      options: Options(contentType: "application/json"),
+    );
+
+    return (response.data as List).map((el) => SupplierBusinessModel.fromJson(el)).toList();
   }
 }

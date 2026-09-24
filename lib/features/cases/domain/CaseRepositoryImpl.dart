@@ -2,12 +2,15 @@ import 'dart:io';
 
 import 'package:apx_cars_repair/core/error/Failure.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/repository.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 
@@ -204,6 +207,26 @@ class CaseRepositoryImpl implements CaseRepository {
   Future<Either<Failure, GlobalOrderModel>> deleteOrder(int orderId) async {
     try {
       GlobalOrderModel response = await remoteDataSource.deleteOrder(orderId);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to load status"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<AssignTypeModel>>> getAllAssignTypes() async {
+    try {
+      List<AssignTypeModel> response = await remoteDataSource.getAllAssignTypes();
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to load status"));
+    }
+  }
+
+  @override
+  Future<Either<Failure, List<SupplierBusinessModel>>> getAllBusinesses() async {
+    try {
+      List<SupplierBusinessModel> response = await remoteDataSource.getAllConsumerBusinesses();
       return Right(response);
     } catch (e) {
       return Left(Failure("Failed to load status"));

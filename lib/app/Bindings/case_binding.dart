@@ -17,9 +17,16 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseService
 import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getConsumerBusinesses_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/show_cases_useCase.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
+import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSource.dart';
+import 'package:apx_cars_repair/features/customers/data/datasource/api/CustomerRemoteDataSourceImpl.dart';
+import 'package:apx_cars_repair/features/customers/domain/CustomerRepositoryImpl.dart';
+import 'package:apx_cars_repair/features/customers/domain/repository.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/getAssignTypes_usecase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:get/get.dart';
 import 'package:get/get_core/src/get_main.dart';
@@ -39,10 +46,25 @@ class CaseBinding extends Bindings {
       () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
       fenix: true,
     );
+
+
+        Get.lazyPut<CustomerRemoteDataSource>(
+      () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
+      fenix: true,
+    );
+
+
     Get.lazyPut<CaseRepository>(
       () => CaseRepositoryImpl(Get.find()),
       fenix: true,
     );
+
+    Get.lazyPut<CustomerRepository>(
+      () => CustomerRepositoryImpl(Get.find()),
+      fenix: true,
+    );
+
+
     Get.lazyPut<ShowCasesUsecase>(
       () => ShowCasesUsecase(Get.find<CaseRepository>()),
       fenix: true,
@@ -94,8 +116,18 @@ class CaseBinding extends Bindings {
       fenix: true,
     );
 
-       Get.lazyPut<DeleteOrderUsecase>(
+    Get.lazyPut<DeleteOrderUsecase>(
       () => DeleteOrderUsecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
+
+    Get.lazyPut<GetassigntypesUsecase>(
+      () => GetassigntypesUsecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
+
+        Get.lazyPut<GetconsumerbusinessesUsecase>(
+      () => GetconsumerbusinessesUsecase(Get.find<CaseRepository>()),
       fenix: true,
     );
 
@@ -115,6 +147,8 @@ class CaseBinding extends Bindings {
         Get.find<AddCarToOrderUseCase>(),
         Get.find<GetCarInfoUsecase>(),
         Get.find<DeleteOrderUsecase>(),
+        Get.put(GetassigntypesUsecase(Get.find())),
+        Get.put(GetconsumerbusinessesUsecase(Get.find())),
       ),
       fenix: true,
     );

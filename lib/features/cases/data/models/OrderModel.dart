@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -10,12 +11,28 @@ class GlobalOrderModel {
   final CustomerModel? customer;
   final int businessId;
   final String insertDate;
+  final String? createdDate;
   final String scheduleDt;
   final String scheduleTime;
   CarInfoModel? carInfo;
   final OrderStatusModel? status;
   final String? notes;
+  final int? serviceId;
   final ServiceModel? service;
+  final double? cartValue;
+
+  // ---- Assigner (اللي أسند الطلب) ----
+  final int? assignerTypeId;
+  final AssignTypeModel? assignerType;
+  final String? assignerId;
+  final String? assignerName;
+
+  // ---- Assignee (المسنَد إليه الطلب: Business أو Customer) ----
+  final int? assigneeTypeId;
+  final AssignTypeModel? assigneeType;
+  final String? assigneeId;
+  final String? assigneeName;
+
   List<OrderImage>? orderImages;
   List<GlobalOrderDetailModel>? orderDetails;
 
@@ -25,6 +42,7 @@ class GlobalOrderModel {
     required this.businessId,
     this.carInfoTblId,
     required this.insertDate,
+    this.createdDate,
     required this.scheduleDt,
     required this.scheduleTime,
     required this.status,
@@ -32,7 +50,17 @@ class GlobalOrderModel {
     this.orderImages,
     this.customer,
     this.notes,
+    this.serviceId,
     this.service,
+    this.cartValue,
+    this.assignerTypeId,
+    this.assignerType,
+    this.assignerId,
+    this.assignerName,
+    this.assigneeTypeId,
+    this.assigneeType,
+    this.assigneeId,
+    this.assigneeName,
     this.orderDetails,
   });
 
@@ -48,9 +76,12 @@ class GlobalOrderModel {
       globalCustomerId: json['globalCustomerId'],
       businessId: json['business_id'],
       insertDate: json['insertDate'] ?? '',
+      createdDate: json['createdDate'],
       scheduleDt: json['schedule_dt'] ?? '',
       scheduleTime: json['schedule_time'] ?? '',
-      status: json['orderStatus'] != null ? OrderStatusModel.fromJson(json['orderStatus'] ) : null,
+      status: json['orderStatus'] != null
+          ? OrderStatusModel.fromJson(json['orderStatus'])
+          : null,
       carInfo: json['item'] != null
           ? CarInfoModel.fromJson(json['item'])
           : null,
@@ -58,17 +89,31 @@ class GlobalOrderModel {
       customer: json['customer'] != null
           ? CustomerModel.fromJson(json['customer'])
           : null,
+      serviceId: json['service_id'],
       service: json['service'] != null
           ? ServiceModel.fromJson(json['service'])
           : null,
+      cartValue: json['cart_value'] != null
+          ? (json['cart_value'] as num).toDouble()
+          : null,
+
+      assignerTypeId: json['assignerTypeId'],
+      assignerType: json['assignerType'] != null
+          ? AssignTypeModel.fromJson(json['assignerType'])
+          : null,
+      assignerId: json['assignerId']?.toString(),
+      assignerName: json['assignerName'],
+
+      assigneeTypeId: json['assigneeTypeId'],
+      assigneeType: json['assigneeType'] != null
+          ? AssignTypeModel.fromJson(json['assigneeType'])
+          : null,
+      assigneeId: json['assigneeId']?.toString(),
+      assigneeName: json['assigneeName'],
 
       orderDetails: json['globalOrderDetail'] != null
           ? (json['globalOrderDetail'] as List)
-                .map(
-                  (el) => GlobalOrderDetailModel.fromJson(
-                    el
-                  ),
-                )
+                .map((el) => GlobalOrderDetailModel.fromJson(el))
                 .toList()
           : null,
     );
@@ -80,10 +125,19 @@ class GlobalOrderModel {
       'globalCustomerId': globalCustomerId,
       'business_id': businessId,
       'insertDate': insertDate,
+      'createdDate': createdDate,
       'schedule_dt': scheduleDt,
       'schedule_time': scheduleTime,
       'status': status,
       'notes': notes,
+      'service_id': serviceId,
+      'cart_value': cartValue,
+      'assignerTypeId': assignerTypeId,
+      'assignerId': assignerId,
+      'assignerName': assignerName,
+      'assigneeTypeId': assigneeTypeId,
+      'assigneeId': assigneeId,
+      'assigneeName': assigneeName,
     };
   }
 }

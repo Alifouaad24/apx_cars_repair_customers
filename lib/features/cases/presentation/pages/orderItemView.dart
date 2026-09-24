@@ -149,13 +149,13 @@ class OrderListItem extends StatelessWidget {
                                             controller.currentOrderId =
                                                 order.globalOrderId;
 
-                                            controller.selectedCustomer =
-                                                controller.customers.firstWhere(
+                                            controller.selectedCustomerType =
+                                                controller.assignTypes.firstWhere(
                                                   (c) =>
-                                                      c.globalCustomerId ==
+                                                      c.assignTypeId ==
                                                       order
-                                                          .customer!
-                                                          .globalCustomerId,
+                                                          .assigneeType!
+                                                          .assignTypeId,
                                                 );
 
                                             controller.notesController.text =

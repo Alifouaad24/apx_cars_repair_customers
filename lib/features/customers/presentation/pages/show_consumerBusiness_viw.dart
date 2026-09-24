@@ -104,7 +104,12 @@ class _ShowConsumerbusinessViwState extends State<ShowConsumerbusinessViw> {
       ),
       child: Row(
         children: [
-          IconButton(onPressed: (){Get.back();}, icon: Icon(Icons.arrow_back)),
+          IconButton(
+            onPressed: () {
+              Get.back();
+            },
+            icon: Icon(Icons.arrow_back),
+          ),
           const Expanded(
             child: Text(
               'Consumer Businesses',
@@ -259,8 +264,8 @@ class _BusinessCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 3),
-                                       Text(
-                        'Service : $service',
+                      Text(
+                        'Service : ${service?.trim().isNotEmpty == true ? service : 'All'}',
                         style: const TextStyle(
                           fontSize: 12,
                           color: Colors.grey,
@@ -300,18 +305,17 @@ class _AddConsumerBusinessSheet extends StatefulWidget {
       _AddConsumerBusinessSheetState();
 }
 
-class _AddConsumerBusinessSheetState
-    extends State<_AddConsumerBusinessSheet> {
+class _AddConsumerBusinessSheetState extends State<_AddConsumerBusinessSheet> {
   static const _primary = Color(0xFF0F2A47);
 
   int? _selectedBusinessId;
   int? _selectedServiceId;
 
   Future<void> _onConfirm(CustomerController controller) async {
-    if (_selectedBusinessId == null || _selectedServiceId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please select a business and a service')),
-      );
+    if (_selectedBusinessId == null) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please select a business')));
       return;
     }
 
@@ -319,8 +323,6 @@ class _AddConsumerBusinessSheetState
       businessId: _selectedBusinessId,
       serviceId: _selectedServiceId,
     );
-
-    if (mounted) Navigator.of(context).pop();
   }
 
   @override
@@ -418,7 +420,8 @@ class _AddConsumerBusinessSheetState
                       icon: const Icon(Icons.keyboard_arrow_down_rounded),
                       items: services.map((s) {
                         return DropdownMenuItem<int>(
-                          value: s.serviceId, // TODO: confirm the actual field name in ServiceModel
+                          value: s
+                              .serviceId, // TODO: confirm the actual field name in ServiceModel
                           child: Text(
                             s.description, // TODO: confirm the actual field name in ServiceModel
                             overflow: TextOverflow.ellipsis,
@@ -469,8 +472,9 @@ class _AddConsumerBusinessSheetState
                     const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton(
-                        onPressed:
-                            submitting ? null : () => _onConfirm(controller),
+                        onPressed: submitting
+                            ? null
+                            : () => _onConfirm(controller),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: _primary,
                           padding: const EdgeInsets.symmetric(vertical: 14),

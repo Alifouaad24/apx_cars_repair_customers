@@ -30,6 +30,7 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableS
 import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/getAssignTypes_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/show_customers_useCase.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
@@ -49,7 +50,12 @@ class AppBinding extends Bindings {
       () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
+        Get.lazyPut<CaseRemoteDataSource>(
+      () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
+    );
+
     Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
+  Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
 
     Get.lazyPut(() => AddCustomerUseCase(Get.find()));
     Get.lazyPut(() => ShowCustomersUsecase(Get.find()));
@@ -58,16 +64,21 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => BindCustomerWithImageUseCase(Get.find()));
     Get.put(AddconsumerbusinessUsecase(Get.find()));
     Get.put(ShowconsumerbusinessUsecase(Get.find()));
-        Get.put(GetAvailableBusinessesUsecase(Get.find()));
+    Get.put(GetAvailableBusinessesUsecase(Get.find()));
     Get.put(GetAvailableServicesUsecase(Get.find()));
+
     // ================= CASES =================
 
     Get.lazyPut<CaseRemoteDataSource>(
       () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
-    Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
+    Get.lazyPut<CustomerRemoteDataSource>(
+      () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
+    );
 
+    Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
+Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
 
     // إذا عندك usecases أخرى للكيس
@@ -105,10 +116,13 @@ class AppBinding extends Bindings {
     Get.lazyPut(() => GetCarInfoUsecase(Get.find()));
     Get.lazyPut(() => GetorderstatusUsecase(Get.find()));
     Get.lazyPut(() => DeleteOrderUsecase(Get.find()));
-
+    Get.put(GetassigntypesUsecase(Get.find()));
+    Get.put(GetAvailableBusinessesUsecase(Get.find()));
 
     Get.lazyPut<CaseController>(
       () => CaseController(
+        Get.find(),
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

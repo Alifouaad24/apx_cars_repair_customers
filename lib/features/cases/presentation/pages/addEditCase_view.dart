@@ -1,4 +1,5 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
@@ -104,20 +105,24 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                         ),
                         _card(
                           children: [
-                            DropdownButtonFormField<CustomerModel>(
-                              value: controller.selectedCustomer,
+                            if(!controller.isUpdate)
+                            DropdownButtonFormField<AssignTypeModel>(
+                              value: controller.selectedCustomerType,
                               decoration: _inputDecoration(
-                                label: "Select Customer",
+                                label: "Select Consumer type",
                                 icon: Icons.person_outline,
                               ),
-                              items: controller.customers.map((customer) {
-                                return DropdownMenuItem<CustomerModel>(
+                              items: controller.assignTypes.map((customer) {
+                                return DropdownMenuItem<AssignTypeModel>(
                                   value: customer,
-                                  child: Text(customer.customerName),
+                                  child: Text(customer.type!),
                                 );
                               }).toList(),
                               onChanged: (value) {
-                                controller.selectedCustomer = value;
+                                controller.selectedCustomerType = value!;
+                                controller.getCorrectedType(
+                                  value.assignTypeId!,
+                                );
                                 controller.update();
                               },
                               validator: (value) {
@@ -127,7 +132,64 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                 return null;
                               },
                             ),
+                            if(!controller.isUpdate)
                             const SizedBox(height: 15),
+                            if(!controller.isUpdate)
+                            if (controller.selectedCustomerType != null) ...[
+                              if (controller.isLoading)
+                                const Center(child: CircularProgressIndicator())
+                              else
+                                DropdownButtonFormField<dynamic>(
+                                  value: controller.selectedConsumer,
+                                  decoration: _inputDecoration(
+                                    label:
+                                        controller
+                                                .selectedCustomerType!
+                                                .assignTypeId ==
+                                            1
+                                        ? "Select Business"
+                                        : "Select Customer",
+                                    icon: Icons.person_outline,
+                                  ),
+                                  items:
+                                      controller
+                                              .selectedCustomerType!
+                                              .assignTypeId ==
+                                          1
+                                      ? controller.businesses
+                                            .map<DropdownMenuItem<dynamic>>((
+                                              b,
+                                            ) {
+                                              return DropdownMenuItem<dynamic>(
+                                                value: b,
+                                                child: Text(b.consumerBusiness!.businessName),
+                                              );
+                                            })
+                                            .toList()
+                                      : controller.customers
+                                            .map<DropdownMenuItem<dynamic>>((
+                                              c,
+                                            ) {
+                                              return DropdownMenuItem<dynamic>(
+                                                value: c,
+                                                child: Text(c.customerName),
+                                              );
+                                            })
+                                            .toList(),
+                                  onChanged: (value) {
+                                    print(value);
+                                    controller.selectedConsumer = value;
+                                    controller.update();
+                                  },
+                                  validator: (value) {
+                                    if (value == null) {
+                                      return "Please select consumer";
+                                    }
+                                    return null;
+                                  },
+                                ),
+                              const SizedBox(height: 15),
+                            ],
                             Row(
                               children: const [
                                 Icon(
@@ -293,25 +355,25 @@ class _AddeditCaseViewState extends State<AddeditCaseView> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 16),
-                            DropdownButtonFormField<ServiceModel>(
-                              value: controller.selectedService,
-                              decoration: _inputDecoration(
-                                label: "Select Service",
-                                icon: Icons.design_services,
-                              ),
-                              items: controller.Services.map((se) {
-                                return DropdownMenuItem<ServiceModel>(
-                                  value: se,
-                                  child: Text(se.description),
-                                );
-                              }).toList(),
-                              onChanged: (value) {
-                                controller.selectedService = value;
-                                controller.update();
-                              },
-                            ),
-                            const SizedBox(height: 15),
+                            // const SizedBox(height: 16),
+                            // DropdownButtonFormField<ServiceModel>(
+                            //   value: controller.selectedService,
+                            //   decoration: _inputDecoration(
+                            //     label: "Select Service",
+                            //     icon: Icons.design_services,
+                            //   ),
+                            //   items: controller.Services.map((se) {
+                            //     return DropdownMenuItem<ServiceModel>(
+                            //       value: se,
+                            //       child: Text(se.description),
+                            //     );
+                            //   }).toList(),
+                            //   onChanged: (value) {
+                            //     controller.selectedService = value;
+                            //     controller.update();
+                            //   },
+                            // ),
+                            const SizedBox(height: 25),
                             DropdownButtonFormField<OrderStatusModel>(
                               value: controller.selectedStatus,
                               decoration: _inputDecoration(

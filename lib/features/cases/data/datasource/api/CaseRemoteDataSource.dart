@@ -1,10 +1,13 @@
 import 'dart:io';
 
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:dio/dio.dart';
 
 abstract class CaseRemoteDataSource {
@@ -22,4 +25,6 @@ abstract class CaseRemoteDataSource {
   Future<Map<String, dynamic>> deleteCaseService(int caseServiceId);
   Future<CarsDataModel> getAllCarsData();
   Future<GlobalOrderModel> deleteOrder(int orderId);
+  Future<List<AssignTypeModel>> getAllAssignTypes();
+  Future<List<SupplierBusinessModel>> getAllConsumerBusinesses();
 }

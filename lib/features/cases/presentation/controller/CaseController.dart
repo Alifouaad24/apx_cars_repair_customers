@@ -2,16 +2,22 @@ import 'dart:io';
 import 'package:apx_cars_repair/core/services/MultiOrderInvoices.dart';
 import 'package:apx_cars_repair/core/services/ServiceItem.dart';
 import 'package:apx_cars_repair/core/services/invoiceService.dart';
+import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart'
     hide CarBrandModel;
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/getConsumerBusinesses_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
+import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/getAssignTypes_usecase.dart';
 import 'package:intl/intl.dart';
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -35,7 +41,9 @@ import 'package:mailer/smtp_server/gmail.dart';
 class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
 
+  GetconsumerbusinessesUsecase getconsumerbusinessesUsecase;
   ShowCasesUsecase showCasesUsecase;
+  GetassigntypesUsecase getassigntypesUsecase;
   GetorderstatusUsecase getorderstatusUsecase;
   AddCarToOrderUseCase addCarToOrderUseCase;
   ChangeCaseServiceStatus changeCaseServiceStatus;
@@ -70,6 +78,8 @@ class CaseController extends GetxController {
   List<OrderStatusModel> OrderStatus = [];
   OrderStatusModel? selectedStatus;
   OrderStatusModel? selectedServiseStatus;
+  List<AssignTypeModel> assignTypes = [];
+  AssignTypeModel? selectedCustomerType;
   bool isEditService = false;
   int? currentOrderId;
   int? editingOrderDetailId;
@@ -119,6 +129,8 @@ class CaseController extends GetxController {
     this.addCarToOrderUseCase,
     this.getCarInfoUsecase,
     this.deleteOrderUsecase,
+    this.getassigntypesUsecase,
+    this.getconsumerbusinessesUsecase,
   );
 
   @override
@@ -129,8 +141,8 @@ class CaseController extends GetxController {
       getCases(),
       getAllServices(),
       getOrderStatus(),
-      loadCustomers(),
       getAllCarsData(),
+      getAllAssignTypes(),
     ]);
   }
 
@@ -141,6 +153,15 @@ class CaseController extends GetxController {
       Services = data
           .where((s) => s.businessServices.first.businessId == 40)
           .toList();
+      update();
+    });
+  }
+
+  Future<void> getAllAssignTypes() async {
+    final result = await getassigntypesUsecase();
+
+    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
+      assignTypes = data;
       update();
     });
   }
@@ -503,18 +524,13 @@ class CaseController extends GetxController {
   /// ================= SUBMIT CASE =================
   Future<void> submitCase() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
-
-    final customerId = selectedCustomer?.globalCustomerId;
-
-    if (customerId == null) {
-      Get.snackbar("Error", "Please select customer");
-      return;
-    }
-
     isAddingCase = true;
     update();
     final data = {
-      "globalCustomerId": selectedCustomer!.globalCustomerId,
+      "assigneeTypeId": selectedCustomerType!.assignTypeId,
+      "assigneeId": selectedCustomerType!.assignTypeId == 1
+          ? (selectedConsumer.consumerBusiness?.businessId).toString()
+          : (selectedConsumer.globalCustomerId).toString(),
       "business_id": 40,
       "notes": notesController.text.trim(),
       "OrderStatusId": selectedStatus?.orderStatusId,
@@ -545,17 +561,9 @@ class CaseController extends GetxController {
   Future<void> editCase() async {
     if (!(formKey.currentState?.validate() ?? false)) return;
 
-    final customerId = selectedCustomer?.globalCustomerId;
-
-    if (customerId == null) {
-      Get.snackbar("Error", "Please select customer");
-      return;
-    }
-
     isAddingCase = true;
     update();
     final data = {
-      "globalCustomerId": selectedCustomer!.globalCustomerId,
       "business_id": 40,
       "notes": notesController.text.trim(),
       "OrderStatusId": selectedStatus?.orderStatusId,
@@ -1135,12 +1143,44 @@ class CaseController extends GetxController {
           Get.snackbar("Success", "Service deleted successfully");
 
           await getCases();
+          isDeletingOrder = false;
+          update();
           return true;
         },
       );
     } finally {
       isDeletingOrder = false;
       update();
+    }
+  }
+
+  List<SupplierBusinessModel> businesses = [];
+  dynamic selectedConsumer; // ممكن يكون BusinessModel أو CustomerModel
+
+  Future<void> loadBusinesses() async {
+    isLoading = true;
+    update();
+
+    final result = await getconsumerbusinessesUsecase();
+
+    result.fold(
+      (failure) {
+        Get.snackbar("Error", failure.message);
+      },
+      (data) {
+        businesses = data;
+      },
+    );
+
+    isLoading = false;
+    update();
+  }
+
+  void getCorrectedType(int id) {
+    if (id == 1) {
+      loadBusinesses();
+    } else if (id == 2) {
+      loadCustomers();
     }
   }
 }
