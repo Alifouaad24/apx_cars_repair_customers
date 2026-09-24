@@ -11,7 +11,7 @@ import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dar
 import 'package:dio/dio.dart';
 
 abstract class CaseRemoteDataSource {
-  Future<GlobalOrderModel> addCase(Map<String, dynamic> caseData);
+  Future<String> addCase(Map<String, dynamic> caseData);
   Future<CarInfoModel> addCarToOrder(Map<String, dynamic> carData);
   Future<List<OrderStatusModel>> getOrderStatus();
   Future<List<GlobalOrderModel>> showCases();

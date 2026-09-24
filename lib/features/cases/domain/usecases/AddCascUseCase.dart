@@ -10,7 +10,7 @@ class AddCaseUseCase {
 
   AddCaseUseCase(this.repository);
 
-  Future<Either<Failure, GlobalOrderModel>> call(Map<String, dynamic> caseData) {
+  Future<Either<Failure, String>> call(Map<String, dynamic> caseData) {
     return repository.addCase(caseData);
   }
 }

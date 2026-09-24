@@ -20,7 +20,7 @@ class CaseRepositoryImpl implements CaseRepository {
   CaseRepositoryImpl(this.remoteDataSource);
 
   @override
-  Future<Either<Failure, GlobalOrderModel>> addCase(
+  Future<Either<Failure, String>> addCase(
     Map<String, dynamic> caseData,
   ) async {
     try {

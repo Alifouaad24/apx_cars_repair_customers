@@ -11,7 +11,7 @@ import 'package:dartz/dartz.dart';
 import 'dart:io';
 
 abstract class CaseRepository {
-  Future<Either<Failure, GlobalOrderModel>> addCase(Map<String, dynamic> caseData);
+  Future<Either<Failure, String>> addCase(Map<String, dynamic> caseData);
   Future<Either<Failure, CarInfoModel>> addCarToOrder(Map<String, dynamic> caseData);
   Future<Either<Failure, List<OrderStatusModel>>> getOrderStatus();
   Future<Either<Failure, List<GlobalOrderModel>>> showCases();

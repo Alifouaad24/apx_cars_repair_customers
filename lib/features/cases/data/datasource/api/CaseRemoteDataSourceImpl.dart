@@ -17,12 +17,12 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   CaseRemoteDataSourceImpl(this.client);
 
   @override
-  Future<GlobalOrderModel> addCase(Map<String, dynamic> caseData) async {
+  Future<String> addCase(Map<String, dynamic> caseData) async {
     final response = await client.dio.post(
       "/Orders/AddGlobalOrder",
       data: caseData,
     );
-    return GlobalOrderModel.fromJson(response.data);
+    return response.data['msg'];
   }
 
   @override
