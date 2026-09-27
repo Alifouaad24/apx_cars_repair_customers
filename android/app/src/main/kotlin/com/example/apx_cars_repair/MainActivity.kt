@@ -1,4 +1,4 @@
-package com.example.apx_cars_repair
+package com.apx.apxCarsRepair
 
 import io.flutter.embedding.android.FlutterActivity
 
