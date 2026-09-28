@@ -4,6 +4,7 @@ import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDat
 import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -111,7 +112,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   }
 
   @override
-  Future<OrderServiceModel> editServiceToCase(
+  Future<GlobalOrderDetailModel> editServiceToCase(
     int orderServicId,
     Map<String, dynamic> data,
   ) async {
@@ -120,7 +121,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
       data: data,
       options: Options(contentType: "application/json"),
     );
-    return OrderServiceModel.fromJson(response.data);
+    return GlobalOrderDetailModel.fromJson(response.data);
   }
 
   @override

@@ -5,6 +5,7 @@ import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDat
 import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
@@ -110,12 +111,12 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, OrderServiceModel>> editServiceToCase(
+  Future<Either<Failure, GlobalOrderDetailModel>> editServiceToCase(
     int caseServiceId,
     Map<String, dynamic> data,
   ) async {
     try {
-      OrderServiceModel model = await remoteDataSource.editServiceToCase(
+      GlobalOrderDetailModel model = await remoteDataSource.editServiceToCase(
         caseServiceId,
         data,
       );

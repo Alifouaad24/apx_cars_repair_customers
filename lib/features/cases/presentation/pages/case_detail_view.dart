@@ -651,7 +651,8 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                                   setDState(() => isSubmitting = true);
                                   print(currentCase.toJson());
                                   final data = {
-                                    "customerId": currentCase?.customer?.globalCustomerId,
+                                    "customerId":
+                                        currentCase?.customer?.globalCustomerId,
                                     "orderId": currentCase?.globalOrderId,
                                     "brand":
                                         controller.selectedBrand!.carBrandName,
@@ -733,51 +734,89 @@ void showAddServiceDialog(
   GlobalOrderModel currentCase,
 ) {
   bool isSubmitting = false;
+
   Get.dialog(
     Dialog(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(24),
+      ),
       clipBehavior: Clip.antiAlias,
       child: StatefulBuilder(
         builder: (context, setDState) {
-          return Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Dialog header
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(colors: [primary, primaryDark]),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(
-                      Icons.build_circle_rounded,
-                      color: Colors.white,
-                      size: 24,
-                    ),
-                    const SizedBox(width: 10),
-                    Text(
-                      controller.isEditService ? 'Edit Service' : 'Add Service',
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
+          return Listener(
+            behavior: HitTestBehavior.translucent,
+            onPointerDown: (_) {
+              FocusScope.of(context).unfocus();
+            },
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(context).size.height * 0.9,
+                maxWidth: 500,
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // ============================================================
+                  // Dialog Header
+                  // ============================================================
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          primary,
+                          primaryDark,
+                        ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-              // Dialog body
-              SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    modernDropdown(controller, setDState),
-                    const SizedBox(height: 16),
+                    child: Row(
+                      children: [
+                        const Icon(
+                          Icons.build_circle_rounded,
+                          color: Colors.white,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            controller.isEditService
+                                ? 'Edit Service'
+                                : 'Add Service',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
 
-                    const SizedBox(height: 15),
+                  // ============================================================
+                  // Dialog Body - Scrollable
+                  // ============================================================
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Services Buttons
+                          modernDropdown(
+                            context,
+                            controller,
+                            setDState,
+                          ),
+
+                          // ======================================================
+                          // Edit Service Fields
+                          // ======================================================
+                          if (controller.isEditService) ...[
+                            const SizedBox(height: 15),
+
+                            // Status
                             DropdownButtonFormField<OrderStatusModel>(
                               value: controller.selectedServiseStatus,
                               decoration: _inputDecoration(
@@ -791,138 +830,281 @@ void showAddServiceDialog(
                                 );
                               }).toList(),
                               onChanged: (value) {
-                                controller.selectedServiseStatus = value;
-                                controller.update();
+                                setDState(() {
+                                  controller.selectedServiseStatus = value;
+                                });
                               },
                               validator: (value) {
                                 if (value == null) {
                                   return "Please select Status";
                                 }
+
                                 return null;
                               },
                             ),
+
                             const SizedBox(height: 15),
 
-                    modernField(
-                      controller: controller.notesController,
-                      label: 'Notes',
-                      icon: Icons.notes_rounded,
-                      maxLines: 3,
+                            // Notes
+                            modernField(
+                              controller: controller.notesController,
+                              label: 'Notes',
+                              icon: Icons.notes_rounded,
+                              maxLines: 3,
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Cost + Discount
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: modernField(
+                                    controller: controller.costController,
+                                    label: 'Cost',
+                                    icon: Icons.attach_money_rounded,
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: modernField(
+                                    controller:
+                                        controller.discountController,
+                                    label: 'Discount',
+                                    icon: Icons.discount_rounded,
+                                    keyboardType: TextInputType.number,
+                                  ),
+                                ),
+                              ],
+                            ),
+
+                            const SizedBox(height: 12),
+
+                            // Paid
+                            modernField(
+                              controller: controller.paidController,
+                              label: 'Paid',
+                              icon: Icons.payment_rounded,
+                              keyboardType: TextInputType.number,
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    Row(
+                  ),
+
+                  // ============================================================
+                  // Dialog Actions
+                  // ============================================================
+                  Padding(
+                    padding: const EdgeInsets.only(
+                      left: 20,
+                      right: 20,
+                      bottom: 20,
+                      top: 8,
+                    ),
+                    child: Row(
                       children: [
+                        // ======================================================
+                        // Cancel
+                        // ======================================================
                         Expanded(
-                          child: modernField(
-                            controller: controller.costController,
-                            label: 'Cost',
-                            icon: Icons.attach_money_rounded,
-                            keyboardType: TextInputType.number,
+                          child: OutlinedButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () {
+                                    FocusScope.of(context).unfocus();
+                                    Get.back();
+                                  },
+                            style: OutlinedButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                              side: BorderSide(
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                            child: const Text('Cancel'),
                           ),
                         ),
-                        const SizedBox(width: 10),
+
+                        const SizedBox(width: 12),
+
+                        // ======================================================
+                        // Confirm
+                        // ======================================================
                         Expanded(
-                          child: modernField(
-                            controller: controller.discountController,
-                            label: 'Discount',
-                            icon: Icons.discount_rounded,
-                            keyboardType: TextInputType.number,
+                          child: ElevatedButton(
+                            onPressed: isSubmitting
+                                ? null
+                                : () async {
+                                    // Close keyboard first
+                                    FocusScope.of(context).unfocus();
+
+                                    // ========================================
+                                    // Validate Service
+                                    // ========================================
+                                    if (controller.selectedService == null) {
+                                      Get.snackbar(
+                                        'Required',
+                                        'Please select a service',
+                                        snackPosition:
+                                            SnackPosition.BOTTOM,
+                                      );
+                                      return;
+                                    }
+
+                                    // ========================================
+                                    // Validate Status in Edit Mode
+                                    // ========================================
+                                    if (controller.isEditService &&
+                                        controller.selectedServiseStatus ==
+                                            null) {
+                                      Get.snackbar(
+                                        'Required',
+                                        'Please select a status',
+                                        snackPosition:
+                                            SnackPosition.BOTTOM,
+                                      );
+                                      return;
+                                    }
+
+                                    // ========================================
+                                    // Start Loading
+                                    // ========================================
+                                    setDState(() {
+                                      isSubmitting = true;
+                                    });
+
+                                    try {
+                                      // ======================================
+                                      // Prepare Data
+                                      // ======================================
+                                      final data = {
+                                        "serviceId": controller
+                                            .selectedService
+                                            ?.serviceId,
+
+                                        "statusId": controller
+                                            .selectedServiseStatus
+                                            ?.orderStatusId,
+
+                                        "globalOrderId":
+                                            currentCase.globalOrderId,
+
+                                        "notes": controller
+                                            .notesController
+                                            .text,
+
+                                        "cost": double.tryParse(
+                                              controller
+                                                  .costController
+                                                  .text,
+                                            ) ??
+                                            0,
+
+                                        "discount": double.tryParse(
+                                              controller
+                                                  .discountController
+                                                  .text,
+                                            ) ??
+                                            0,
+
+                                        "paid": double.tryParse(
+                                              controller
+                                                  .paidController
+                                                  .text,
+                                            ) ??
+                                            0,
+                                      };
+
+                                      debugPrint(
+                                        'Service Data: $data',
+                                      );
+
+                                      // ======================================
+                                      // Add / Edit
+                                      // ======================================
+                                      if (controller.isEditService) {
+                                        await controller.editDetail(data);
+                                      } else {
+                                        await controller.addDetailToOrder(
+                                          data,
+                                        );
+                                      }
+
+                                      // ======================================
+                                      // Close Dialog
+                                      // ======================================
+                                      if (context.mounted) {
+                                        FocusScope.of(context).unfocus();
+                                        Get.back();
+                                      }
+                                    } catch (e, stackTrace) {
+                                      debugPrint(
+                                        '❌ Service submit error: $e',
+                                      );
+
+                                      debugPrint(
+                                        stackTrace.toString(),
+                                      );
+
+                                      // ======================================
+                                      // Stop Loading
+                                      // ======================================
+                                      if (context.mounted) {
+                                        setDState(() {
+                                          isSubmitting = false;
+                                        });
+                                      }
+
+                                      Get.snackbar(
+                                        'Error',
+                                        'Something went wrong',
+                                        snackPosition:
+                                            SnackPosition.BOTTOM,
+                                      );
+                                    }
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: primary,
+                              foregroundColor: Colors.white,
+                              disabledBackgroundColor:
+                                  primary.withOpacity(0.6),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 14,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(14),
+                              ),
+                            ),
+                            child: isSubmitting
+                                ? const SizedBox(
+                                    width: 20,
+                                    height: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      color: Colors.white,
+                                    ),
+                                  )
+                                : const Text(
+                                    'Confirm',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                           ),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 12),
-                    modernField(
-                      controller: controller.paidController,
-                      label: 'Paid',
-                      icon: Icons.payment_rounded,
-                      keyboardType: TextInputType.number,
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
-              // Dialog actions
-              Padding(
-                padding: const EdgeInsets.only(left: 20, right: 20, bottom: 20),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        onPressed: () => Get.back(),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          side: BorderSide(color: Colors.grey.shade300),
-                        ),
-                        child: const Text('Cancel'),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        onPressed: isSubmitting
-                            ? null
-                            : () async {
-                                setDState(() => isSubmitting = true);
-                                final data = {
-                                  "serviceId":
-                                      controller.selectedService?.serviceId,
-                                  "globalOrderId":
-                                      controller.currentCase?.globalOrderId,
-                                  "notes": controller.notesController.text,
-                                  "cost":
-                                      double.tryParse(
-                                        controller.costController.text,
-                                      ) ??
-                                      0,
-                                  "discount":
-                                      double.tryParse(
-                                        controller.discountController.text,
-                                      ) ??
-                                      0,
-                                  "paid":
-                                      double.tryParse(
-                                        controller.paidController.text,
-                                      ) ??
-                                      0,
-                                };
-                                debugPrint(data.toString());
-                                if (controller.isEditService) {
-                                  await controller.editDetail(data);
-                                } else {
-                                  await controller.addDetailToOrder(data);
-                                }
-                                Get.back();
-                                if (context.mounted) {
-                                  setDState(() => isSubmitting = false);
-                                }
-                              },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: primary,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 14),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                        ),
-                        child: isSubmitting
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Text('Confirm'),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+            ),
           );
         },
       ),
@@ -982,31 +1164,78 @@ InputDecoration _inputDecoration({
   );
 }
 
-Widget modernDropdown(CaseController controller, StateSetter setDState) {
-  return DropdownButtonFormField<ServiceModel>(
-    decoration: InputDecoration(
-      labelText: 'Select Service',
-      prefixIcon: const Icon(Icons.miscellaneous_services_rounded, size: 20),
-      border: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+Widget modernDropdown(
+  BuildContext context,
+  CaseController controller,
+  StateSetter setDState,
+) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      const Text(
+        'Select Service',
+        style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
       ),
-      enabledBorder: OutlineInputBorder(
-        borderRadius: BorderRadius.circular(14),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+      const SizedBox(height: 12),
+
+      Wrap(
+        spacing: 10,
+        runSpacing: 10,
+        children: controller.Services.map((service) {
+          final isSelected = controller.selectedService == service;
+
+          return InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () {
+              setDState(() {
+                controller.selectedService = service;
+              });
+            },
+            child: AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 13),
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(context).primaryColor
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(14),
+                border: Border.all(
+                  color: isSelected
+                      ? Theme.of(context).primaryColor
+                      : Colors.grey.shade300,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.miscellaneous_services_rounded,
+                    size: 18,
+                    color: isSelected ? Colors.white : Colors.grey.shade700,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    service.description,
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: isSelected ? Colors.white : Colors.grey.shade800,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }).toList(),
       ),
-      filled: true,
-      fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
-    ),
-    value: controller.selectedService,
-    items: controller.Services.map((service) {
-      return DropdownMenuItem<ServiceModel>(
-        value: service,
-        child: Text(service.description),
-      );
-    }).toList(),
-    onChanged: (value) => setDState(() => controller.selectedService = value),
+    ],
   );
 }
 

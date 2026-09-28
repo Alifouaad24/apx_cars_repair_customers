@@ -120,7 +120,8 @@ class ServiceCard extends StatelessWidget {
                                       child: ElevatedButton.icon(
                                         onPressed: () {
                                           Get.back();
-                                          controller.editingServiceId = service.globalOrderDetailId;
+                                          controller.editingServiceId =
+                                              service.globalOrderDetailId;
                                           controller.isEditService = true;
                                           controller.selectedService =
                                               controller.Services.firstWhere(
@@ -141,10 +142,14 @@ class ServiceCard extends StatelessWidget {
                                           controller.notesController.text =
                                               service.notes ?? '';
 
-                                          controller.selectedServiseStatus = controller.OrderStatus.firstWhere(
+                                          controller.selectedServiseStatus =
+                                              controller
+                                                  .OrderStatus.firstWhereOrNull(
                                                 (s) =>
                                                     s.orderStatusId ==
-                                                    service.status?.orderStatusId,
+                                                    service
+                                                        .status
+                                                        ?.orderStatusId,
                                               );
 
                                           showAddServiceDialog(
@@ -250,7 +255,6 @@ class ServiceCard extends StatelessWidget {
                                                                       true,
                                                                 ).pop();
                                                               }
-                                                              
                                                             },
                                                       child:
                                                           controller
@@ -550,8 +554,7 @@ class ServiceCard extends StatelessWidget {
                         controller.serviceNoteController.clear();
                         Get.dialog(
                           GetBuilder<CaseController>(
-                            builder: (controller) => 
-                             Dialog(
+                            builder: (controller) => Dialog(
                               backgroundColor: Colors.transparent,
                               child: Container(
                                 padding: const EdgeInsets.all(24),
@@ -577,7 +580,9 @@ class ServiceCard extends StatelessWidget {
                                       decoration: InputDecoration(
                                         hintText: "Add note for this service",
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(16),
+                                          borderRadius: BorderRadius.circular(
+                                            16,
+                                          ),
                                           borderSide: BorderSide.none,
                                         ),
                                         filled: true,
