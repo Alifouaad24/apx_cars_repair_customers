@@ -99,11 +99,11 @@ class CaseRepositoryImpl implements CaseRepository {
   }
 
   @override
-  Future<Either<Failure, OrderServiceModel>> addServiceToCase(
+  Future<Either<Failure, GlobalOrderDetailModel>> addServiceToCase(
     Map<String, dynamic> data,
   ) async {
     try {
-      OrderServiceModel model = await remoteDataSource.addServiceToCase(data);
+      GlobalOrderDetailModel model = await remoteDataSource.addServiceToCase(data);
       return Right(model);
     } catch (e) {
       return Left(Failure("Failed to add service to case"));

@@ -32,7 +32,8 @@ class GlobalOrderModel {
   final AssignTypeModel? assigneeType;
   final String? assigneeId;
   final String? assigneeName;
-
+final String? sssigneeEmail;
+final String? sssigneePhone;
   List<OrderImage>? orderImages;
   List<GlobalOrderDetailModel>? orderDetails;
 
@@ -62,6 +63,8 @@ class GlobalOrderModel {
     this.assigneeId,
     this.assigneeName,
     this.orderDetails,
+    this.sssigneeEmail,
+    this.sssigneePhone
   });
 
   factory GlobalOrderModel.fromJson(Map<String, dynamic> json) {
@@ -110,7 +113,8 @@ class GlobalOrderModel {
           : null,
       assigneeId: json['assigneeId']?.toString(),
       assigneeName: json['assigneeName'],
-
+      sssigneeEmail: json['assigneeEmail'] ?? '',
+      sssigneePhone: json['assigneePhone'] ?? '',
       orderDetails: json['globalOrderDetail'] != null
           ? (json['globalOrderDetail'] as List)
                 .map((el) => GlobalOrderDetailModel.fromJson(el))

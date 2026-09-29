@@ -637,24 +637,19 @@ class CaseController extends GetxController {
           Get.snackbar("Error", failure.message);
         },
         (data) async {
-          Get.snackbar("Success", "Service edited successfully");
+          Get.snackbar("Success", "Service added successfully");
 
           // Reload cases from API
-          await getCases();
 
           // Refresh current case from the newly loaded list
           if (currentCase != null) {
-            final updatedCase = cases.firstWhereOrNull(
-              (e) => e.globalOrderId == currentCase!.globalOrderId,
-            );
-
-            if (updatedCase != null) {
-              currentCase = updatedCase;
-            }
+            currentCase!.orderDetails?.add(data);
           }
+          isEditingCaseService = false;
 
           update();
-
+          Get.back();
+          await getCases();
           print("Service added successfully");
           print(data);
         },
@@ -663,7 +658,7 @@ class CaseController extends GetxController {
       isEditingCaseService = false;
       update();
 
-      Get.offAllNamed(AppRoutes.main);
+      // Get.offAllNamed(AppRoutes.main);
     }
   }
 
@@ -693,8 +688,16 @@ class CaseController extends GetxController {
           Get.snackbar("Success", "Service edited successfully");
           await getCases();
           isEditingCaseService = false;
+
+          var detailToRemove = currentCase!.orderDetails?.where(
+            (d) => d.globalOrderDetailId == editingServiceId,
+          );
+
+          currentCase!.orderDetails?.remove(detailToRemove);
+          currentCase!.orderDetails?.add(data);
           update();
-          Get.toNamed(AppRoutes.main);
+          Get.back();
+          await getCases();
         },
       );
     } finally {}
@@ -987,9 +990,9 @@ class CaseController extends GetxController {
     try {
       // 1️⃣ كل الطلبات لنفس الزبون (متأكد أصلاً من toggleListOrders) -> نأخذ بيانات الزبون من أول طلب
       final firstOrder = ordersToSendInvoice.first;
-      final customerName = firstOrder.customer?.customerName ?? '';
-      final customerEmail = firstOrder.customer?.customerEmail ?? '';
-      final customerPhone = firstOrder.customer?.customerMobile ?? '';
+      final customerName = firstOrder.assigneeName ?? '';
+      final customerEmail = firstOrder.sssigneeEmail ?? '';
+      final customerPhone = firstOrder.sssigneePhone ?? '';
 
       // 2️⃣ حوّل كل طلب إلى صف بالجدول (VIN / QTY / AMOUNT)
       final orderRows = ordersToSendInvoice.map((order) {
@@ -1082,6 +1085,15 @@ class CaseController extends GetxController {
       for (var p in e.problems) {
         print('المشكلة: ${p.code}: ${p.msg}');
       }
+      Get.snackbar(
+        'خطـأ',
+        'تأكد من وجود البريد الالكتروني الخاص بالعميل',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
       return false;
     } finally {
       isSendingRecipt = false;

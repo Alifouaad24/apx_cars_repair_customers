@@ -19,7 +19,7 @@ abstract class CaseRemoteDataSource {
   Future<List<ServiceModel>> getAllServices();
   Future<GlobalOrderModel> editCase(int caseId, Map<String, dynamic> caseData);
   Future<List<OrderImage>> bindImagesWithCase(int caseId, List<File> images);
-  Future<OrderServiceModel> addServiceToCase(Map<String, dynamic> data);
+  Future<GlobalOrderDetailModel> addServiceToCase(Map<String, dynamic> data);
   Future<GlobalOrderDetailModel> editServiceToCase(int caseServiceId, Map<String, dynamic> data);
   Future<Map<String, dynamic>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data);
   Future<OrderServiceModel> changCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);

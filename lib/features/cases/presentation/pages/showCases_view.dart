@@ -408,7 +408,7 @@ class _ShowCasesState extends State<ShowCases> {
                                 ? Container(
                                     margin: EdgeInsetsGeometry.all(2),
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: const Color.fromARGB(255, 22, 21, 21),
                                     ),
                                   )
                                 : IconButton(

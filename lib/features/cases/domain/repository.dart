@@ -27,7 +27,7 @@ abstract class CaseRepository {
     List<File> images,
   );
   Future<Either<Failure, List<ServiceModel>>> getAllServices();
-  Future<Either<Failure, OrderServiceModel>> addServiceToCase(Map<String, dynamic> data);
+  Future<Either<Failure, GlobalOrderDetailModel>> addServiceToCase(Map<String, dynamic> data);
   Future<Either<Failure, Map<String, dynamic>>> addCaseServiceNote(int caseServiceId, Map<String, dynamic> data);
   Future<Either<Failure, OrderServiceModel>> changeCaseServiceStatus(int caseServiceId, Map<String, dynamic> data);
   Future<Either<Failure, Map<String, dynamic>>> deleteCaseService(int caseServiceId);

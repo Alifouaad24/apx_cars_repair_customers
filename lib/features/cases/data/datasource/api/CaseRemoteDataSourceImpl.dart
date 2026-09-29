@@ -101,14 +101,14 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
   }
 
   @override
-  Future<OrderServiceModel> addServiceToCase(Map<String, dynamic> data) async {
+  Future<GlobalOrderDetailModel> addServiceToCase(Map<String, dynamic> data) async {
     int globalOrderId = data['globalOrderId'];
     final response = await client.dio.post(
       "/Orders/AddDetailForOrder?orderId=${globalOrderId}",
       data: data,
       options: Options(contentType: "application/json"),
     );
-    return OrderServiceModel.fromJson(response.data);
+    return GlobalOrderDetailModel.fromJson(response.data);
   }
 
   @override

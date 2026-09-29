@@ -490,7 +490,7 @@ class _ShowCustomersState extends State<ShowCustomers> {
                   controller.currentCustomerId = c.globalCustomerId;
                   controller.line1Controller.text = address?.line1 ?? "";
                   controller.line2Controller.text = address?.line2 ?? "";
-                  controller.cityController.text = address.usCity ?? "";
+                  controller.cityController.text = address?.usCity ?? "";
                   controller.zipController.text = address?.postCode ?? "";
                   controller.firstNameController.text = c.customerName
                       .split(" ")
