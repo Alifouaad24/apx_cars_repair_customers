@@ -74,7 +74,7 @@ class _ShowConsumerbusinessViwState extends State<ShowConsumerbusinessViw> {
                         final business = item.consumerBusiness;
                         final service = item.service;
                         return _BusinessCard(
-                          name: business.name,
+                          name: business.email,
                           service: service.name,
                         );
                       },
@@ -241,10 +241,12 @@ class _BusinessCard extends StatelessWidget {
                   alignment: Alignment.center,
                   child: Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
+                    maxLines: 2,
+                    softWrap: true,
                     style: const TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w800,
-                      fontSize: 18,
+                      fontSize: 14,
                     ),
                   ),
                 ),

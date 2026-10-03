@@ -30,16 +30,19 @@ class SupplierFilterModel {
 class BusinessFilterModel {
   final int id;
   final String name;
+  final String email;
 
   BusinessFilterModel({
     required this.id,
     required this.name,
+    required this.email,
   });
 
   factory BusinessFilterModel.fromJson(Map<String, dynamic> json) {
     return BusinessFilterModel(
       id: json['business_id'] ?? 0,
       name: json['business_name'] ?? '',
+      email: json['business_email'] ?? '',
     );
   }
 }

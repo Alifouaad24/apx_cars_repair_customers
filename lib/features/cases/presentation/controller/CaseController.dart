@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:apx_cars_repair/core/services/MultiOrderInvoices.dart';
 import 'package:apx_cars_repair/core/services/ServiceItem.dart';
 import 'package:apx_cars_repair/core/services/invoiceService.dart';
+import 'package:apx_cars_repair/core/services/multiOrderReipt.dart';
 import 'package:apx_cars_repair/features/cases/data/models/AssignTypeModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CarsDataModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
@@ -970,7 +971,7 @@ class CaseController extends GetxController {
     }
   }
 
-  Future<bool> sendMultiOrderInvoiceEmail() async {
+  Future<bool> sendMultiOrderInvoiceEmail({String? ccEmail}) async {
     if (ordersToSendInvoice.isEmpty) {
       Get.snackbar(
         'تنبيه',
@@ -1004,7 +1005,10 @@ class CaseController extends GetxController {
 
         return InvoiceOrderRow(
           vin: order.carInfo?.vinNumber ?? '',
-          qty: details.length,
+          year: order.carInfo?.carYear?.carYearNumber ?? '',
+          brand: order.carInfo?.carBrand?.carBrandName ?? '',
+          model: order.carInfo?.carModel?.carModelName ?? '',
+          qty: details,
           amount: totalAmount,
         );
       }).toList();
@@ -1056,7 +1060,7 @@ class CaseController extends GetxController {
         ..from = const Address('alifouaad24@gmail.com', 'The Giest')
         ..recipients.add(customerEmail)
         ..subject = 'Invoice #$invoiceNumber'
-        ..text = 'مرفق فاتورتك يا $customerName'
+        ..text = 'Your Invoic document: $customerName'
         ..attachments = [
           StreamAttachment(
             Stream.fromIterable([pdfBytes]),
@@ -1064,12 +1068,151 @@ class CaseController extends GetxController {
             fileName: 'invoice_$invoiceNumber.pdf',
           ),
         ];
+      if (ccEmail != null && ccEmail.trim().isNotEmpty) {
+        message.ccRecipients.add(ccEmail.trim());
+      }
 
       final sendReport = await send(message, smtpServer);
       print('تم الإرسال: $sendReport');
       Get.snackbar(
         'نجاح',
         'تم ارسال الفاتورة بنجاح',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: const Color.fromARGB(255, 86, 164, 1),
+        colorText: Colors.white,
+      );
+      // 8️⃣ نظّف القائمة بعد نجاح الإرسال
+      ordersToSendInvoice.clear();
+
+      return true;
+    } on MailerException catch (e) {
+      print('فشل الإرسال: $e');
+      for (var p in e.problems) {
+        print('المشكلة: ${p.code}: ${p.msg}');
+      }
+      Get.snackbar(
+        'خطـأ',
+        'تأكد من وجود البريد الالكتروني الخاص بالعميل',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    } finally {
+      isSendingRecipt = false;
+      update();
+    }
+  }
+
+  Future<bool> sendMultiOrderReceiptEmail({String? ccEmail}) async {
+    if (ordersToSendInvoice.isEmpty) {
+      Get.snackbar(
+        'تنبيه',
+        'لم يتم اختيار أي طلب لإرسال ايصال',
+        snackPosition: SnackPosition.BOTTOM,
+        margin: const EdgeInsets.all(16),
+        borderRadius: 12,
+        backgroundColor: Colors.orange,
+        colorText: Colors.white,
+      );
+      return false;
+    }
+
+    isSendingRecipt = true;
+    update();
+
+    try {
+      // 1️⃣ كل الطلبات لنفس الزبون (متأكد أصلاً من toggleListOrders) -> نأخذ بيانات الزبون من أول طلب
+      final firstOrder = ordersToSendInvoice.first;
+      final customerName = firstOrder.assigneeName ?? '';
+      final customerEmail = firstOrder.sssigneeEmail ?? '';
+      final customerPhone = firstOrder.sssigneePhone ?? '';
+
+      // 2️⃣ حوّل كل طلب إلى صف بالجدول (VIN / QTY / AMOUNT)
+      final orderRows = ordersToSendInvoice.map((order) {
+        final details = order.orderDetails ?? [];
+        final totalAmount = details.fold<double>(
+          0,
+          (sum, d) => sum + (d.cost ?? 0).toDouble(),
+        );
+
+        return ReceiptOrderRow(
+          vin: order.carInfo?.vinNumber ?? '',
+          year: order.carInfo?.carYear?.carYearNumber ?? '',
+          brand: order.carInfo?.carBrand?.carBrandName ?? '',
+          model: order.carInfo?.carModel?.carModelName ?? '',
+          qty: details,
+          amount: totalAmount,
+        );
+      }).toList();
+
+      // 3️⃣ احسب نطاق التاريخ (أقدم -> أحدث) اعتماداً على تاريخ كل طلب
+      // عدّل "scheduleDt" لو عندك حقل تاريخ إنشاء مختلف (مثل createdAt)
+      final orderDates =
+          ordersToSendInvoice
+              .map(
+                (o) => o.scheduleDt != null
+                    ? DateTime.tryParse(o.scheduleDt!)
+                    : null,
+              )
+              .whereType<DateTime>()
+              .toList()
+            ..sort();
+
+      final dateFormat = DateFormat('MM/dd/yyyy');
+      final dateFrom = orderDates.isNotEmpty
+          ? dateFormat.format(orderDates.first)
+          : dateFormat.format(DateTime.now());
+      final dateTo = orderDates.isNotEmpty
+          ? dateFormat.format(orderDates.last)
+          : dateFormat.format(DateTime.now());
+
+      // 4️⃣ رقم فاتورة مؤقت (عدّله حسب نظام الترقيم عندك، مثلاً من السيرفر)
+      final invoiceNumber = DateTime.now().millisecondsSinceEpoch.toString();
+
+      // 5️⃣ ابنِ بيانات الفاتورة المجمّعة
+      final receiptData = MultiOrderReceiptData(
+        receiptNumber: invoiceNumber,
+        dateFrom: dateFrom,
+        dateTo: dateTo,
+        customerName: customerName,
+        customerPhone: customerPhone,
+        customerEmail: customerEmail,
+        customerAddress: '',
+        orders: orderRows,
+        technicianNotes: '',
+      );
+
+      // 6️⃣ ولّد الـ PDF
+      final pdfBytes = await generateMultiOrderReceiptPdf(receiptData);
+
+      // 7️⃣ جهّز الإيميل وأرسله (نفس منطقك الأصلي)
+      final smtpServer = gmail('alifouaad24@gmail.com', 'tdhhwaczycgqemmh');
+
+      final message = Message()
+        ..from = const Address('alifouaad24@gmail.com', 'The Giest')
+        ..recipients.add(customerEmail)
+        ..subject = 'Receipt #$invoiceNumber'
+        ..text = 'Your Receipt document: $customerName'
+        ..attachments = [
+          StreamAttachment(
+            Stream.fromIterable([pdfBytes]),
+            'application/pdf',
+            fileName: 'Receipt$invoiceNumber.pdf',
+          ),
+        ];
+      if (ccEmail != null && ccEmail.trim().isNotEmpty) {
+        message.ccRecipients.add(ccEmail.trim());
+      }
+      final sendReport = await send(message, smtpServer);
+      print('تم الإرسال: $sendReport');
+      Get.snackbar(
+        'نجاح',
+        'تم ارسال الايصال بنجاح',
         snackPosition: SnackPosition.BOTTOM,
         margin: const EdgeInsets.all(16),
         borderRadius: 12,
@@ -1120,7 +1263,7 @@ class CaseController extends GetxController {
       if (currentCustomerId != newCustomerId) {
         Get.snackbar(
           'تنبيه',
-          'لا يمكنك اختيار طلبات لأكثر من زبون واحد في نفس الفاتورة',
+          'لا يمكنك اختيار طلبات لأكثر من زبون واحد في نفس الايصال',
           snackPosition: SnackPosition.BOTTOM,
           margin: const EdgeInsets.all(16),
           borderRadius: 12,

@@ -6,19 +6,22 @@ import 'package:pdf/widgets.dart' as pw;
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 
-// ==================== نماذج البيانات (فاتورة متعددة الطلبات) ====================
+// ==================== نماذج البيانات (إيصال متعدد الطلبات) ====================
 
 /// كل صف في الجدول يمثل طلب واحد (سيارة واحدة) قام بها العميل.
-class InvoiceOrderRow {
+class ReceiptOrderRow {
   final String vin;
   final String year;
   final String brand;
   final String model;
-  // رقم شاصي السيارة لهذا الطلب
-  final List<GlobalOrderDetailModel> qty; // عدد الخدمات المنجزة ضمن هذا الطلب
-  final double amount; // إجمالي مبلغ هذا الطلب
 
-  InvoiceOrderRow({
+  // الخدمات المنجزة ضمن هذا الطلب
+  final List<GlobalOrderDetailModel> qty;
+
+  // المبلغ المدفوع لهذا الطلب
+  final double amount;
+
+  ReceiptOrderRow({
     required this.vin,
     required this.year,
     required this.brand,
@@ -28,8 +31,8 @@ class InvoiceOrderRow {
   });
 }
 
-class MultiOrderInvoiceData {
-  final String invoiceNumber;
+class MultiOrderReceiptData {
+  final String receiptNumber;
 
   // نطاق التاريخ: من أقدم طلب إلى أحدث طلب
   final String dateFrom;
@@ -40,16 +43,18 @@ class MultiOrderInvoiceData {
   final String customerEmail;
   final String customerAddress;
 
-  final List<InvoiceOrderRow> orders;
+  final List<ReceiptOrderRow> orders;
+
   final String technicianNotes;
+
   final String footerNote;
 
   final double labor;
   final double parts;
-  final double taxRate; // مثال: 0.07 لـ 7%
+  final double taxRate;
 
-  MultiOrderInvoiceData({
-    required this.invoiceNumber,
+  MultiOrderReceiptData({
+    required this.receiptNumber,
     required this.dateFrom,
     required this.dateTo,
     required this.customerName,
@@ -59,7 +64,7 @@ class MultiOrderInvoiceData {
     required this.orders,
     this.technicianNotes = '',
     this.footerNote =
-        'Electrical diagnostics are billed per hour. Parts carry a 12-month / 12,000-mile warranty; labor carries a 90-day warranty. Vehicles left over 5 days after completion incur storage fees.',
+        'Thank you for your payment. This receipt confirms that payment has been received in full for the services listed above. Parts carry a 12-month / 12,000-mile warranty; labor carries a 90-day warranty.',
     this.labor = 0,
     this.parts = 0,
     this.taxRate = 0,
@@ -67,13 +72,15 @@ class MultiOrderInvoiceData {
 
   double get subtotal =>
       orders.fold(0.0, (sum, o) => sum + o.amount) + labor + parts;
+
   double get tax => subtotal * taxRate;
+
   double get total => subtotal + tax;
 }
 
 // ==================== ألوان التصميم ====================
 
-class _InvoiceColors {
+class _ReceiptColors {
   static const bg = PdfColor.fromInt(0xFFFFFFFF);
   static const lightHeader = PdfColor.fromInt(0xFFe8e6df);
   static const orange = PdfColor.fromInt(0xFFd97a3f);
@@ -85,12 +92,13 @@ class _InvoiceColors {
 
 // ==================== دالة توليد PDF ====================
 
-Future<Uint8List> generateMultiOrderInvoicePdf(
-  MultiOrderInvoiceData data,
+Future<Uint8List> generateMultiOrderReceiptPdf(
+  MultiOrderReceiptData data,
 ) async {
   final pdf = pw.Document();
 
   final imageData = await rootBundle.load('assets/appIcon/theGiest.jpeg');
+
   final logoImage = pw.MemoryImage(imageData.buffer.asUint8List());
 
   pdf.addPage(
@@ -99,24 +107,34 @@ Future<Uint8List> generateMultiOrderInvoicePdf(
       margin: pw.EdgeInsets.zero,
       build: (context) {
         return pw.Container(
-          color: _InvoiceColors.bg,
+          color: _ReceiptColors.bg,
           padding: const pw.EdgeInsets.all(28),
           child: pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               _buildHeader(data, logoImage),
+
               pw.SizedBox(height: 14),
-              pw.Divider(color: _InvoiceColors.border, thickness: 1),
+
+              pw.Divider(color: _ReceiptColors.border, thickness: 1),
+
               pw.SizedBox(height: 14),
+
               _buildCustomerBox(data),
+
               pw.SizedBox(height: 16),
+
               _buildOrdersTable(data),
+
               pw.SizedBox(height: 16),
+
               pw.Row(
                 crossAxisAlignment: pw.CrossAxisAlignment.start,
                 children: [
                   pw.Expanded(flex: 3, child: _buildTechnicianNotes(data)),
+
                   pw.SizedBox(width: 14),
+
                   pw.Expanded(flex: 2, child: _buildTotalsBox(data)),
                 ],
               ),
@@ -132,7 +150,7 @@ Future<Uint8List> generateMultiOrderInvoicePdf(
 
 // ==================== الأقسام ====================
 
-pw.Widget _buildHeader(MultiOrderInvoiceData data, pw.MemoryImage logoImage) {
+pw.Widget _buildHeader(MultiOrderReceiptData data, pw.MemoryImage logoImage) {
   return pw.Row(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
@@ -144,7 +162,7 @@ pw.Widget _buildHeader(MultiOrderInvoiceData data, pw.MemoryImage logoImage) {
             height: 46,
             alignment: pw.Alignment.center,
             decoration: pw.BoxDecoration(
-              border: pw.Border.all(color: _InvoiceColors.black, width: 1.2),
+              border: pw.Border.all(color: _ReceiptColors.black, width: 1.2),
             ),
             child: pw.Padding(
               padding: const pw.EdgeInsets.all(6),
@@ -156,32 +174,38 @@ pw.Widget _buildHeader(MultiOrderInvoiceData data, pw.MemoryImage logoImage) {
               ),
             ),
           ),
+
           pw.SizedBox(width: 12),
+
           pw.Column(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Text(
                 'The Geist LLC',
                 style: pw.TextStyle(
-                  color: _InvoiceColors.black,
+                  color: _ReceiptColors.black,
                   fontSize: 20,
                   fontWeight: pw.FontWeight.bold,
                 ),
               ),
+
               pw.SizedBox(height: 2),
+
               pw.Text(
                 'AUTOMOTIVE ELECTRICAL SERVICES',
                 style: pw.TextStyle(
-                  color: _InvoiceColors.orange,
+                  color: _ReceiptColors.orange,
                   fontSize: 8,
                   letterSpacing: 1.2,
                 ),
               ),
+
               pw.SizedBox(height: 4),
+
               pw.Text(
                 'Phone (317) 516-9700 · saifaldinsami@gmail.com',
                 style: pw.TextStyle(
-                  color: _InvoiceColors.grayText,
+                  color: _ReceiptColors.grayText,
                   fontSize: 8,
                 ),
               ),
@@ -189,25 +213,29 @@ pw.Widget _buildHeader(MultiOrderInvoiceData data, pw.MemoryImage logoImage) {
           ),
         ],
       ),
+
       pw.Column(
         crossAxisAlignment: pw.CrossAxisAlignment.end,
         children: [
           pw.Text(
-            'Invoice',
+            'Payment Receipt',
             style: pw.TextStyle(
-              color: _InvoiceColors.black,
+              color: _ReceiptColors.black,
               fontSize: 22,
               fontWeight: pw.FontWeight.bold,
             ),
           ),
+
           pw.SizedBox(height: 4),
+
           pw.Text(
-            'NO. ${data.invoiceNumber}',
-            style: pw.TextStyle(color: _InvoiceColors.grayText, fontSize: 9),
+            'RECEIPT NO. ${data.receiptNumber}',
+            style: pw.TextStyle(color: _ReceiptColors.grayText, fontSize: 9),
           ),
+
           pw.Text(
-            'From ${data.dateFrom}  to  ${data.dateTo}',
-            style: pw.TextStyle(color: _InvoiceColors.grayText, fontSize: 9),
+            'Services from ${data.dateFrom} to ${data.dateTo}',
+            style: pw.TextStyle(color: _ReceiptColors.grayText, fontSize: 9),
           ),
         ],
       ),
@@ -218,7 +246,7 @@ pw.Widget _buildHeader(MultiOrderInvoiceData data, pw.MemoryImage logoImage) {
 pw.Widget _sectionHeaderBar(String title) {
   return pw.Container(
     width: double.infinity,
-    color: _InvoiceColors.lightHeader,
+    color: _ReceiptColors.lightHeader,
     padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 5),
     child: pw.Text(
       title,
@@ -240,43 +268,51 @@ pw.Widget _fieldBlock(String label, String value) {
         pw.Text(
           label,
           style: pw.TextStyle(
-            color: _InvoiceColors.grayText,
+            color: _ReceiptColors.grayText,
             fontSize: 7,
             letterSpacing: 0.8,
           ),
         ),
+
         pw.SizedBox(height: 2),
+
         pw.Text(
           value.isEmpty ? ' ' : value,
-          style: pw.TextStyle(color: _InvoiceColors.black, fontSize: 11),
+          style: pw.TextStyle(color: _ReceiptColors.black, fontSize: 11),
         ),
+
         pw.SizedBox(height: 4),
-        pw.Divider(color: _InvoiceColors.border, thickness: 0.6),
+
+        pw.Divider(color: _ReceiptColors.border, thickness: 0.6),
       ],
     ),
   );
 }
 
-pw.Widget _buildCustomerBox(MultiOrderInvoiceData data) {
+pw.Widget _buildCustomerBox(MultiOrderReceiptData data) {
   return pw.Container(
     decoration: pw.BoxDecoration(
-      border: pw.Border.all(color: _InvoiceColors.border, width: 0.7),
+      border: pw.Border.all(color: _ReceiptColors.border, width: 0.7),
     ),
     child: pw.Column(
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
-        _sectionHeaderBar('CUSTOMER'),
+        _sectionHeaderBar('RECEIVED FROM'),
+
         pw.Padding(
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           child: pw.Row(
             crossAxisAlignment: pw.CrossAxisAlignment.start,
             children: [
               pw.Expanded(child: _fieldBlock('NAME', data.customerName)),
+
               pw.SizedBox(width: 14),
+
               pw.Expanded(child: _fieldBlock('PHONE', data.customerPhone)),
-              pw.SizedBox(width: 14),
-              pw.Expanded(child: _fieldBlock('EMAIL', data.customerEmail)),
+
               pw.SizedBox(width: 20),
+
+              pw.Expanded(child: _fieldBlock('EMAIL', data.customerEmail)),
             ],
           ),
         ),
@@ -285,27 +321,30 @@ pw.Widget _buildCustomerBox(MultiOrderInvoiceData data) {
   );
 }
 
-pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
-  final headerStyle = pw.TextStyle(fontSize: 8, fontWeight: pw.FontWeight.bold);
-  final rowStyle = pw.TextStyle(color: _InvoiceColors.black, fontSize: 10);
+// ==================== جدول السيارات والخدمات ====================
 
-  const minRows = 9;
-  final rowCount = data.orders.length > minRows ? data.orders.length : minRows;
+pw.Widget _buildOrdersTable(MultiOrderReceiptData data) {
+  final headerStyle = pw.TextStyle(fontSize: 7, fontWeight: pw.FontWeight.bold);
+
+  final rowStyle = pw.TextStyle(color: _ReceiptColors.black, fontSize: 8.5);
 
   final rows = <pw.TableRow>[
     pw.TableRow(
-      decoration: const pw.BoxDecoration(color: _InvoiceColors.lightHeader),
+      decoration: const pw.BoxDecoration(color: _ReceiptColors.lightHeader),
       children: [
         _tableCell('#', headerStyle, isHeader: true),
-        _tableCell('VIN', headerStyle, isHeader: true),
+
+        _tableCell('VIN / VEHICLE', headerStyle, isHeader: true),
+
         _tableCell(
           'SERVICE',
           headerStyle,
           isHeader: true,
           align: pw.Alignment.center,
         ),
+
         _tableCell(
-          'AMOUNT',
+          'AMOUNT PAID',
           headerStyle,
           isHeader: true,
           align: pw.Alignment.centerRight,
@@ -317,13 +356,17 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
   for (int i = 0; i < data.orders.length; i++) {
     final o = data.orders[i];
 
+    // إذا لم توجد خدمات
     if (o.qty.isEmpty) {
       rows.add(
         pw.TableRow(
           children: [
             _tableCell((i + 1).toString().padLeft(2, '0'), rowStyle),
+
             _tableCell('${o.vin} ${o.year} ${o.brand} ${o.model}', rowStyle),
+
             _tableCell('', rowStyle),
+
             _tableCell(
               '\$${o.amount.toStringAsFixed(0)}',
               rowStyle,
@@ -336,21 +379,30 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
       continue;
     }
 
+    // كل خدمة = Row مستقل
     for (int serviceIndex = 0; serviceIndex < o.qty.length; serviceIndex++) {
       final detail = o.qty[serviceIndex];
 
       final serviceName =
-          detail.service?.description ??
-          detail.service?.description ??
-          detail.item?.itemDescription ??
-          '';
+          detail.service?.description ?? detail.item?.itemDescription ?? '';
 
       rows.add(
         pw.TableRow(
           children: [
-            _tableCell((i + 1).toString().padLeft(2, '0'), rowStyle),
-            _tableCell('${o.vin} ${o.year} ${o.brand} ${o.model}', rowStyle),
+            _tableCell(
+              serviceIndex == 0 ? (i + 1).toString().padLeft(2, '0') : '',
+              rowStyle,
+            ),
+
+            _tableCell(
+              serviceIndex == 0
+                  ? '${o.vin} ${o.year} ${o.brand} ${o.model}'
+                  : '',
+              rowStyle,
+            ),
+
             _tableCell(serviceName, rowStyle),
+
             _tableCell(
               '\$${(detail.cost ?? 0).toStringAsFixed(0)}',
               rowStyle,
@@ -363,7 +415,7 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
   }
 
   return pw.Table(
-    border: pw.TableBorder.all(color: _InvoiceColors.border, width: 0.6),
+    border: pw.TableBorder.all(color: _ReceiptColors.border, width: 0.6),
     columnWidths: {
       0: const pw.FixedColumnWidth(30),
       1: const pw.FlexColumnWidth(3), // VIN
@@ -384,51 +436,55 @@ pw.Widget _tableCell(
     padding: const pw.EdgeInsets.symmetric(horizontal: 8, vertical: 6),
     child: pw.Align(
       alignment: align,
-      child: pw.Text(text, style: isHeader ? style : style),
+      child: pw.Text(text, style: style),
     ),
   );
 }
 
-pw.Widget _buildTechnicianNotes(MultiOrderInvoiceData data) {
+pw.Widget _buildTechnicianNotes(MultiOrderReceiptData data) {
   return pw.Column(
     crossAxisAlignment: pw.CrossAxisAlignment.start,
     children: [
       pw.Text(
         'TECHNICIAN NOTES',
         style: pw.TextStyle(
-          color: _InvoiceColors.grayText,
+          color: _ReceiptColors.grayText,
           fontSize: 8,
           letterSpacing: 0.8,
         ),
       ),
+
       pw.SizedBox(height: 6),
+
       pw.Container(
         height: 130,
         width: double.infinity,
         decoration: pw.BoxDecoration(
-          border: pw.Border.all(color: _InvoiceColors.border, width: 0.7),
+          border: pw.Border.all(color: _ReceiptColors.border, width: 0.7),
         ),
         padding: const pw.EdgeInsets.all(8),
         child: pw.Text(
           data.technicianNotes,
-          style: pw.TextStyle(color: _InvoiceColors.black, fontSize: 9),
+          style: pw.TextStyle(color: _ReceiptColors.black, fontSize: 9),
         ),
       ),
+
       pw.SizedBox(height: 8),
+
       pw.Text(
         data.footerNote,
-        style: pw.TextStyle(color: _InvoiceColors.grayText, fontSize: 7.5),
+        style: pw.TextStyle(color: _ReceiptColors.grayText, fontSize: 7.5),
       ),
     ],
   );
 }
 
-pw.Widget _buildTotalsBox(MultiOrderInvoiceData data) {
+pw.Widget _buildTotalsBox(MultiOrderReceiptData data) {
   pw.Widget row(String label, String value, {bool isBold = false}) {
     return pw.Container(
       decoration: pw.BoxDecoration(
         border: pw.Border(
-          bottom: pw.BorderSide(color: _InvoiceColors.border, width: 0.6),
+          bottom: pw.BorderSide(color: _ReceiptColors.border, width: 0.6),
         ),
       ),
       padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -438,15 +494,16 @@ pw.Widget _buildTotalsBox(MultiOrderInvoiceData data) {
           pw.Text(
             label,
             style: pw.TextStyle(
-              color: _InvoiceColors.grayText,
+              color: _ReceiptColors.grayText,
               fontSize: 8,
               fontWeight: isBold ? pw.FontWeight.bold : pw.FontWeight.normal,
             ),
           ),
+
           pw.Text(
             value,
             style: pw.TextStyle(
-              color: _InvoiceColors.black,
+              color: _ReceiptColors.black,
               fontSize: 9,
               fontWeight: pw.FontWeight.bold,
             ),
@@ -458,7 +515,7 @@ pw.Widget _buildTotalsBox(MultiOrderInvoiceData data) {
 
   return pw.Container(
     decoration: pw.BoxDecoration(
-      border: pw.Border.all(color: _InvoiceColors.border, width: 0.7),
+      border: pw.Border.all(color: _ReceiptColors.border, width: 0.7),
     ),
     child: pw.Column(
       children: [
@@ -466,20 +523,24 @@ pw.Widget _buildTotalsBox(MultiOrderInvoiceData data) {
           'LABOR',
           data.labor > 0 ? '\$${data.labor.toStringAsFixed(2)}' : '',
         ),
+
         row(
           'PARTS',
           data.parts > 0 ? '\$${data.parts.toStringAsFixed(2)}' : '',
         ),
+
         row('SUBTOTAL', '\$${data.subtotal.toStringAsFixed(2)}'),
+
         row('TAX', data.tax > 0 ? '\$${data.tax.toStringAsFixed(2)}' : ''),
+
         pw.Container(
-          color: _InvoiceColors.totalBg,
+          color: _ReceiptColors.totalBg,
           padding: const pw.EdgeInsets.symmetric(horizontal: 10, vertical: 12),
           child: pw.Row(
             mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
             children: [
               pw.Text(
-                'TOTAL AMOUNT \$${data.total.toStringAsFixed(0)}',
+                'TOTAL PAID \$${data.total.toStringAsFixed(0)}',
                 style: pw.TextStyle(
                   fontSize: 11,
                   fontWeight: pw.FontWeight.bold,
@@ -493,72 +554,48 @@ pw.Widget _buildTotalsBox(MultiOrderInvoiceData data) {
   );
 }
 
-// ==================== دالة الإرسال (مدمجة مع التوليد) ====================
+// ==================== دالة الإرسال ====================
 
-Future<bool> sendMultiOrderInvoiceEmail({
+Future<bool> sendMultiOrderReceiptEmail({
   required String toEmail,
   required String customerName,
-  required String invoiceId,
-  required MultiOrderInvoiceData invoiceData,
+  required String receiptId,
+  required MultiOrderReceiptData receiptData,
   String? ccEmail,
 }) async {
   final smtpServer = gmail('alifouaad24@gmail.com', 'tdhhwaczycgqemmh');
 
-  final pdfBytes = await generateMultiOrderInvoicePdf(invoiceData);
+  final pdfBytes = await generateMultiOrderReceiptPdf(receiptData);
 
   final message = Message()
-    ..from = const Address('alifouaad24@gmail.com', 'The Giest')
+    ..from = const Address('alifouaad24@gmail.com', 'The Geist')
     ..recipients.add(toEmail)
-    ..subject = 'Invoice #$invoiceId'
-    ..text = 'Your invoice document: $customerName'
+    ..subject = 'Payment Receipt #$receiptId'
+    ..text =
+        'Dear $customerName,\n\nThank you for your payment. Please find attached your payment receipt for the services completed.\n\nThe Geist LLC'
     ..attachments = [
       StreamAttachment(
         Stream.fromIterable([pdfBytes]),
         'application/pdf',
-        fileName: 'invoice_$invoiceId.pdf',
+        fileName: 'receipt_$receiptId.pdf',
       ),
     ];
   if (ccEmail != null && ccEmail.trim().isNotEmpty) {
     message.ccRecipients.add(ccEmail.trim());
   }
-
   try {
     final sendReport = await send(message, smtpServer);
-    print('تم الإرسال: $sendReport');
+
+    print('تم إرسال الإيصال: $sendReport');
+
     return true;
   } on MailerException catch (e) {
-    print('فشل الإرسال: $e');
+    print('فشل إرسال الإيصال: $e');
+
     for (var p in e.problems) {
       print('المشكلة: ${p.code}: ${p.msg}');
     }
+
     return false;
   }
 }
-
-// ==================== مثال استخدام ====================
-
-/*
-void main() async {
-  final invoice = MultiOrderInvoiceData(
-    invoiceNumber: '4457',
-    dateFrom: '07/01/2026',
-    dateTo: '07/30/2026',
-    customerName: 'HR Auto Body',
-    customerPhone: '3172208557',
-    customerEmail: 'Hrautobody0@gmail.com',
-    customerAddress: '437 E Hanna Ave Indianapolis, IN 46227',
-    orders: [
-      InvoiceOrderRow(vin: '1FTFW1RG5KFB89047', qty: 2, amount: 750),
-      InvoiceOrderRow(vin: '2T1BURHE0JC012345', qty: 1, amount: 375),
-    ],
-    technicianNotes: '',
-  );
-
-  await sendMultiOrderInvoiceEmail(
-    toEmail: 'client@example.com',
-    customerName: invoice.customerName,
-    invoiceId: invoice.invoiceNumber,
-    invoiceData: invoice,
-  );
-}
-*/
