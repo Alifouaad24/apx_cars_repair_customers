@@ -34,4 +34,5 @@ abstract class CaseRepository {
   Future<Either<Failure, GlobalOrderModel>> deleteOrder(int orderId);
   Future<Either<Failure, List<AssignTypeModel>>> getAllAssignTypes();
   Future<Either<Failure, List<SupplierBusinessModel>>> getAllBusinesses();
+  Future<Either<Failure, CarInfoModel>> editCarInfo(int id, Map<String, dynamic> data);
 }

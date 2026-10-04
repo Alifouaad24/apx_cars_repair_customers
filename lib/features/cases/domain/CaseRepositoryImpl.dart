@@ -233,4 +233,14 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to load status"));
     }
   }
+
+  @override
+  Future<Either<Failure, CarInfoModel>> editCarInfo(int id, Map<String, dynamic> data) async {
+    try {
+      CarInfoModel response = await remoteDataSource.editCarInfo(id, data);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to edit car info"));
+    }
+  }
 }

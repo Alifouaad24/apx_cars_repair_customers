@@ -15,6 +15,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNot
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseServiceStatus.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/editCarInfoUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getConsumerBusinesses_usecase.dart';
@@ -47,12 +48,10 @@ class CaseBinding extends Bindings {
       fenix: true,
     );
 
-
-        Get.lazyPut<CustomerRemoteDataSource>(
+    Get.lazyPut<CustomerRemoteDataSource>(
       () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
       fenix: true,
     );
-
 
     Get.lazyPut<CaseRepository>(
       () => CaseRepositoryImpl(Get.find()),
@@ -63,7 +62,6 @@ class CaseBinding extends Bindings {
       () => CustomerRepositoryImpl(Get.find()),
       fenix: true,
     );
-
 
     Get.lazyPut<ShowCasesUsecase>(
       () => ShowCasesUsecase(Get.find<CaseRepository>()),
@@ -126,8 +124,13 @@ class CaseBinding extends Bindings {
       fenix: true,
     );
 
-        Get.lazyPut<GetconsumerbusinessesUsecase>(
+    Get.lazyPut<GetconsumerbusinessesUsecase>(
       () => GetconsumerbusinessesUsecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
+
+    Get.lazyPut<EditCarInfoUseCase>(
+      () => EditCarInfoUseCase(Get.find<CaseRepository>()),
       fenix: true,
     );
 
@@ -149,6 +152,7 @@ class CaseBinding extends Bindings {
         Get.find<DeleteOrderUsecase>(),
         Get.put(GetassigntypesUsecase(Get.find())),
         Get.put(GetconsumerbusinessesUsecase(Get.find())),
+        Get.put(EditCarInfoUseCase(Get.find())),
       ),
       fenix: true,
     );

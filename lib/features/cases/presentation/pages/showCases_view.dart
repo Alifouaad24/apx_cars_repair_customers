@@ -40,6 +40,7 @@ class _ShowCasesState extends State<ShowCases> {
               Get.find(),
               Get.find(),
               Get.find(),
+              Get.find(),
             ),
       builder: (controller) => Scaffold(
         appBar: AppBar(
@@ -61,7 +62,20 @@ class _ShowCasesState extends State<ShowCases> {
             if (controller.ordersToSendInvoice.length == 0)
               IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: () => Get.toNamed(AppRoutes.addEditCase),
+                onPressed: () {
+                  controller.isUpdate = false;
+                  controller.currentOrderId = null;
+                  controller.selectedCustomer = null;
+                  controller.notesController.clear();
+                  controller.serviceNoteController.clear();
+                  controller.ordersToSendInvoice.clear();
+                  controller.selectedConsumer = null;
+                  controller.selectedCustomerType = null;
+                  controller.visitDate = null;
+                  controller.visitTime = null;
+
+                  Get.toNamed(AppRoutes.addEditCase);
+                },
               ),
           ],
         ),
@@ -403,113 +417,128 @@ class _ShowCasesState extends State<ShowCases> {
                             onPressed: () => Navigator.pop(sheetContext),
                           ),
                           if (controller.ordersToSendInvoice.isNotEmpty)
-                          
-                          controller.isSendingRecipt ? Container(
-                              margin: const EdgeInsets.all(2),
-                              child: const CircularProgressIndicator(
-                                color: Color.fromARGB(255, 22, 21, 21),
-                              )
-                            ) : 
-                            IconButton(
-                              icon: const Icon(Icons.send),
-                              onPressed: () {
-                                showModalBottomSheet(
-                                  context: context,
-                                  backgroundColor: Colors.transparent,
-                                  isScrollControlled: true,
-                                  builder: (context) {
-                                    return Container(
-                                      padding: const EdgeInsets.fromLTRB(
-                                        20,
-                                        12,
-                                        20,
-                                        30,
-                                      ),
-                                      decoration: const BoxDecoration(
-                                        color: Colors.white,
-                                        borderRadius: BorderRadius.vertical(
-                                          top: Radius.circular(28),
-                                        ),
-                                      ),
-                                      child: Column(
-                                        mainAxisSize: MainAxisSize.min,
-                                        children: [
-                                          // Handle
-                                          Container(
-                                            width: 45,
-                                            height: 5,
-                                            margin: const EdgeInsets.only(
-                                              bottom: 22,
+                            controller.isSendingRecipt
+                                ? Container(
+                                    margin: const EdgeInsets.all(2),
+                                    child: const CircularProgressIndicator(
+                                      color: Color.fromARGB(255, 22, 21, 21),
+                                    ),
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.send),
+                                    onPressed: () {
+                                      showModalBottomSheet(
+                                        context: context,
+                                        backgroundColor: Colors.transparent,
+                                        isScrollControlled: true,
+                                        builder: (context) {
+                                          return Container(
+                                            padding: const EdgeInsets.fromLTRB(
+                                              20,
+                                              12,
+                                              20,
+                                              30,
                                             ),
-                                            decoration: BoxDecoration(
-                                              color: Colors.grey.shade300,
+                                            decoration: const BoxDecoration(
+                                              color: Colors.white,
                                               borderRadius:
-                                                  BorderRadius.circular(10),
+                                                  BorderRadius.vertical(
+                                                    top: Radius.circular(28),
+                                                  ),
                                             ),
-                                          ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              children: [
+                                                // Handle
+                                                Container(
+                                                  width: 45,
+                                                  height: 5,
+                                                  margin: const EdgeInsets.only(
+                                                    bottom: 22,
+                                                  ),
+                                                  decoration: BoxDecoration(
+                                                    color: Colors.grey.shade300,
+                                                    borderRadius:
+                                                        BorderRadius.circular(
+                                                          10,
+                                                        ),
+                                                  ),
+                                                ),
 
-                                          const Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              'Send Document',
-                                              style: TextStyle(
-                                                fontSize: 21,
-                                                fontWeight: FontWeight.w800,
-                                              ),
+                                                const Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Text(
+                                                    'Send Document',
+                                                    style: TextStyle(
+                                                      fontSize: 21,
+                                                      fontWeight:
+                                                          FontWeight.w800,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 6),
+
+                                                Align(
+                                                  alignment:
+                                                      Alignment.centerLeft,
+                                                  child: Text(
+                                                    'Choose the document you want to send',
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 20),
+
+                                                // Invoice
+                                                _documentOption(
+                                                  context: context,
+                                                  icon: Icons
+                                                      .receipt_long_rounded,
+                                                  title: 'Invoice',
+                                                  subtitle:
+                                                      'Send the invoice to the customer',
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                    controller
+                                                        .sendMultiOrderInvoiceEmail(
+                                                          ccEmail:
+                                                              'saifaldinsami@gmail.com',
+                                                        );
+                                                  },
+                                                ),
+
+                                                const SizedBox(height: 12),
+
+                                                // Receipt
+                                                _documentOption(
+                                                  context: context,
+                                                  icon:
+                                                      Icons.description_rounded,
+                                                  title: 'Receipt',
+                                                  subtitle:
+                                                      'Send the payment receipt',
+                                                  onTap: () {
+                                                    Navigator.pop(context);
+                                                    controller
+                                                        .sendMultiOrderReceiptEmail(
+                                                          ccEmail:
+                                                              'saifaldinsami@gmail.com',
+                                                        );
+                                                  },
+                                                ),
+                                              ],
                                             ),
-                                          ),
-
-                                          const SizedBox(height: 6),
-
-                                          Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: Text(
-                                              'Choose the document you want to send',
-                                              style: TextStyle(
-                                                fontSize: 14,
-                                                color: Colors.grey.shade600,
-                                              ),
-                                            ),
-                                          ),
-
-                                          const SizedBox(height: 20),
-
-                                          // Invoice
-                                          _documentOption(
-                                            context: context,
-                                            icon: Icons.receipt_long_rounded,
-                                            title: 'Invoice',
-                                            subtitle:
-                                                'Send the invoice to the customer',
-                                            onTap: () {
-                                              Navigator.pop(context);
-                                              controller
-                                                  .sendMultiOrderInvoiceEmail(ccEmail: 'saifaldinsami@gmail.com');
-                                            },
-                                          ),
-
-                                          const SizedBox(height: 12),
-
-                                          // Receipt
-                                          _documentOption(
-                                            context: context,
-                                            icon: Icons.description_rounded,
-                                            title: 'Receipt',
-                                            subtitle:
-                                                'Send the payment receipt',
-                                            onTap: () {
-                                              Navigator.pop(context);
-                                              controller
-                                                  .sendMultiOrderReceiptEmail(ccEmail: 'saifaldinsami@gmail.com');
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                );
-                              },
-                            ),
+                                          );
+                                        },
+                                      );
+                                    },
+                                  ),
 
                           // if (controller.ordersToSendInvoice.length > 0)
                           //   controller.isSendingRecipt

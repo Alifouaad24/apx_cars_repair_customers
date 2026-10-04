@@ -13,6 +13,7 @@ import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/editCarInfoUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getConsumerBusinesses_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
@@ -43,6 +44,7 @@ class CaseController extends GetxController {
   CustomerController customerController = Get.find<CustomerController>();
 
   GetconsumerbusinessesUsecase getconsumerbusinessesUsecase;
+  EditCarInfoUseCase editCarInfoUseCase;
   ShowCasesUsecase showCasesUsecase;
   GetassigntypesUsecase getassigntypesUsecase;
   GetorderstatusUsecase getorderstatusUsecase;
@@ -72,6 +74,7 @@ class CaseController extends GetxController {
   CarYearModel? selectedYear;
   CustomerModel? selectedCustomer;
   bool isLoading = false;
+  bool isEditingCar = false;
   bool isUpdate = false;
   bool isEdit = false;
   GlobalOrderModel? currentCase;
@@ -132,6 +135,7 @@ class CaseController extends GetxController {
     this.deleteOrderUsecase,
     this.getassigntypesUsecase,
     this.getconsumerbusinessesUsecase,
+    this.editCarInfoUseCase
   );
 
   @override
@@ -680,28 +684,36 @@ class CaseController extends GetxController {
     try {
       final result = await editServiceToCaseUseCase(editingServiceId!, data);
 
-      await result.fold(
-        (failure) async {
-          Get.snackbar("Error", failure.message);
-        },
-        (data) async {
-          isSuccess = true;
-          Get.snackbar("Success", "Service edited successfully");
-          await getCases();
-          isEditingCaseService = false;
+      result.fold((failure) => Get.snackbar("Error", failure.message), (
+        updated,
+      ) {
+        isSuccess = true;
 
-          var detailToRemove = currentCase!.orderDetails?.where(
+        // استبدل السيرفس القديمة بنفس مكانها بدل ما نضيف وحدة جديدة
+        final details = currentCase?.orderDetails;
+        if (details != null) {
+          final index = details.indexWhere(
             (d) => d.globalOrderDetailId == editingServiceId,
           );
+          if (index != -1) {
+            details[index] = updated;
+          } else {
+            details.add(updated);
+          }
+        }
+      });
+    } finally {
+      // بيوقف اللودنغ دايماً، نجح أو فشل
+      isEditingCaseService = false;
+      update();
+    }
 
-          currentCase!.orderDetails?.remove(detailToRemove);
-          currentCase!.orderDetails?.add(data);
-          update();
-          Get.back();
-          await getCases();
-        },
-      );
-    } finally {}
+    if (isSuccess) {
+      // سكّر البوب أب أول، وبعدين اعرض السناك بار
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar("Success", "Service edited successfully");
+      getCases(); // تحديث القائمة بالخلفية بدون انتظار
+    }
 
     return isSuccess;
   }
@@ -750,18 +762,18 @@ class CaseController extends GetxController {
     var detail = currentCase!.orderDetails!.firstWhere(
       (e) => e.globalOrderDetailId == serviceId,
     );
-    detail.caseServiceNotes?.add(
-      new CaseServiceNotesModel(
-        caseServiceNotesId: DateTime.now().microsecond,
-        notes: data['notes'][0],
-        oredesServicesId: serviceId,
-      ),
-    );
+    
     update();
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
       getCases();
       addingNoteToService = false;
-
+detail.caseServiceNotes?.add(
+      new CaseServiceNotesModel(
+        caseServiceNotesId: DateTime.now().microsecond,
+        notes: serviceNoteController.text.trim(),
+        oredesServicesId: serviceId,
+      ),
+    );
       update();
       Get.back();
       Get.snackbar("Success", "Note added successfully");
@@ -1295,11 +1307,10 @@ class CaseController extends GetxController {
         (data) async {
           cases.removeWhere((el) => el.globalOrderId == orderId);
           Get.back();
-          Get.snackbar("Success", "Service deleted successfully");
-
           await getCases();
           isDeletingOrder = false;
           update();
+          Get.snackbar("Success", "Order deleted successfully");
           return true;
         },
       );
@@ -1337,5 +1348,38 @@ class CaseController extends GetxController {
     } else if (id == 2) {
       loadCustomers();
     }
+  }
+
+  Future<bool> editCarInfo(int carInfoId, Map<String, dynamic> data) async {
+    isEditingCar = true;
+    update();
+    var ok = false;
+
+    try {
+      final result = await editCarInfoUseCase(carInfoId, data);
+      result.fold(
+        (failure) => Get.snackbar("Error", failure.message),
+        (_) => ok = true,
+      );
+    } finally {
+      isEditingCar = false;
+      update();
+    }
+
+    if (ok) {
+      // سكّر الديالوغ أول، وبعدين السناك بار
+      if (Get.isDialogOpen ?? false) Get.back();
+      Get.snackbar("Success", "Car updated successfully");
+
+      await getCases();
+      currentCase =
+          cases.firstWhereOrNull(
+            (c) => c.globalOrderId == currentCase?.globalOrderId,
+          ) ??
+          currentCase;
+      update();
+    }
+
+    return ok;
   }
 }

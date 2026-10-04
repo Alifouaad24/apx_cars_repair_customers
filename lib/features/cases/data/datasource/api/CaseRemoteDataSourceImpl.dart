@@ -36,7 +36,7 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
 
   @override
   Future<CarsDataModel> getAllCarsData() async {
-    final response = await client.dio.get("/Car");
+    final response = await client.dio.get("/Car/40");
     print(response.data);
     print(response.data['models']);
     return CarsDataModel.fromJson(response.data);
@@ -211,5 +211,16 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
     );
 
     return (response.data as List).map((el) => SupplierBusinessModel.fromJson(el)).toList();
+  }
+
+  @override
+  Future<CarInfoModel> editCarInfo(int id, Map<String, dynamic> data) async {
+    final response = await client.dio.put(
+      "/Orders/EditCarInfo/$id",
+      data: data,
+      options: Options(contentType: "application/json"),
+    );
+
+    return CarInfoModel.fromJson(response.data);
   }
 }

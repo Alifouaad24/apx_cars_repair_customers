@@ -14,6 +14,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNot
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/changeCaseServiceStatus.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/deleteCaseService_useCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/editCarInfoUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getAllService_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getOrderStatus_usecase.dart';
@@ -118,9 +119,11 @@ Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.lazyPut(() => DeleteOrderUsecase(Get.find()));
     Get.put(GetassigntypesUsecase(Get.find()));
     Get.put(GetAvailableBusinessesUsecase(Get.find()));
+    Get.put(EditCarInfoUseCase(Get.find()));
 
     Get.lazyPut<CaseController>(
       () => CaseController(
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

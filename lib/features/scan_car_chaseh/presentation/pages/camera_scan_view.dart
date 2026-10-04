@@ -1,11 +1,14 @@
 import 'dart:io';
+import 'dart:math' as math;
 import 'dart:ui' as ui;
 import 'package:camera/camera.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/controllers/scan_chaseh_controller.dart';
 import 'package:apx_cars_repair/features/scan_car_chaseh/presentation/pages/car_info_view.dart';
+import 'package:flutter/foundation.dart' show compute;
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:google_mlkit_text_recognition/google_mlkit_text_recognition.dart';
+import 'package:image/image.dart' as img;
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:speech_to_text/speech_to_text.dart';
@@ -51,13 +54,6 @@ class _CameraScanViewState extends State<CameraScanView>
     return Size(ps.height, ps.width);
   }
 
-  double _coverScale(Size box, Size preview) {
-    final boxRatio = box.width / box.height;
-    final previewRatio = preview.width / preview.height;
-    final s = previewRatio / boxRatio;
-    return s < 1 ? 1 / s : s;
-  }
-
   @override
   void initState() {
     super.initState();
@@ -86,6 +82,7 @@ class _CameraScanViewState extends State<CameraScanView>
     }
   }
 
+  // ================= Speech =================
   Future<void> _startListening() async {
     bool available = await _speech.initialize(
       onStatus: (status) {
@@ -202,6 +199,7 @@ class _CameraScanViewState extends State<CameraScanView>
     // onStatus callback will handle processing when speech engine is done
   }
 
+  // ================= Camera Init =================
   Future<void> _initCamera() async {
     if (_cameraController != null || _isInitializingCamera) return;
 
@@ -229,7 +227,7 @@ class _CameraScanViewState extends State<CameraScanView>
 
       final controller = CameraController(
         back,
-        ResolutionPreset.high, // Use medium — high is too heavy
+        ResolutionPreset.high,
         enableAudio: false,
         imageFormatGroup: Platform.isIOS
             ? ImageFormatGroup.bgra8888
@@ -302,11 +300,9 @@ class _CameraScanViewState extends State<CameraScanView>
 
     try {
       final file = await _cameraController!.takePicture();
-
       await _extractTextFromImage(file.path);
     } catch (e) {
       debugPrint("Capture Error: $e");
-
       Get.snackbar(
         'Capture Error',
         e.toString(),
@@ -314,130 +310,87 @@ class _CameraScanViewState extends State<CameraScanView>
       );
     }
 
-    setState(() => _isProcessing = false);
+    if (mounted) setState(() => _isProcessing = false);
   }
 
-  // Future<void> _extractTextFromImage(String imagePath) async {
-  //   final inputImage = InputImage.fromFilePath(imagePath);
-  //   final recognized = await _textRecognizer.processImage(inputImage);
+  /// موقع المستطيل الداخلي بإحداثيات طبيعية (0..1) نسبةً إلى الـ preview
+  Rect _frameRectNormalizedInPreview(Size screen) {
+    final preview = _rotatedPreviewSize();
 
-  //   final bytes = await File(imagePath).readAsBytes();
-  //   final codec = await ui.instantiateImageCodec(bytes);
-  //   final frame = await codec.getNextFrame();
-  //   final imageSize = Size(
-  //     frame.image.width.toDouble(),
-  //     frame.image.height.toDouble(),
-  //   );
+    // نفس منطق FittedBox(fit: BoxFit.cover) المستخدم في العرض
+    final scale = math.max(
+      screen.width / preview.width,
+      screen.height / preview.height,
+    );
+    final dispW = preview.width * scale;
+    final dispH = preview.height * scale;
+    final offX = (dispW - screen.width) / 2;
+    final offY = (dispH - screen.height) / 2;
 
-  //   final frameRect = _visibleFrameRectInImage(imageSize);
+    // المستطيل بعرض الشاشة وفي منتصفها
+    final frameTop = (screen.height - _frameHeight) / 2;
+    final frameBottom = frameTop + _frameHeight;
 
-  //   final buffer = StringBuffer();
-  //   for (final block in recognized.blocks) {
-  //     for (final line in block.lines) {
-  //       if (frameRect == null || frameRect.overlaps(line.boundingBox)) {
-  //         buffer.writeln(line.text);
-  //       }
-  //     }
-  //   }
-
-  //   _showCapturedImageDialog(imagePath, buffer.toString().trim());
-  // }
+    return Rect.fromLTRB(
+      (0 + offX) / dispW,
+      (frameTop + offY) / dispH,
+      (screen.width + offX) / dispW,
+      (frameBottom + offY) / dispH,
+    );
+  }
 
   Future<void> _extractTextFromImage(String imagePath) async {
-    final inputImage = InputImage.fromFilePath(imagePath);
-    final recognized = await _textRecognizer.processImage(inputImage);
+    if (_cameraController == null) return;
 
-    final bytes = await File(imagePath).readAsBytes();
-    final codec = await ui.instantiateImageCodec(bytes);
-    final frame = await codec.getNextFrame();
-    final imageSize = Size(
-      frame.image.width.toDouble(),
-      frame.image.height.toDouble(),
+    // نقرأ القيم قبل أي await
+    final screenSize = MediaQuery.of(context).size;
+    final norm = _frameRectNormalizedInPreview(screenSize);
+    final preview = _rotatedPreviewSize();
+
+    // 1) قص الصورة على حدود المستطيل فقط (في isolate منفصل)
+    final croppedPath = await compute(
+      _cropImageToFrame,
+      _CropParams(
+        path: imagePath,
+        left: norm.left,
+        top: norm.top,
+        right: norm.right,
+        bottom: norm.bottom,
+        previewAspect: preview.width / preview.height,
+      ),
     );
 
-    final frameRect = _visibleFrameRectInImage(
-      imageSize,
-      MediaQuery.of(context).size,
-      MediaQuery.of(context).size.width,
+    // 2) OCR على الجزء المقصوص فقط
+    final recognized = await _textRecognizer.processImage(
+      InputImage.fromFilePath(croppedPath),
     );
 
-    final buffer = StringBuffer();
-    for (final block in recognized.blocks) {
-      for (final line in block.lines) {
-        if (frameRect == null || frameRect.overlaps(line.boundingBox)) {
-          buffer.writeln(line.text);
-        }
-      }
+    // 3) استخراج VIN
+    final vin = extractVin(recognized);
+
+    if (!mounted) return;
+
+    if (vin == null) {
+      Get.rawSnackbar(
+        message: 'لم يتم العثور على VIN، حاول تقريب الكاميرا أو تعديل المستطيل',
+        duration: const Duration(seconds: 2),
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
 
-    _showCapturedImageDialog(imagePath, buffer.toString().trim());
-  }
-
-  Rect? _visibleFrameRectInImage(
-    Size imageSize,
-    Size screenSize,
-    double frameWidth,
-  ) {
-    if (_cameraController == null) return null;
-
-    final rotated = _rotatedPreviewSize();
-
-    // كيف يغطي الفيديو الشاشة بالكامل (BoxFit.cover) - نفس المنطق المستخدم في العرض
-    final scale = _coverScale(screenSize, rotated);
-
-    final dispW = rotated.width * scale;
-    final dispH = rotated.height * scale;
-    final offX = (dispW - screenSize.width) / 2;
-    final offY = (dispH - screenSize.height) / 2;
-
-    // موقع المستطيل على الشاشة (بالنسبة لمنتصف الشاشة تماماً)
-    final frameLeftScreen = (screenSize.width - frameWidth) / 2;
-    final frameTopScreen = (screenSize.height - _frameHeight) / 2;
-    final frameRightScreen = frameLeftScreen + frameWidth;
-    final frameBottomScreen = frameTopScreen + _frameHeight;
-
-    // تحويل من إحداثيات الشاشة إلى إحداثيات الفيديو (preview)
-    final left = (frameLeftScreen + offX) / scale;
-    final top = (frameTopScreen + offY) / scale;
-    final right = (frameRightScreen + offX) / scale;
-    final bottom = (frameBottomScreen + offY) / scale;
-
-    // تحويل من إحداثيات الـ preview إلى إحداثيات الصورة الملتقطة الفعلية
-    final sx = imageSize.width / rotated.width;
-    final sy = imageSize.height / rotated.height;
-
-    return Rect.fromLTRB(left * sx, top * sy, right * sx, bottom * sy);
-  }
-
-  Offset? _frameCenterNormalized(Size screenSize, double frameWidth) {
-    if (_cameraController == null) return null;
-
-    final rotated = _rotatedPreviewSize();
-    final scale = _coverScale(screenSize, rotated);
-
-    final dispW = rotated.width * scale;
-    final dispH = rotated.height * scale;
-    final offX = (dispW - screenSize.width) / 2;
-    final offY = (dispH - screenSize.height) / 2;
-
-    final frameCenterXScreen = screenSize.width / 2;
-    final frameCenterYScreen =
-        screenSize.height / 2; // المستطيل بمنتصف الشاشة دائماً
-
-    final centerX = (frameCenterXScreen + offX) / scale / rotated.width;
-    final centerY = (frameCenterYScreen + offY) / scale / rotated.height;
-
-    return Offset(centerX.clamp(0.0, 1.0), centerY.clamp(0.0, 1.0));
+    // نعرض الصورة المقصوصة حتى يرى المستخدم ما قرأه الـ OCR فعلاً
+    _showCapturedImageDialog(
+      croppedPath,
+      vin ?? recognized.text.replaceAll('\n', ' ').trim(),
+    );
   }
 
   Future<void> _focusOnFrame() async {
     final controller = _cameraController;
     if (controller == null || !controller.value.isInitialized) return;
 
-    final screenSize = MediaQuery.of(context).size;
-    final point = _frameCenterNormalized(screenSize, screenSize.width);
-    if (point == null) return;
-
+    // المستطيل دائماً في منتصف الشاشة، والـ preview متمركز أيضاً
+    const point = Offset(0.5, 0.5);
     try {
       await controller.setFocusMode(FocusMode.auto);
       await controller.setFocusPoint(point);
@@ -460,11 +413,14 @@ class _CameraScanViewState extends State<CameraScanView>
               borderRadius: const BorderRadius.vertical(
                 top: Radius.circular(16),
               ),
-              child: Image.file(
-                File(imagePath),
-                fit: BoxFit.cover,
-                width: double.infinity,
-                height: 280,
+              child: Container(
+                color: Colors.black,
+                child: Image.file(
+                  File(imagePath),
+                  fit: BoxFit.contain,
+                  width: double.infinity,
+                  height: 140,
+                ),
               ),
             ),
             Padding(
@@ -520,7 +476,7 @@ class _CameraScanViewState extends State<CameraScanView>
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
-        title: const Text('Extructed text'),
+        title: const Text('Extracted text'),
         content: TextField(
           controller: textCtrl,
           maxLines: 4,
@@ -749,7 +705,6 @@ class _CameraScanViewState extends State<CameraScanView>
       backgroundColor: Colors.black,
       body: Stack(
         children: [
-          // ── Camera / Scanner Feed ──────────────────────────
           // ── Camera / Scanner Feed (full screen) ────────────
           Positioned.fill(
             child: _isBarcodeMode
@@ -867,7 +822,6 @@ class _CameraScanViewState extends State<CameraScanView>
             ),
           ),
 
-          // ── Scan frame overlay ─────────────────────────────
           // ── Scan frame overlay (resizable) ─────────────────
           Center(
             child: Builder(
@@ -885,22 +839,22 @@ class _CameraScanViewState extends State<CameraScanView>
                     ),
 
                     // زوايا الديكور
-                    Positioned(
+                    const Positioned(
                       top: 0,
                       left: 0,
                       child: _Corner(Alignment.topLeft),
                     ),
-                    Positioned(
+                    const Positioned(
                       top: 0,
                       right: 0,
                       child: _Corner(Alignment.topRight),
                     ),
-                    Positioned(
+                    const Positioned(
                       bottom: 0,
                       left: 0,
                       child: _Corner(Alignment.bottomLeft),
                     ),
-                    Positioned(
+                    const Positioned(
                       bottom: 0,
                       right: 0,
                       child: _Corner(Alignment.bottomRight),
@@ -916,8 +870,8 @@ class _CameraScanViewState extends State<CameraScanView>
                             _frameHeight = (_frameHeight + details.delta.dy)
                                 .clamp(_minFrameHeight, _maxFrameHeight);
                           });
-                          _focusOnFrame();
                         },
+                        onPanEnd: (_) => _focusOnFrame(),
                         child: Container(
                           width: 30,
                           height: 30,
@@ -1050,6 +1004,160 @@ class _CameraScanViewState extends State<CameraScanView>
   }
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// قص الصورة على حدود المستطيل (يعمل في isolate منفصل عبر compute)
+// ═══════════════════════════════════════════════════════════════════════════
+class _CropParams {
+  final String path;
+  final double left, top, right, bottom;
+  final double previewAspect;
+
+  const _CropParams({
+    required this.path,
+    required this.left,
+    required this.top,
+    required this.right,
+    required this.bottom,
+    required this.previewAspect,
+  });
+}
+
+String _cropImageToFrame(_CropParams p) {
+  final bytes = File(p.path).readAsBytesSync();
+  var image = img.decodeImage(bytes);
+  if (image == null) return p.path;
+
+  // تطبيق دوران EXIF حتى تتطابق الصورة مع ما يظهر على الشاشة
+  image = img.bakeOrientation(image);
+
+  final imgW = image.width.toDouble();
+  final imgH = image.height.toDouble();
+
+  // الصورة الملتقطة قد تكون بنسبة مختلفة عن الـ preview (مثلاً 4:3 مقابل 16:9)
+  // الجزء الظاهر في الـ preview هو المنطقة المتمركزة بنسبة الـ preview
+  double visW = imgW, visH = imgH;
+  if (imgW / imgH > p.previewAspect) {
+    visW = imgH * p.previewAspect;
+  } else {
+    visH = imgW / p.previewAspect;
+  }
+  final visX = (imgW - visW) / 2;
+  final visY = (imgH - visH) / 2;
+
+  // هامش صغير عمودي حتى لا تُقص أطراف الحروف
+  final margin = (p.bottom - p.top) * 0.08;
+  final l = p.left.clamp(0.0, 1.0).toDouble();
+  final r = p.right.clamp(0.0, 1.0).toDouble();
+  final t = (p.top - margin).clamp(0.0, 1.0).toDouble();
+  final b = (p.bottom + margin).clamp(0.0, 1.0).toDouble();
+
+  final x = (visX + l * visW).round().clamp(0, image.width - 1).toInt();
+  final y = (visY + t * visH).round().clamp(0, image.height - 1).toInt();
+  final w = ((r - l) * visW).round().clamp(1, image.width - x).toInt();
+  final h = ((b - t) * visH).round().clamp(1, image.height - y).toInt();
+
+  var cropped = img.copyCrop(image, x: x, y: y, width: w, height: h);
+
+  // تحسينات بسيطة للـ OCR
+  if (cropped.width < 1600) {
+    cropped = img.copyResize(
+      cropped,
+      width: 1600,
+      interpolation: img.Interpolation.cubic,
+    );
+  }
+  cropped = img.grayscale(cropped);
+  cropped = img.adjustColor(cropped, contrast: 1.3);
+
+  final outPath =
+      '${Directory.systemTemp.path}/vin_crop_${DateTime.now().millisecondsSinceEpoch}.jpg';
+  File(outPath).writeAsBytesSync(img.encodeJpg(cropped, quality: 95));
+  return outPath;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// استخراج VIN من نص الـ OCR
+// ═══════════════════════════════════════════════════════════════════════════
+final RegExp _vinRegex = RegExp(r'^[A-HJ-NPR-Z0-9]{17}$');
+
+String _normalizeForVin(String s) {
+  return s
+      .toUpperCase()
+      // إزالة الكلمات المساعدة مثل "VIN" و "NO" و "CHASSIS"
+      .replaceAll(RegExp(r'\b(VIN|NO|CHASSIS)\b'), ' ')
+      .replaceAll(RegExp(r'[^A-Z0-9 ]'), ' ')
+      // أخطاء OCR الشائعة: هذه الحروف غير مسموحة في VIN
+      .replaceAll('O', '0')
+      .replaceAll('Q', '0')
+      .replaceAll('I', '1');
+}
+
+String? extractVin(RecognizedText recognized) {
+  final sources = <String>[
+    for (final block in recognized.blocks)
+      for (final line in block.lines) line.text,
+    for (final block in recognized.blocks) block.text,
+    recognized.text,
+  ];
+
+  final scores = <String, int>{};
+
+  for (final src in sources) {
+    final normalized = _normalizeForVin(src);
+
+    // أ) كلمة مستقلة طولها 17 بالضبط (الأقوى)
+    for (final token in normalized.split(RegExp(r'\s+'))) {
+      if (_vinRegex.hasMatch(token)) {
+        scores[token] = (scores[token] ?? 0) + 2;
+      }
+    }
+
+    // ب) الـ OCR أحياناً يضع مسافات داخل الـ VIN: نزيلها ونجرب كل نافذة بطول 17
+    final joined = normalized.replaceAll(' ', '');
+    for (var i = 0; i + 17 <= joined.length; i++) {
+      final cand = joined.substring(i, i + 17);
+      if (_vinRegex.hasMatch(cand)) {
+        scores[cand] = scores[cand] ?? 0;
+      }
+    }
+  }
+
+  if (scores.isEmpty) return null;
+
+  // رقم التحقق يرفع الأولوية (إلزامي في أمريكا الشمالية فقط، لذلك ليس شرطاً)
+  for (final key in scores.keys.toList()) {
+    if (isValidVinChecksum(key)) scores[key] = scores[key]! + 3;
+  }
+
+  final sorted = scores.entries.toList()
+    ..sort((a, b) => b.value.compareTo(a.value));
+  return sorted.first.key;
+}
+
+bool isValidVinChecksum(String vin) {
+  if (vin.length != 17) return false;
+  const translit = {
+    'A': 1, 'B': 2, 'C': 3, 'D': 4, 'E': 5, 'F': 6, 'G': 7, 'H': 8,
+    'J': 1, 'K': 2, 'L': 3, 'M': 4, 'N': 5, 'P': 7, 'R': 9,
+    'S': 2, 'T': 3, 'U': 4, 'V': 5, 'W': 6, 'X': 7, 'Y': 8, 'Z': 9,
+  };
+  const weights = [8, 7, 6, 5, 4, 3, 2, 10, 0, 9, 8, 7, 6, 5, 4, 3, 2];
+
+  var sum = 0;
+  for (var i = 0; i < 17; i++) {
+    final c = vin[i];
+    final v = int.tryParse(c) ?? translit[c];
+    if (v == null) return false;
+    sum += v * weights[i];
+  }
+  final r = sum % 11;
+  final check = r == 10 ? 'X' : '$r';
+  return vin[8] == check;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// Widgets
+// ═══════════════════════════════════════════════════════════════════════════
 class _ScannerOverlayPainter extends CustomPainter {
   final double frameWidth;
   final double frameHeight;
@@ -1059,8 +1167,7 @@ class _ScannerOverlayPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final overlayPaint = Paint()
-      ..color = Colors.black
-          .withOpacity(0.5) // <-- هنا درجة الشفافية 50%
+      ..color = Colors.black.withOpacity(0.5) // درجة الشفافية 50%
       ..style = PaintingStyle.fill;
 
     final center = Offset(size.width / 2, size.height / 2);
@@ -1083,32 +1190,6 @@ class _ScannerOverlayPainter extends CustomPainter {
     return oldDelegate.frameWidth != frameWidth ||
         oldDelegate.frameHeight != frameHeight;
   }
-}
-
-/// يفلتر النص المستخرج ويُبقي فقط الكلمات التي طولها بين 16 و18 حرفاً
-/// (بدون فراغات) بعد عمل trim، ويحذف أي نص آخر.
-String _filterByLengthRange(
-  String rawText, {
-  int minLength = 16,
-  int maxLength = 18,
-}) {
-  // نقسّم النص إلى كلمات بناءً على أي نوع من الفراغات (مسافة، سطر جديد...)
-  final tokens = rawText
-      .split(RegExp(r'\s+'))
-      .map((t) => t.trim())
-      .where((t) => t.isNotEmpty);
-
-  final matched = <String>[];
-
-  for (final token in tokens) {
-    final length =
-        token.length; // الطول بدون فراغات لأن التوكن أصلاً بدون فراغات
-    if (length >= minLength && length <= maxLength) {
-      matched.add(token);
-    }
-  }
-
-  return matched.join('\n').trim();
 }
 
 // ── Corner decoration widget ───────────────────────────────────────────────
@@ -1266,8 +1347,6 @@ class _CameraErrorView extends StatelessWidget {
     );
   }
 }
-
-
 //////////////////////////////// Scanbot /////////////////////////////////////
 
 // import 'dart:async';

@@ -220,10 +220,18 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                       children: [
                         // Car Info: تفاصيل السيارة إذا موجودة، وإلا بطاقة "إضافة سيارة"
                         primaryCarInfo != null
-                            ? CarInfoCard(
-                                carInfo: primaryCarInfo,
-                                customer: currentCase.customer,
-                                scheduleDate: currentCase.scheduleDt,
+                            ? GestureDetector(
+                                behavior: HitTestBehavior.opaque,
+                                onTap: () => showAddCarDialog(
+                                  controller,
+                                  currentCase,
+                                  existingCar: primaryCarInfo,
+                                ),
+                                child: CarInfoCard(
+                                  carInfo: primaryCarInfo,
+                                  customer: currentCase.customer,
+                                  scheduleDate: currentCase.scheduleDt,
+                                ),
                               )
                             : EmptyCarCard(
                                 onAddCar: () =>
@@ -395,12 +403,41 @@ CarInfoModel? _resolvePrimaryCarInfo(List<OrderServiceModel>? services) {
 //     (يرجع CarInfoTblId الجديد حتى نقدر نفتح منتقي الصور فورًا بعده)
 // إذا الاسم أو التوقيع مختلف بالكونترولر عندك، أرسله لي لأطابقه بدقة.
 // ═══════════════════════════════════════════════════════════════════════
-void showAddCarDialog(CaseController controller, dynamic currentCase) {
+void showAddCarDialog(
+  CaseController controller,
+  dynamic currentCase, {
+  CarInfoModel? existingCar,
+}) {
   bool isSubmitting = false;
+  final isEdit = existingCar != null;
   final brandController = TextEditingController(text: '');
   final modelController = TextEditingController(text: '');
   final yearController = TextEditingController(text: '');
-  controller.vinController.text = '';
+
+  controller.vinController.text = existingCar?.vinNumber ?? '';
+
+  if (existingCar != null) {
+    // منجيب الأوبجكتات من نفس قوائم الدروب داون حتى تظهر معبّاية
+    final brandName = (existingCar.carBrand?.carBrandName ?? '').toLowerCase();
+    final modelName = (existingCar.carModel?.carModelName ?? '').toLowerCase();
+
+    controller.selectedBrand = controller.brands.firstWhereOrNull(
+      (b) => b.carBrandName.toLowerCase() == brandName,
+    );
+    controller.models = controller.allModels
+        .where((m) => m.carBrandId == controller.selectedBrand?.carBrandId)
+        .toList();
+    controller.selectedModel = controller.models.firstWhereOrNull(
+      (m) => m.carModelName.toLowerCase() == modelName,
+    );
+    controller.selectedYear = controller.years.firstWhereOrNull(
+      (y) => y.carYearNumber == existingCar.carYear?.carYearNumber,
+    );
+  } else {
+    controller.selectedBrand = null;
+    controller.selectedModel = null;
+    controller.selectedYear = null;
+  }
 
   Get.dialog(
     Dialog(
@@ -417,17 +454,17 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                 decoration: BoxDecoration(
                   gradient: LinearGradient(colors: [primary, primaryDark]),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(
+                    const Icon(
                       Icons.directions_car_rounded,
                       color: Colors.white,
                       size: 24,
                     ),
-                    SizedBox(width: 10),
+                    const SizedBox(width: 10),
                     Text(
-                      'Add Car',
-                      style: TextStyle(
+                      isEdit ? 'Edit Car' : 'Add Car',
+                      style: const TextStyle(
                         color: Colors.white,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -668,14 +705,19 @@ void showAddCarDialog(CaseController controller, dynamic currentCase) {
                                         : controller.vinController.text.trim(),
                                   };
 
-                                  final success = await controller.addCarToCase(
-                                    data,
-                                  );
-
-                                  if (success) {
-                                    Get.back();
-                                    controller.getCases();
-                                    Get.back();
+                                  if (isEdit) {
+                                    await controller.editCarInfo(
+                                      existingCar.carInfoTblId,
+                                      data,
+                                    );
+                                  } else {
+                                    final success = await controller
+                                        .addCarToCase(data);
+                                    if (success) {
+                                      Get.back();
+                                      controller.getCases();
+                                      Get.back();
+                                    }
                                   }
                                 } finally {
                                   if (Get.isDialogOpen ?? false) {
@@ -737,9 +779,7 @@ void showAddServiceDialog(
 
   Get.dialog(
     Dialog(
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: StatefulBuilder(
         builder: (context, setDState) {
@@ -763,12 +803,7 @@ void showAddServiceDialog(
                     width: double.infinity,
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          primary,
-                          primaryDark,
-                        ],
-                      ),
+                      gradient: LinearGradient(colors: [primary, primaryDark]),
                     ),
                     child: Row(
                       children: [
@@ -804,11 +839,7 @@ void showAddServiceDialog(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           // Services Buttons
-                          modernDropdown(
-                            context,
-                            controller,
-                            setDState,
-                          ),
+                          modernDropdown(context, controller, setDState),
 
                           // ======================================================
                           // Edit Service Fields
@@ -869,8 +900,7 @@ void showAddServiceDialog(
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: modernField(
-                                    controller:
-                                        controller.discountController,
+                                    controller: controller.discountController,
                                     label: 'Discount',
                                     icon: Icons.discount_rounded,
                                     keyboardType: TextInputType.number,
@@ -918,15 +948,11 @@ void showAddServiceDialog(
                                     Get.back();
                                   },
                             style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
-                              side: BorderSide(
-                                color: Colors.grey.shade300,
-                              ),
+                              side: BorderSide(color: Colors.grey.shade300),
                             ),
                             child: const Text('Cancel'),
                           ),
@@ -952,8 +978,7 @@ void showAddServiceDialog(
                                       Get.snackbar(
                                         'Required',
                                         'Please select a service',
-                                        snackPosition:
-                                            SnackPosition.BOTTOM,
+                                        snackPosition: SnackPosition.BOTTOM,
                                       );
                                       return;
                                     }
@@ -967,8 +992,7 @@ void showAddServiceDialog(
                                       Get.snackbar(
                                         'Required',
                                         'Please select a status',
-                                        snackPosition:
-                                            SnackPosition.BOTTOM,
+                                        snackPosition: SnackPosition.BOTTOM,
                                       );
                                       return;
                                     }
@@ -996,35 +1020,31 @@ void showAddServiceDialog(
                                         "globalOrderId":
                                             currentCase.globalOrderId,
 
-                                        "notes": controller
-                                            .notesController
-                                            .text,
+                                        "notes":
+                                            controller.notesController.text,
 
-                                        "cost": double.tryParse(
-                                              controller
-                                                  .costController
-                                                  .text,
+                                        "cost":
+                                            double.tryParse(
+                                              controller.costController.text,
                                             ) ??
                                             0,
 
-                                        "discount": double.tryParse(
+                                        "discount":
+                                            double.tryParse(
                                               controller
                                                   .discountController
                                                   .text,
                                             ) ??
                                             0,
 
-                                        "paid": double.tryParse(
-                                              controller
-                                                  .paidController
-                                                  .text,
+                                        "paid":
+                                            double.tryParse(
+                                              controller.paidController.text,
                                             ) ??
                                             0,
                                       };
 
-                                      debugPrint(
-                                        'Service Data: $data',
-                                      );
+                                      debugPrint('Service Data: $data');
 
                                       // ======================================
                                       // Add / Edit
@@ -1032,52 +1052,29 @@ void showAddServiceDialog(
                                       if (controller.isEditService) {
                                         await controller.editDetail(data);
                                       } else {
-                                        await controller.addDetailToOrder(
-                                          data,
-                                        );
-                                      }
-
-                                      // ======================================
-                                      // Close Dialog
-                                      // ======================================
-                                      if (context.mounted) {
-                                        FocusScope.of(context).unfocus();
-                                        Get.back();
+                                        await controller.addDetailToOrder(data);
                                       }
                                     } catch (e, stackTrace) {
-                                      debugPrint(
-                                        '❌ Service submit error: $e',
-                                      );
+                                      debugPrint('❌ Service submit error: $e');
 
-                                      debugPrint(
-                                        stackTrace.toString(),
-                                      );
-
-                                      // ======================================
-                                      // Stop Loading
-                                      // ======================================
-                                      if (context.mounted) {
-                                        setDState(() {
-                                          isSubmitting = false;
-                                        });
-                                      }
+                                      debugPrint(stackTrace.toString());
 
                                       Get.snackbar(
                                         'Error',
                                         'Something went wrong',
-                                        snackPosition:
-                                            SnackPosition.BOTTOM,
+                                        snackPosition: SnackPosition.BOTTOM,
                                       );
+                                    } finally {
+                                      if (Get.isDialogOpen ?? false) {
+                                        setDState(() => isSubmitting = false);
+                                      }
                                     }
                                   },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: primary,
                               foregroundColor: Colors.white,
-                              disabledBackgroundColor:
-                                  primary.withOpacity(0.6),
-                              padding: const EdgeInsets.symmetric(
-                                vertical: 14,
-                              ),
+                              disabledBackgroundColor: primary.withOpacity(0.6),
+                              padding: const EdgeInsets.symmetric(vertical: 14),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),

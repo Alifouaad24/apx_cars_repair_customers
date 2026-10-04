@@ -28,4 +28,5 @@ abstract class CaseRemoteDataSource {
   Future<GlobalOrderModel> deleteOrder(int orderId);
   Future<List<AssignTypeModel>> getAllAssignTypes();
   Future<List<SupplierBusinessModel>> getAllConsumerBusinesses();
+  Future<CarInfoModel> editCarInfo(int id, Map<String, dynamic> data);
 }
