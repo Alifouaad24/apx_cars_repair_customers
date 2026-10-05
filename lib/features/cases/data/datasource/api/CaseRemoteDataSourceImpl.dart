@@ -223,4 +223,14 @@ class CaseRemoteDataSourceImpl implements CaseRemoteDataSource {
 
     return CarInfoModel.fromJson(response.data);
   }
+
+  @override
+  Future<Map<String, dynamic>> SetOrderCompleted(int id) async {
+    final response = await client.dio.put(
+      "/Orders/SetOrderCompleted/$id",
+      options: Options(contentType: "application/json"),
+    );
+
+    return response.data;
+  }
 }

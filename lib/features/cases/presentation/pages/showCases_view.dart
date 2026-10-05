@@ -41,6 +41,7 @@ class _ShowCasesState extends State<ShowCases> {
               Get.find(),
               Get.find(),
               Get.find(),
+              Get.find(),
             ),
       builder: (controller) => Scaffold(
         appBar: AppBar(
@@ -59,24 +60,32 @@ class _ShowCasesState extends State<ShowCases> {
             ),
           ),
           actions: [
-            if (controller.ordersToSendInvoice.length == 0)
-              IconButton(
-                icon: const Icon(Icons.add),
-                onPressed: () {
-                  controller.isUpdate = false;
-                  controller.currentOrderId = null;
-                  controller.selectedCustomer = null;
-                  controller.notesController.clear();
-                  controller.serviceNoteController.clear();
-                  controller.ordersToSendInvoice.clear();
-                  controller.selectedConsumer = null;
-                  controller.selectedCustomerType = null;
-                  controller.visitDate = null;
-                  controller.visitTime = null;
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                IconButton(icon: const Icon(Icons.search), onPressed: () {
+                  Get.toNamed(AppRoutes.simpleOrdersView);
+                }),
+                IconButton(
+                  icon: const Icon(Icons.add),
+                  onPressed: () {
+                    controller.isUpdate = false;
+                    controller.currentOrderId = null;
+                    controller.selectedCustomer = null;
+                    controller.notesController.clear();
+                    controller.serviceNoteController.clear();
+                    controller.ordersToSendInvoice.clear();
+                    controller.selectedConsumer = null;
+                    controller.selectedCustomerType = null;
+                    controller.visitDate = null;
+                    controller.visitTime = null;
 
-                  Get.toNamed(AppRoutes.addEditCase);
-                },
-              ),
+                    Get.toNamed(AppRoutes.addEditCase);
+                  },
+                ),
+                
+              ],
+            ),
           ],
         ),
         body: GetBuilder<CaseController>(
@@ -110,7 +119,7 @@ class _ShowCasesState extends State<ShowCases> {
                 controller.cases.length != controller.allCases.length;
 
             // ================= group orders by assignee (من أُسند إليه الطلب) =================
-            final groupedByAssignee = _groupCasesByAssignee(controller.cases);
+            final groupedByAssignee = _groupCasesByAssignee(controller.unCompletedCases);
             final assigneeIds = groupedByAssignee.keys.toList()
               ..sort((a, b) {
                 final aName = _assigneeNameOf(

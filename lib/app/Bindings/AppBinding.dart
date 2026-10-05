@@ -9,6 +9,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCas
 import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/SetOrderCompletedUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
@@ -51,12 +52,12 @@ class AppBinding extends Bindings {
       () => CustomerRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
-        Get.lazyPut<CaseRemoteDataSource>(
+    Get.lazyPut<CaseRemoteDataSource>(
       () => CaseRemoteDataSourceImpl(Get.find<DioClient>()),
     );
 
     Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
-  Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
+    Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
 
     Get.lazyPut(() => AddCustomerUseCase(Get.find()));
     Get.lazyPut(() => ShowCustomersUsecase(Get.find()));
@@ -79,7 +80,7 @@ class AppBinding extends Bindings {
     );
 
     Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
-Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
+    Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
 
     // إذا عندك usecases أخرى للكيس
@@ -120,9 +121,10 @@ Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.put(GetassigntypesUsecase(Get.find()));
     Get.put(GetAvailableBusinessesUsecase(Get.find()));
     Get.put(EditCarInfoUseCase(Get.find()));
-
+    Get.put(Setordercompletedusecase(Get.find()));
     Get.lazyPut<CaseController>(
       () => CaseController(
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

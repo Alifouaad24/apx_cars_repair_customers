@@ -243,4 +243,14 @@ class CaseRepositoryImpl implements CaseRepository {
       return Left(Failure("Failed to edit car info"));
     }
   }
+
+  @override
+  Future<Either<Failure, Map<String, dynamic>>> SetOrderCompleted(int id) async {
+    try {
+      Map<String, dynamic> response = await remoteDataSource.SetOrderCompleted(id);
+      return Right(response);
+    } catch (e) {
+      return Left(Failure("Failed to set order completed"));
+    }
+  }
 }

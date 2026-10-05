@@ -10,6 +10,7 @@ import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCas
 import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/EditServiceToCaseUseCase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/SetOrderCompletedUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCaseServiceNote.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addServiceToCase_useCase.dart';
@@ -134,6 +135,11 @@ class CaseBinding extends Bindings {
       fenix: true,
     );
 
+    Get.lazyPut<Setordercompletedusecase>(
+      () => Setordercompletedusecase(Get.find<CaseRepository>()),
+      fenix: true,
+    );
+
     Get.lazyPut<CaseController>(
       () => CaseController(
         Get.find<ShowCasesUsecase>(),
@@ -153,6 +159,7 @@ class CaseBinding extends Bindings {
         Get.put(GetassigntypesUsecase(Get.find())),
         Get.put(GetconsumerbusinessesUsecase(Get.find())),
         Get.put(EditCarInfoUseCase(Get.find())),
+        Get.put(Setordercompletedusecase(Get.find())),
       ),
       fenix: true,
     );

@@ -35,4 +35,5 @@ abstract class CaseRepository {
   Future<Either<Failure, List<AssignTypeModel>>> getAllAssignTypes();
   Future<Either<Failure, List<SupplierBusinessModel>>> getAllBusinesses();
   Future<Either<Failure, CarInfoModel>> editCarInfo(int id, Map<String, dynamic> data);
+  Future<Either<Failure, Map<String, dynamic>>> SetOrderCompleted(int id);
 }

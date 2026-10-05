@@ -12,6 +12,7 @@ import 'package:apx_cars_repair/features/cases/data/models/OrderStatusModel.dart
 import 'package:apx_cars_repair/features/cases/data/models/SupplierBusinessModel.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/BindImagesWithCase_useCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/DeleteOrderUsecase.dart';
+import 'package:apx_cars_repair/features/cases/domain/usecases/SetOrderCompletedUsecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/addCar_to_order_usecase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/editCarInfoUseCase.dart';
 import 'package:apx_cars_repair/features/cases/domain/usecases/getCarInfo_usecase.dart';
@@ -53,6 +54,7 @@ class CaseController extends GetxController {
   GetCarInfoUsecase getCarInfoUsecase;
   EditServiceToCaseUseCase editServiceToCaseUseCase;
   AddServiceToCaseUseCase addServiceToCaseUseCase;
+  Setordercompletedusecase setordercompletedusecase;
   GetAllServiceUseCase getAllServiceUseCase;
   TimeOfDay? visitTime; // = TimeOfDay.now()
   DeletecaseserviceUsecase deletecaseserviceUsecase;
@@ -62,6 +64,7 @@ class CaseController extends GetxController {
   AddCaseServiceNote addCaseServiceNote;
   BindImagesWithCaseUseCase bindImagesWithCaseUseCase;
   List<GlobalOrderModel> cases = [];
+   List<GlobalOrderModel> unCompletedCases = [];
   List<GlobalOrderModel> allCases = [];
   List<CustomerModel> customers = [];
   List<GlobalOrderModel> ordersToSendInvoice = [];
@@ -135,7 +138,8 @@ class CaseController extends GetxController {
     this.deleteOrderUsecase,
     this.getassigntypesUsecase,
     this.getconsumerbusinessesUsecase,
-    this.editCarInfoUseCase
+    this.editCarInfoUseCase,
+    this.setordercompletedusecase,
   );
 
   @override
@@ -189,6 +193,8 @@ class CaseController extends GetxController {
       },
       (data) {
         cases = data;
+        unCompletedCases = data;
+        unCompletedCases = unCompletedCases.where((el) => el.status?.orderStatusId != 8).toList();
         allCases = data;
       },
     );
@@ -762,18 +768,18 @@ class CaseController extends GetxController {
     var detail = currentCase!.orderDetails!.firstWhere(
       (e) => e.globalOrderDetailId == serviceId,
     );
-    
+
     update();
     result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
       getCases();
       addingNoteToService = false;
-detail.caseServiceNotes?.add(
-      new CaseServiceNotesModel(
-        caseServiceNotesId: DateTime.now().microsecond,
-        notes: serviceNoteController.text.trim(),
-        oredesServicesId: serviceId,
-      ),
-    );
+      detail.caseServiceNotes?.add(
+        new CaseServiceNotesModel(
+          caseServiceNotesId: DateTime.now().microsecond,
+          notes: serviceNoteController.text.trim(),
+          oredesServicesId: serviceId,
+        ),
+      );
       update();
       Get.back();
       Get.snackbar("Success", "Note added successfully");
@@ -1381,5 +1387,41 @@ detail.caseServiceNotes?.add(
     }
 
     return ok;
+  }
+
+  Future<void> markOrderAsCompleted(dynamic order) async {
+    try {
+      isLoading = true;
+      update();
+
+      final result = await setordercompletedusecase(order.globalOrderId);
+
+      result.fold(
+        (failure) {
+          Get.snackbar(
+            'خطأ',
+            'فشل تحديث حالة الطلب',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+        },
+        (_) {
+          Get.snackbar(
+            'تم',
+            'تم تحويل الطلب إلى مكتمل',
+            snackPosition: SnackPosition.BOTTOM,
+          );
+          getCases();
+        },
+      );
+    } catch (e) {
+      Get.snackbar(
+        'خطأ',
+        'فشل تحديث حالة الطلب',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+    } finally {
+      isLoading = false;
+      update();
+    }
   }
 }
