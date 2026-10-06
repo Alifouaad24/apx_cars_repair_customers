@@ -64,7 +64,7 @@ class CaseController extends GetxController {
   AddCaseServiceNote addCaseServiceNote;
   BindImagesWithCaseUseCase bindImagesWithCaseUseCase;
   List<GlobalOrderModel> cases = [];
-   List<GlobalOrderModel> unCompletedCases = [];
+  List<GlobalOrderModel> unCompletedCases = [];
   List<GlobalOrderModel> allCases = [];
   List<CustomerModel> customers = [];
   List<GlobalOrderModel> ordersToSendInvoice = [];
@@ -194,7 +194,9 @@ class CaseController extends GetxController {
       (data) {
         cases = data;
         unCompletedCases = data;
-        unCompletedCases = unCompletedCases.where((el) => el.status?.orderStatusId != 8).toList();
+        unCompletedCases = unCompletedCases
+            .where((el) => el.status?.orderStatusId != 8)
+            .toList();
         allCases = data;
       },
     );
@@ -579,11 +581,12 @@ class CaseController extends GetxController {
       "notes": notesController.text.trim(),
       "OrderStatusId": selectedStatus?.orderStatusId,
       "service_id": selectedService?.serviceId,
-      "schedule_time":
-          "${visitTime?.hour.toString().padLeft(2, '0')}:${visitTime?.minute.toString().padLeft(2, '0')}",
+      "schedule_time": visitTime != null
+          ? "${visitTime?.hour.toString().padLeft(2, '0')}:${visitTime?.minute.toString().padLeft(2, '0')}"
+          : null,
       "schedule_dt": visitDate != null
           ? DateFormat('yyyy-MM-dd').format(visitDate!)
-          : '',
+          : null,
     };
 
     final result = await editCaseUseCase(currentOrderId!, data);
@@ -1423,5 +1426,38 @@ class CaseController extends GetxController {
       isLoading = false;
       update();
     }
+  }
+
+  void addNewModel(String modelName) {
+    if (selectedBrand == null) {
+      Get.snackbar(
+        'Required',
+        'Please enter the model name',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    final newModel = CarModel(
+      carModelId: -(DateTime.now().millisecondsSinceEpoch),
+      carBrandId: selectedBrand!.carBrandId,
+      carModelName: modelName,
+    );
+
+    allModels.add(newModel);
+
+    models = allModels
+        .where((e) => e.carBrandId == selectedBrand!.carBrandId)
+        .toList();
+
+    selectedModel = newModel;
+    Get.back();
+
+    Get.snackbar(
+      'Success',
+      'Model added successfully',
+      snackPosition: SnackPosition.BOTTOM,
+    );
+    update();
   }
 }

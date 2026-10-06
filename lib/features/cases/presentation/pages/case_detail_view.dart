@@ -518,45 +518,323 @@ void showAddCarDialog(
 
                     const SizedBox(height: 12),
 
-                    Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(18),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 12,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: DropdownButtonFormField<CarModel>(
-                        value: controller.selectedModel,
-                        decoration: modernDropdownDecoration(
-                          label: 'Model',
-                          icon: Icons.category_rounded,
-                        ),
-                        items: controller.models
-                            .where(
-                              (m) =>
-                                  m.carBrandId ==
-                                  controller.selectedBrand?.carBrandId,
-                            )
-                            .map((model) {
-                              return DropdownMenuItem<CarModel>(
-                                value: model, // <-- هنا التعديل
-                                child: Text(model.carModelName),
-                              );
-                            })
-                            .toList(),
-                        onChanged: controller.selectedBrand == null
-                            ? null
-                            : (value) {
-                                setDState(() {
-                                  controller.selectedModel = value;
-                                  controller.update();
-                                });
+                    GetBuilder<CaseController>(
+                      builder: (controller) {
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.05),
+                                      blurRadius: 12,
+                                      offset: const Offset(0, 4),
+                                    ),
+                                  ],
+                                ),
+                                child: DropdownButtonFormField<CarModel>(
+                                  value: controller.selectedModel,
+                                  decoration: modernDropdownDecoration(
+                                    label: 'Model',
+                                    icon: Icons.category_rounded,
+                                  ),
+                                  items: controller.models
+                                      .where(
+                                        (m) =>
+                                            m.carBrandId ==
+                                            controller
+                                                .selectedBrand
+                                                ?.carBrandId,
+                                      )
+                                      .map((model) {
+                                        return DropdownMenuItem<CarModel>(
+                                          value: model,
+                                          child: Text(model.carModelName),
+                                        );
+                                      })
+                                      .toList(),
+                                  onChanged: controller.selectedBrand == null
+                                      ? null
+                                      : (value) {
+                                          setDState(() {
+                                            controller.selectedModel = value;
+                                            controller.update();
+                                          });
+                                        },
+                                ),
+                              ),
+                            ),
+
+                            const SizedBox(width: 8),
+
+                            GetBuilder<CaseController>(
+                              builder: (controller) {
+                                return Container(
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(
+                                      255,
+                                      89,
+                                      85,
+                                      85,
+                                    ).withOpacity(.10),
+                                    shape: BoxShape.circle,
+                                  ),
+                                  child: IconButton(
+                                    onPressed: () {
+                                      final modelController =
+                                          TextEditingController();
+
+                                      Get.dialog(
+                                        Dialog(
+                                          backgroundColor: Colors.transparent,
+                                          insetPadding:
+                                              const EdgeInsets.symmetric(
+                                                horizontal: 24,
+                                              ),
+                                          child: Container(
+                                            padding: const EdgeInsets.all(24),
+                                            decoration: BoxDecoration(
+                                              color: Colors.white,
+                                              borderRadius:
+                                                  BorderRadius.circular(28),
+                                              boxShadow: [
+                                                BoxShadow(
+                                                  color: Colors.black
+                                                      .withOpacity(.15),
+                                                  blurRadius: 30,
+                                                  offset: const Offset(0, 10),
+                                                ),
+                                              ],
+                                            ),
+                                            child: Column(
+                                              mainAxisSize: MainAxisSize.min,
+                                              crossAxisAlignment:
+                                                  CrossAxisAlignment.start,
+                                              children: [
+                                                // Header
+                                                Row(
+                                                  children: [
+                                                    Container(
+                                                      width: 48,
+                                                      height: 48,
+                                                      decoration: BoxDecoration(
+                                                        color: Colors.green
+                                                            .withOpacity(.10),
+                                                        shape: BoxShape.circle,
+                                                      ),
+                                                      child: const Icon(
+                                                        Icons
+                                                            .directions_car_rounded,
+                                                        color: Color(
+                                                          0xFF3AB62F,
+                                                        ),
+                                                        size: 25,
+                                                      ),
+                                                    ),
+
+                                                    const SizedBox(width: 14),
+
+                                                    const Expanded(
+                                                      child: Column(
+                                                        crossAxisAlignment:
+                                                            CrossAxisAlignment
+                                                                .start,
+                                                        children: [
+                                                          Text(
+                                                            'Add New Model',
+                                                            style: TextStyle(
+                                                              fontSize: 19,
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              color: Color(
+                                                                0xFF222222,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                          SizedBox(height: 3),
+                                                          Text(
+                                                            'Enter the model name',
+                                                            style: TextStyle(
+                                                              fontSize: 13,
+                                                              color:
+                                                                  Colors.grey,
+                                                            ),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    ),
+
+                                                    IconButton(
+                                                      onPressed: () =>
+                                                          Get.back(),
+                                                      icon: const Icon(
+                                                        Icons.close_rounded,
+                                                        color: Colors.grey,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+
+                                                const SizedBox(height: 25),
+
+                                                // Model name
+                                                TextField(
+                                                  controller: modelController,
+                                                  textInputAction:
+                                                      TextInputAction.done,
+                                                  decoration: InputDecoration(
+                                                    labelText: 'Model Name',
+                                                    hintText: 'e.g. Corolla',
+                                                    prefixIcon: const Icon(
+                                                      Icons
+                                                          .directions_car_outlined,
+                                                    ),
+                                                    filled: true,
+                                                    fillColor:
+                                                        Colors.grey.shade50,
+                                                    border: OutlineInputBorder(
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                      borderSide:
+                                                          BorderSide.none,
+                                                    ),
+                                                    enabledBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                16,
+                                                              ),
+                                                          borderSide:
+                                                              BorderSide(
+                                                                color: Colors
+                                                                    .grey
+                                                                    .shade200,
+                                                              ),
+                                                        ),
+                                                    focusedBorder:
+                                                        OutlineInputBorder(
+                                                          borderRadius:
+                                                              BorderRadius.circular(
+                                                                16,
+                                                              ),
+                                                          borderSide:
+                                                              const BorderSide(
+                                                                color: Color(
+                                                                  0xFF3AB62F,
+                                                                ),
+                                                                width: 1.5,
+                                                              ),
+                                                        ),
+                                                  ),
+                                                ),
+
+                                                const SizedBox(height: 25),
+
+                                                // Buttons
+                                                Row(
+                                                  children: [
+                                                    Expanded(
+                                                      child: OutlinedButton(
+                                                        onPressed: () {
+                                                          Get.back();
+                                                        },
+                                                        style: OutlinedButton.styleFrom(
+                                                          minimumSize:
+                                                              const Size(
+                                                                double.infinity,
+                                                                52,
+                                                              ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15,
+                                                                ),
+                                                          ),
+                                                          side: BorderSide(
+                                                            color: Colors
+                                                                .grey
+                                                                .shade300,
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'Cancel',
+                                                          style: TextStyle(
+                                                            color: Colors.grey,
+                                                            fontWeight:
+                                                                FontWeight.w600,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+
+                                                    const SizedBox(width: 12),
+
+                                                    Expanded(
+                                                      child: ElevatedButton(
+                                                        onPressed: () {
+                                                          final name =
+                                                              modelController
+                                                                  .text
+                                                                  .trim();
+
+                                                          controller
+                                                              .addNewModel(
+                                                                name,
+                                                              );
+                                                        },
+                                                        style: ElevatedButton.styleFrom(
+                                                          backgroundColor:
+                                                              const Color(
+                                                                0xFF3AB62F,
+                                                              ),
+                                                          foregroundColor:
+                                                              Colors.white,
+                                                          elevation: 0,
+                                                          minimumSize:
+                                                              const Size(
+                                                                double.infinity,
+                                                                52,
+                                                              ),
+                                                          shape: RoundedRectangleBorder(
+                                                            borderRadius:
+                                                                BorderRadius.circular(
+                                                                  15,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                        child: const Text(
+                                                          'Add Model',
+                                                          style: TextStyle(
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                    icon: const Icon(
+                                      Icons.add,
+                                      color: Color.fromARGB(255, 58, 182, 47),
+                                    ),
+                                  ),
+                                );
                               },
-                      ),
+                            ),
+                          ],
+                        );
+                      },
                     ),
 
                     const SizedBox(height: 12),

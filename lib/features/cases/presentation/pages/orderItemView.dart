@@ -35,9 +35,7 @@ class OrderListItem extends StatelessWidget {
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 1, vertical: 2),
           child: Material(
-            color: isSelected
-                ? Colors.red.withOpacity(0.35)
-                : colors.surface,
+            color: isSelected ? Colors.red.withOpacity(0.35) : colors.surface,
             borderRadius: BorderRadius.circular(18),
             child: InkWell(
               borderRadius: BorderRadius.circular(18),
@@ -150,13 +148,14 @@ class OrderListItem extends StatelessWidget {
                                                 order.globalOrderId;
 
                                             controller.selectedCustomerType =
-                                                controller.assignTypes.firstWhere(
-                                                  (c) =>
-                                                      c.assignTypeId ==
-                                                      order
-                                                          .assigneeType!
-                                                          .assignTypeId,
-                                                );
+                                                controller.assignTypes
+                                                    .firstWhere(
+                                                      (c) =>
+                                                          c.assignTypeId ==
+                                                          order
+                                                              .assigneeType!
+                                                              .assignTypeId,
+                                                    );
 
                                             controller.notesController.text =
                                                 order.notes ?? '';
@@ -168,18 +167,21 @@ class OrderListItem extends StatelessWidget {
                                                   )
                                                 : null;
 
-                                            controller.visitTime = order.scheduleTime.isNotEmpty ? TimeOfDay(
-                                              hour: int.parse(
-                                                order.scheduleTime.split(
-                                                  ':',
-                                                )[0],
-                                              ),
-                                              minute: int.parse(
-                                                order.scheduleTime.split(
-                                                  ':',
-                                                )[1],
-                                              ),
-                                            ) : null;
+                                            controller.visitTime =
+                                                order.scheduleTime.isNotEmpty
+                                                ? TimeOfDay(
+                                                    hour: int.parse(
+                                                      order.scheduleTime.split(
+                                                        ':',
+                                                      )[0],
+                                                    ),
+                                                    minute: int.parse(
+                                                      order.scheduleTime.split(
+                                                        ':',
+                                                      )[1],
+                                                    ),
+                                                  )
+                                                : null;
 
                                             controller.selectedStatus =
                                                 controller
@@ -205,6 +207,164 @@ class OrderListItem extends StatelessWidget {
 
                                             Get.back();
                                             Get.toNamed(AppRoutes.addEditCase);
+                                          },
+                                        ),
+
+                                        const SizedBox(height: 10),
+                                        _buildOrderAction(
+                                          icon: Icons.done_outline_rounded,
+                                          title: 'مكتمل',
+                                          subtitle:
+                                              'تحويل الطلب الى الحالة المكتملة',
+                                          iconColor: const Color.fromARGB(
+                                            255,
+                                            48,
+                                            183,
+                                            21,
+                                          ),
+                                          backgroundColor: Colors.blue
+                                              .withOpacity(.10),
+                                          onTap: () {
+                                            Get.defaultDialog(
+                                              title: '',
+                                              titlePadding: EdgeInsets.zero,
+                                              contentPadding:
+                                                  const EdgeInsets.fromLTRB(
+                                                    24,
+                                                    0,
+                                                    24,
+                                                    20,
+                                                  ),
+                                              radius: 20,
+                                              backgroundColor: Colors.white,
+                                              content: Column(
+                                                children: [
+                                                  Container(
+                                                    width: 65,
+                                                    height: 65,
+                                                    decoration: BoxDecoration(
+                                                      color: const Color.fromARGB(255, 110, 213, 115)
+                                                          .withOpacity(.10),
+                                                      shape: BoxShape.circle,
+                                                    ),
+                                                    child: const Icon(
+                                                      Icons
+                                                          .done_outline_rounded,
+                                                      color: Colors.green,
+                                                      size: 34,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 15),
+
+                                                  const Text(
+                                                    'تأكيد التحويل!',
+                                                    style: TextStyle(
+                                                      fontSize: 21,
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 8),
+
+                                                  Text(
+                                                    'هل أنت متأكد من تحويل هذا الطلب إلى الحالة المكتملة؟',
+                                                    textAlign: TextAlign.center,
+                                                    style: TextStyle(
+                                                      fontSize: 14,
+                                                      height: 1.5,
+                                                      color:
+                                                          Colors.grey.shade600,
+                                                    ),
+                                                  ),
+
+                                                  const SizedBox(height: 22),
+
+                                                  Row(
+                                                    children: [
+                                                      Expanded(
+                                                        child: OutlinedButton(
+                                                          onPressed: () =>
+                                                              Get.back(),
+                                                          style: OutlinedButton.styleFrom(
+                                                            minimumSize:
+                                                                const Size(
+                                                                  0,
+                                                                  48,
+                                                                ),
+                                                            side: BorderSide(
+                                                              color: Colors
+                                                                  .grey
+                                                                  .shade300,
+                                                            ),
+                                                            shape: RoundedRectangleBorder(
+                                                              borderRadius:
+                                                                  BorderRadius.circular(
+                                                                    12,
+                                                                  ),
+                                                            ),
+                                                          ),
+                                                          child: const Text(
+                                                            'إلغاء',
+                                                            style: TextStyle(
+                                                              color: Colors
+                                                                  .black87,
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+
+                                                      const SizedBox(width: 10),
+
+                                                      GetBuilder<
+                                                        CaseController
+                                                      >(
+                                                        builder: (controller) => Expanded(
+                                                          child: ElevatedButton(
+                                                            onPressed: () {
+                                                              controller
+                                                                  .markOrderAsCompleted(
+                                                                    order,
+                                                                  );
+                                                            },
+                                                            style: ElevatedButton.styleFrom(
+                                                              backgroundColor:
+                                                                  const Color.fromARGB(255, 23, 194, 63),
+                                                              foregroundColor:
+                                                                  Colors.white,
+                                                              elevation: 0,
+                                                              minimumSize:
+                                                                  const Size(
+                                                                    0,
+                                                                    48,
+                                                                  ),
+                                                              shape: RoundedRectangleBorder(
+                                                                borderRadius:
+                                                                    BorderRadius.circular(
+                                                                      12,
+                                                                    ),
+                                                              ),
+                                                            ),
+                                                            child: Text(
+                                                              controller
+                                                                      .isLoading
+                                                                  ? "جار التأكيد"
+                                                                  : "تأكيد",
+                                                              style: TextStyle(
+                                                                fontWeight:
+                                                                    FontWeight
+                                                                        .bold,
+                                                              ),
+                                                            ),
+                                                          ),
+                                                        ),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                ],
+                                              ),
+                                            );
                                           },
                                         ),
 
@@ -313,15 +473,18 @@ class OrderListItem extends StatelessWidget {
 
                                                       const SizedBox(width: 10),
 
-                                                      GetBuilder<CaseController>(
-                                                        builder: (controller) => 
-                                                         Expanded(
+                                                      GetBuilder<
+                                                        CaseController
+                                                      >(
+                                                        builder: (controller) => Expanded(
                                                           child: ElevatedButton(
                                                             onPressed: () {
                                                               // delete logic هنا
-                                                              controller.deleteOrder(order.globalOrderId!);
-                                                        
-                                                              
+                                                              controller
+                                                                  .deleteOrder(
+                                                                    order
+                                                                        .globalOrderId!,
+                                                                  );
                                                             },
                                                             style: ElevatedButton.styleFrom(
                                                               backgroundColor:
@@ -341,8 +504,11 @@ class OrderListItem extends StatelessWidget {
                                                                     ),
                                                               ),
                                                             ),
-                                                            child:  Text(
-                                                              controller.isDeletingOrder ? "جار الحذف" : "حذف",
+                                                            child: Text(
+                                                              controller
+                                                                      .isDeletingOrder
+                                                                  ? "جار الحذف"
+                                                                  : "حذف",
                                                               style: TextStyle(
                                                                 fontWeight:
                                                                     FontWeight
@@ -534,7 +700,10 @@ class OrderListItem extends StatelessWidget {
                               ),
                             );
                           },
-                          child: (hasCar && brandImgUrl != null && brandImgUrl.isNotEmpty)
+                          child:
+                              (hasCar &&
+                                  brandImgUrl != null &&
+                                  brandImgUrl.isNotEmpty)
                               ? Image.network(
                                   brandImgUrl,
                                   width: 48,
@@ -583,14 +752,15 @@ class OrderListItem extends StatelessWidget {
                                 child: Text(
                                   hasCar
                                       ? [
-                                          carInfo.carYear?.carYearNumber,
-                                          carInfo.carBrand?.carBrandName,
-                                          carInfo.carModel?.carModelName,
-                                        ]
+                                              carInfo.carYear?.carYearNumber,
+                                              carInfo.carBrand?.carBrandName,
+                                              carInfo.carModel?.carModelName,
+                                            ]
                                             .whereType<String>()
                                             .where((e) => e.isNotEmpty)
                                             .join(' ')
-                                      : (order.customer?.customerName ?? "بدون اسم"),
+                                      : (order.customer?.customerName ??
+                                            "بدون اسم"),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),

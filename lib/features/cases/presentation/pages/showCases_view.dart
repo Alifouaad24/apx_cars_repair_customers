@@ -63,9 +63,12 @@ class _ShowCasesState extends State<ShowCases> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                IconButton(icon: const Icon(Icons.search), onPressed: () {
-                  Get.toNamed(AppRoutes.simpleOrdersView);
-                }),
+                IconButton(
+                  icon: const Icon(Icons.search),
+                  onPressed: () {
+                    Get.toNamed(AppRoutes.simpleOrdersView);
+                  },
+                ),
                 IconButton(
                   icon: const Icon(Icons.add),
                   onPressed: () {
@@ -77,13 +80,10 @@ class _ShowCasesState extends State<ShowCases> {
                     controller.ordersToSendInvoice.clear();
                     controller.selectedConsumer = null;
                     controller.selectedCustomerType = null;
-                    controller.visitDate = null;
-                    controller.visitTime = null;
 
                     Get.toNamed(AppRoutes.addEditCase);
                   },
                 ),
-                
               ],
             ),
           ],
@@ -119,7 +119,9 @@ class _ShowCasesState extends State<ShowCases> {
                 controller.cases.length != controller.allCases.length;
 
             // ================= group orders by assignee (من أُسند إليه الطلب) =================
-            final groupedByAssignee = _groupCasesByAssignee(controller.unCompletedCases);
+            final groupedByAssignee = _groupCasesByAssignee(
+              controller.unCompletedCases,
+            );
             final assigneeIds = groupedByAssignee.keys.toList()
               ..sort((a, b) {
                 final aName = _assigneeNameOf(
