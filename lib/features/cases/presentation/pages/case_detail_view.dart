@@ -836,9 +836,7 @@ void showAddCarDialog(
                         );
                       },
                     ),
-
                     const SizedBox(height: 12),
-
                     Container(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(18),
