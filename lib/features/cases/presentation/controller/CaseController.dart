@@ -1413,7 +1413,12 @@ class CaseController extends GetxController {
             'تم تحويل الطلب إلى مكتمل',
             snackPosition: SnackPosition.BOTTOM,
           );
+          cases = cases
+              .where((el) => el.globalOrderId != order.globalOrderId)
+              .toList();
           getCases();
+          isLoading = false;
+          update();
         },
       );
     } catch (e) {

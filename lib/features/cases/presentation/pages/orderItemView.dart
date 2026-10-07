@@ -225,6 +225,7 @@ class OrderListItem extends StatelessWidget {
                                           backgroundColor: Colors.blue
                                               .withOpacity(.10),
                                           onTap: () {
+                                            Get.back();
                                             Get.defaultDialog(
                                               title: '',
                                               titlePadding: EdgeInsets.zero,
@@ -243,8 +244,13 @@ class OrderListItem extends StatelessWidget {
                                                     width: 65,
                                                     height: 65,
                                                     decoration: BoxDecoration(
-                                                      color: const Color.fromARGB(255, 110, 213, 115)
-                                                          .withOpacity(.10),
+                                                      color:
+                                                          const Color.fromARGB(
+                                                            255,
+                                                            110,
+                                                            213,
+                                                            115,
+                                                          ).withOpacity(.10),
                                                       shape: BoxShape.circle,
                                                     ),
                                                     child: const Icon(
@@ -322,16 +328,51 @@ class OrderListItem extends StatelessWidget {
                                                       >(
                                                         builder: (controller) => Expanded(
                                                           child: ElevatedButton(
-                                                            onPressed: () {
-                                                              controller
-                                                                  .markOrderAsCompleted(
-                                                                    order,
-                                                                  );
-                                                            },
+                                                            onPressed:
+                                                                controller
+                                                                    .isLoading
+                                                                ? null // منع الضغط المتكرر أثناء التحميل
+                                                                : () async {
+                                                                    await controller
+                                                                        .markOrderAsCompleted(
+                                                                          order,
+                                                                        );
+                                                                    Navigator.of(
+                                                                      Get.overlayContext!,
+                                                                    ).popUntil(
+                                                                      (route) =>
+                                                                          route
+                                                                              is! PopupRoute,
+                                                                    );
+
+                                                                    // إغلاق نافذة التأكيد بعد انتهاء العملية
+                                                                    if (Get.isDialogOpen ??
+                                                                        false) {
+                                                                      Navigator.of(
+                                                                        Get.overlayContext!,
+                                                                      ).pop();
+                                                                    }
+                                                                  },
                                                             style: ElevatedButton.styleFrom(
                                                               backgroundColor:
-                                                                  const Color.fromARGB(255, 23, 194, 63),
+                                                                  const Color.fromARGB(
+                                                                    255,
+                                                                    23,
+                                                                    194,
+                                                                    63,
+                                                                  ),
                                                               foregroundColor:
+                                                                  Colors.white,
+                                                              disabledBackgroundColor:
+                                                                  const Color.fromARGB(
+                                                                    255,
+                                                                    23,
+                                                                    194,
+                                                                    63,
+                                                                  ).withOpacity(
+                                                                    0.6,
+                                                                  ),
+                                                              disabledForegroundColor:
                                                                   Colors.white,
                                                               elevation: 0,
                                                               minimumSize:
@@ -346,17 +387,27 @@ class OrderListItem extends StatelessWidget {
                                                                     ),
                                                               ),
                                                             ),
-                                                            child: Text(
-                                                              controller
-                                                                      .isLoading
-                                                                  ? "جار التأكيد"
-                                                                  : "تأكيد",
-                                                              style: TextStyle(
-                                                                fontWeight:
-                                                                    FontWeight
-                                                                        .bold,
-                                                              ),
-                                                            ),
+                                                            child:
+                                                                controller
+                                                                    .isLoading
+                                                                ? const SizedBox(
+                                                                    width: 20,
+                                                                    height: 20,
+                                                                    child: CircularProgressIndicator(
+                                                                      strokeWidth:
+                                                                          2,
+                                                                      color: Colors
+                                                                          .white,
+                                                                    ),
+                                                                  )
+                                                                : const Text(
+                                                                    'تأكيد',
+                                                                    style: TextStyle(
+                                                                      fontWeight:
+                                                                          FontWeight
+                                                                              .bold,
+                                                                    ),
+                                                                  ),
                                                           ),
                                                         ),
                                                       ),
