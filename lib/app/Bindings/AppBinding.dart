@@ -30,6 +30,7 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addNewBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/getAssignTypes_usecase.dart';
@@ -82,7 +83,7 @@ class AppBinding extends Bindings {
     Get.lazyPut<CaseRepository>(() => CaseRepositoryImpl(Get.find()));
     Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
-
+    Get.lazyPut(() => AddnewbusinessUsecase(Get.find()));
     // إذا عندك usecases أخرى للكيس
     // Get.lazyPut(() => ShowCasesUseCase(Get.find()));
 
@@ -90,6 +91,7 @@ class AppBinding extends Bindings {
 
     Get.lazyPut<CustomerController>(
       () => CustomerController(
+        Get.find(),
         Get.find(),
         Get.find(),
         Get.find(),

@@ -39,9 +39,6 @@ class CrmDashboardView extends StatelessWidget {
               ),
               child: Column(
                 children: [
-
-              
-
                   // Cards
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,

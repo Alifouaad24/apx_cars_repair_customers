@@ -16,4 +16,5 @@ abstract class CustomerRepository {
   Future<Either<Failure, CustomerModel>> bindCustomerWithImage(int customerId, XFile image);
   Future<Either<Failure, List<BusinessModel>>> getAvailableBusinesses();
   Future<Either<Failure, List<ServiceModel>>> getAvailableServices();
+  Future<Either<Failure, BusinessModel>> addNewBusiness(Map<String, dynamic> data);
 }

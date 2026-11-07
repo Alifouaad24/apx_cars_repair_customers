@@ -98,4 +98,12 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
         .map((e) => ServiceModel.fromJson(e))
         .toList();
   }
+
+  @override
+  Future<BusinessModel> addNewBusiness(Map<String, dynamic> data) async {
+    final formData = FormData.fromMap(data);
+
+    final response = await client.dio.post('/Business', data: formData);
+    return BusinessModel.fromJson(response.data);
+  }
 }

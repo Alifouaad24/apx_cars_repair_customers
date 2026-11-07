@@ -30,14 +30,36 @@ class _ShowConsumerbusinessViwState extends State<ShowConsumerbusinessViw> {
     });
   }
 
-  void _openAddConsumerSheet() {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (_) => const _AddConsumerBusinessSheet(),
-    );
+void _openAddConsumerSheet() {
+  showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => _AddConsumerBusinessSheet(
+      onAddNewBusiness: _openAddBusinessDialog,
+    ),
+  );
+}
+
+
+
+Future<void> _openAddBusinessDialog() async {
+  final controller = Get.find<CustomerController>();
+
+  final added = await showDialog<bool>(
+    context: context,
+    barrierDismissible: false,
+    builder: (_) => _AddBusinessDialog(
+      onSubmit: (name, email, phone) =>
+          controller.addBusiness(name: name, email: email, phone: phone),
+    ),
+  );
+
+  if (added == true && mounted) {
+    await controller.getAvailableBusinesses(); // تحديث القائمة
+    _openAddConsumerSheet();                   // إعادة فتح الشيت
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -298,9 +320,10 @@ class _BusinessCard extends StatelessWidget {
 }
 
 /// Bottom sheet for adding a new consumer business.
-/// Contains a Business dropdown, a Service dropdown, and Confirm/Cancel buttons.
 class _AddConsumerBusinessSheet extends StatefulWidget {
-  const _AddConsumerBusinessSheet();
+  final VoidCallback onAddNewBusiness;
+
+  const _AddConsumerBusinessSheet({required this.onAddNewBusiness});
 
   @override
   State<_AddConsumerBusinessSheet> createState() =>
@@ -377,29 +400,44 @@ class _AddConsumerBusinessSheetState extends State<_AddConsumerBusinessSheet> {
 
                 _buildLabel('Business'),
                 const SizedBox(height: 6),
-                _buildDropdownContainer(
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<int>(
-                      isExpanded: true,
-                      value: _selectedBusinessId,
-                      hint: const Text('Select business'),
-                      icon: const Icon(Icons.keyboard_arrow_down_rounded),
-                      items: businesses.map((b) {
-                        return DropdownMenuItem<int>(
-                          value: b.businessId,
-                          child: Text(
-                            b.businessName,
-                            overflow: TextOverflow.ellipsis,
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildDropdownContainer(
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<int>(
+                            isExpanded: true,
+                            value: _selectedBusinessId,
+                            hint: const Text('Select business'),
+                            icon: const Icon(Icons.keyboard_arrow_down_rounded),
+                            items: businesses.map((b) {
+                              return DropdownMenuItem<int>(
+                                value: b.businessId,
+                                child: Text(
+                                  b.businessName,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              );
+                            }).toList(),
+                            onChanged: businesses.isEmpty
+                                ? null
+                                : (value) {
+                                    setState(() => _selectedBusinessId = value);
+                                  },
                           ),
-                        );
-                      }).toList(),
-                      onChanged: businesses.isEmpty
-                          ? null
-                          : (value) {
-                              setState(() => _selectedBusinessId = value);
-                            },
+                        ),
+                      ),
                     ),
-                  ),
+                    const SizedBox(width: 8),
+IconButton(
+  tooltip: 'Add new business',
+  onPressed: () {
+    Navigator.of(context).pop(); // يسكّر الشيت
+    widget.onAddNewBusiness();   // يفتح البوبب من الصفحة
+  },
+  icon: Icon(Icons.add, color: Colors.grey.shade600, size: 20),
+),
+                  ],
                 ),
                 if (businesses.isEmpty)
                   const Padding(
@@ -536,3 +574,221 @@ class _AddConsumerBusinessSheetState extends State<_AddConsumerBusinessSheet> {
     );
   }
 }
+
+/// Dialog for creating a new business: name, email, phone.
+class _AddBusinessDialog extends StatefulWidget {
+  final Future<bool> Function(String name, String email, String phone) onSubmit;
+
+  const _AddBusinessDialog({required this.onSubmit});
+
+  @override
+  State<_AddBusinessDialog> createState() => _AddBusinessDialogState();
+}
+
+class _AddBusinessDialogState extends State<_AddBusinessDialog> {
+  static const _primary = Color(0xFF0F2A47);
+
+  final _formKey = GlobalKey<FormState>();
+  final _nameController = TextEditingController();
+  final _emailController = TextEditingController();
+  final _phoneController = TextEditingController();
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+    final success = await widget.onSubmit(
+      _nameController.text.trim(),
+      _emailController.text.trim(),
+      _phoneController.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    if (success) {
+      Navigator.of(context).pop(true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to add business, please try again')),
+      );
+    }
+  }
+
+  InputDecoration _decoration(String hint, IconData icon) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade600),
+      filled: true,
+      fillColor: const Color(0xFFF5F6FA),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primary),
+      ),
+    );
+  }
+
+  Widget _label(String text) => Padding(
+        padding: const EdgeInsets.only(bottom: 6),
+        child: Text(
+          text,
+          style: const TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: Colors.black87,
+          ),
+        ),
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add new business',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Enter the business details',
+                style: TextStyle(fontSize: 12.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              _label('Name'),
+              TextFormField(
+                controller: _nameController,
+                textInputAction: TextInputAction.next,
+                decoration: _decoration('Business name', Icons.business_outlined),
+                validator: (v) =>
+                    (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+              ),
+              const SizedBox(height: 14),
+
+              _label('Email'),
+              TextFormField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                textInputAction: TextInputAction.next,
+                decoration: _decoration('example@mail.com', Icons.email_outlined),
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty) return 'Email is required';
+                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
+                    return 'Invalid email';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 14),
+
+              _label('Phone number'),
+              TextFormField(
+                controller: _phoneController,
+                keyboardType: TextInputType.phone,
+                textInputAction: TextInputAction.done,
+                onFieldSubmitted: (_) => _save(),
+                decoration: _decoration('07xxxxxxxxx', Icons.phone_outlined),
+                validator: (v) {
+                  final value = v?.trim() ?? '';
+                  if (value.isEmpty) return 'Phone number is required';
+                  if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(value)) {
+                    return 'Invalid phone number';
+                  }
+                  return null;
+                },
+              ),
+              const SizedBox(height: 24),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _saving ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.4,
+                              ),
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+

@@ -8,6 +8,7 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addNewBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
@@ -36,6 +37,7 @@ class CustomerBinding extends Bindings {
     Get.put(ShowconsumerbusinessUsecase(Get.find()));
     Get.put(GetAvailableBusinessesUsecase(Get.find()));
     Get.put(GetAvailableServicesUsecase(Get.find()));
+    Get.put(AddnewbusinessUsecase(Get.find()));
     Get.lazyPut(
       () => CustomerController(
         Get.find<AddCustomerUseCase>(),
@@ -47,6 +49,8 @@ class CustomerBinding extends Bindings {
         Get.find<AddconsumerbusinessUsecase>(),
         Get.find<GetAvailableBusinessesUsecase>(),
         Get.find<GetAvailableServicesUsecase>(),
+        Get.find<AddnewbusinessUsecase>(),
+
       ),
 
     );

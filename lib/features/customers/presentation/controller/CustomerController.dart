@@ -11,6 +11,7 @@ import 'package:apx_cars_repair/features/customers/domain/usecases/EditCustomer_
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableBusinessesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/GetAvailableServicesUsecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/addConsumerBusiness_usecase.dart';
+import 'package:apx_cars_repair/features/customers/domain/usecases/addNewBusiness_usecase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/bindCustomerWithImage.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/deleteCustomer_useCase.dart';
 import 'package:apx_cars_repair/features/customers/domain/usecases/showConsumerBusiness_usecase.dart';
@@ -28,6 +29,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 class CustomerController extends GetxController {
   final AddCustomerUseCase addCustomerUseCase;
+  final AddnewbusinessUsecase addNewCustomerUseCase;
   final ShowCustomersUsecase showCustomersUsecase;
   final ShowconsumerbusinessUsecase showconsumerbusinessUsecase;
   final AddconsumerbusinessUsecase addconsumerbusinessUsecase;
@@ -62,7 +64,8 @@ class CustomerController extends GetxController {
     this.showconsumerbusinessUsecase,
     this.addconsumerbusinessUsecase,
     this._getAvailableBusinessesUsecase,
-    this._getAvailableServicesUsecase
+    this._getAvailableServicesUsecase,
+    this.addNewCustomerUseCase,
   );
 
   List<CustomerModel> customers = [];
@@ -720,10 +723,7 @@ class CustomerController extends GetxController {
       (failure) {
         addingConsumerBusiness = false;
         update();
-        Get.snackbar(
-          'خطأ',
-          failure.message,
-        ); 
+        Get.snackbar('خطأ', failure.message);
       },
       (data) {
         addingConsumerBusiness = false;
@@ -748,5 +748,31 @@ class CustomerController extends GetxController {
       availableServices = data;
       update();
     });
+  }
+
+  Future<bool> addBusiness({
+    required String name,
+    String? email,
+    String? phone,
+  }) async {
+    final result = await addNewCustomerUseCase.call({
+      'business_name': name,
+      "countryId": 3,
+      "is_active": true,
+      'business_email': email,
+      'business_phone': phone
+    });
+
+    return result.fold(
+      (failure) {
+        Get.snackbar('خطأ', failure.message);
+        return false;
+      },
+      (data) {
+        Get.snackbar('نجاح', 'تم إضافة البزنس بنجاح');
+        getAvailableBusinesses();
+        return true;
+      },
+    );
   }
 }
