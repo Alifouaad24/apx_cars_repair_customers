@@ -760,7 +760,9 @@ class CustomerController extends GetxController {
       "countryId": 3,
       "is_active": true,
       'business_email': email,
-      'business_phone': phone
+      'business_phone': phone,
+      'setItConsumer': true,
+      'providerBusiness': 40
     });
 
     return result.fold(
