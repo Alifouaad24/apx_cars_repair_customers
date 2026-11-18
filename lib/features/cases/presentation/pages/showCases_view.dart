@@ -152,7 +152,7 @@ class _ShowCasesState extends State<ShowCases> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             _buildHeaderCard(
-                              totalCases: controller.cases.length,
+                              totalCases: controller.unCompletedCases.length,
                               totalTodayTasks: totalTodayTasks,
                               isFiltered: isFiltered,
                               onAddPressed: () {
