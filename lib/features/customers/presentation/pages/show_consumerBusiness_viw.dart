@@ -1,5 +1,6 @@
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
+import 'package:apx_cars_repair/features/customers/data/models/SupplierModel.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
@@ -30,36 +31,42 @@ class _ShowConsumerbusinessViwState extends State<ShowConsumerbusinessViw> {
     });
   }
 
-void _openAddConsumerSheet() {
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    backgroundColor: Colors.transparent,
-    builder: (_) => _AddConsumerBusinessSheet(
-      onAddNewBusiness: _openAddBusinessDialog,
-    ),
-  );
-}
-
-
-
-Future<void> _openAddBusinessDialog() async {
-  final controller = Get.find<CustomerController>();
-
-  final added = await showDialog<bool>(
-    context: context,
-    barrierDismissible: false,
-    builder: (_) => _AddBusinessDialog(
-      onSubmit: (name, email, phone) =>
-          controller.addBusiness(name: name, email: email, phone: phone),
-    ),
-  );
-
-  if (added == true && mounted) {
-    await controller.getAvailableBusinesses(); // تحديث القائمة
-    _openAddConsumerSheet();                   // إعادة فتح الشيت
+  void _openAddConsumerSheet() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) =>
+          _AddConsumerBusinessSheet(onAddNewBusiness: _openAddBusinessDialog),
+    );
   }
-}
+
+  void _openDetailsSheet(SupplierFilterModel item) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _BusinessDetailsSheet(item: item),
+    );
+  }
+
+  Future<void> _openAddBusinessDialog() async {
+    final controller = Get.find<CustomerController>();
+
+    final added = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _AddBusinessDialog(
+        onSubmit: (name, email, phone) =>
+            controller.addBusiness(name: name, email: email, phone: phone),
+      ),
+    );
+
+    if (added == true && mounted) {
+      await controller.getAvailableBusinesses(); // تحديث القائمة
+      _openAddConsumerSheet(); // إعادة فتح الشيت
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -96,8 +103,9 @@ Future<void> _openAddBusinessDialog() async {
                         final business = item.consumerBusiness;
                         final service = item.service;
                         return _BusinessCard(
-                          name: business.email,
+                          name: business.name,
                           service: service.name,
+                          onTap: () => _openDetailsSheet(item),
                         );
                       },
                     ),
@@ -162,10 +170,10 @@ Future<void> _openAddBusinessDialog() async {
               child: const Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Icon(Icons.add_rounded, color: Colors.white, size: 20),
+                  Icon(Icons.link, color: Colors.white, size: 20),
                   SizedBox(width: 6),
                   Text(
-                    'Add',
+                    'Link',
                     style: TextStyle(
                       color: Colors.white,
                       fontWeight: FontWeight.w700,
@@ -221,8 +229,9 @@ Future<void> _openAddBusinessDialog() async {
 class _BusinessCard extends StatelessWidget {
   final String name;
   final String service;
+  final VoidCallback? onTap;
 
-  const _BusinessCard({required this.name, required this.service});
+  const _BusinessCard({required this.name, required this.service, this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -243,7 +252,7 @@ class _BusinessCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
+          onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             child: Row(
@@ -314,6 +323,207 @@ class _BusinessCard extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Bottom sheet showing the details of a linked consumer business.
+class _BusinessDetailsSheet extends StatelessWidget {
+  final SupplierFilterModel item;
+
+  const _BusinessDetailsSheet({required this.item});
+
+  static const _primary = Color(0xFF0F2A47);
+  static const _accent = Color(0xFFF5A524);
+
+  String _orDash(String value) => value.trim().isEmpty ? '-' : value;
+
+  @override
+  Widget build(BuildContext context) {
+    final consumer = item.consumerBusiness;
+    final provider = item.providerBusiness;
+    final serviceName = item.service.name.trim().isNotEmpty
+        ? item.service.name
+        : 'All';
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        20,
+        12,
+        20,
+        20 + MediaQuery.of(context).padding.bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Center(
+            child: Container(
+              width: 42,
+              height: 4,
+              margin: const EdgeInsets.only(bottom: 18),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade300,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+          Row(
+            children: [
+              Container(
+                width: 56,
+                height: 56,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(colors: [_primary, _accent]),
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  consumer.name.isNotEmpty
+                      ? consumer.name[0].toUpperCase()
+                      : '?',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                    fontSize: 20,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      _orDash(consumer.name),
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w800,
+                        color: _primary,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 2),
+                    const Text(
+                      'Consumer business',
+                      style: TextStyle(fontSize: 12.5, color: Colors.grey),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 20),
+          _DetailTile(
+            icon: Icons.email_outlined,
+            label: 'Email',
+            value: _orDash(consumer.email),
+          ),
+          if (consumer.phone.trim().isNotEmpty)
+            _DetailTile(
+              icon: Icons.phone_outlined,
+              label: 'Phone',
+              value: consumer.phone,
+            ),
+          if (consumer.address.trim().isNotEmpty)
+            _DetailTile(
+              icon: Icons.location_on_outlined,
+              label: 'Address',
+              value: consumer.address,
+            ),
+          _DetailTile(
+            icon: Icons.miscellaneous_services_outlined,
+            label: 'Service',
+            value: serviceName,
+          ),
+          _DetailTile(
+            icon: Icons.storefront_outlined,
+            label: 'Provider business',
+            value: _orDash(provider.name),
+          ),
+          if (provider.email.trim().isNotEmpty)
+            _DetailTile(
+              icon: Icons.alternate_email,
+              label: 'Provider email',
+              value: provider.email,
+            ),
+          const SizedBox(height: 12),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: _primary,
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+              elevation: 0,
+            ),
+            child: const Text(
+              'Close',
+              style: TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DetailTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _DetailTile({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF5F6FA),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, size: 20, color: Colors.grey.shade600),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: const TextStyle(fontSize: 11.5, color: Colors.grey),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.black87,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -429,14 +639,18 @@ class _AddConsumerBusinessSheetState extends State<_AddConsumerBusinessSheet> {
                       ),
                     ),
                     const SizedBox(width: 8),
-IconButton(
-  tooltip: 'Add new business',
-  onPressed: () {
-    Navigator.of(context).pop(); // يسكّر الشيت
-    widget.onAddNewBusiness();   // يفتح البوبب من الصفحة
-  },
-  icon: Icon(Icons.add, color: Colors.grey.shade600, size: 20),
-),
+                    IconButton(
+                      tooltip: 'Add new business',
+                      onPressed: () {
+                        Navigator.of(context).pop(); // يسكّر الشيت
+                        widget.onAddNewBusiness(); // يفتح البوبب من الصفحة
+                      },
+                      icon: Icon(
+                        Icons.add,
+                        color: Colors.grey.shade600,
+                        size: 20,
+                      ),
+                    ),
                   ],
                 ),
                 if (businesses.isEmpty)
@@ -603,7 +817,8 @@ class _AddBusinessDialogState extends State<_AddBusinessDialog> {
   }
 
   Future<void> _save() async {
-    if (!_formKey.currentState!.validate()) return;
+    setState(() => _submitted = true);
+  if (!_formKey.currentState!.validate()) return;
 
     setState(() => _saving = true);
     final success = await widget.onSubmit(
@@ -618,7 +833,9 @@ class _AddBusinessDialogState extends State<_AddBusinessDialog> {
       Navigator.of(context).pop(true);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to add business, please try again')),
+        const SnackBar(
+          content: Text('Failed to add business, please try again'),
+        ),
       );
     }
   }
@@ -646,16 +863,23 @@ class _AddBusinessDialogState extends State<_AddBusinessDialog> {
   }
 
   Widget _label(String text) => Padding(
-        padding: const EdgeInsets.only(bottom: 6),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 13,
-            fontWeight: FontWeight.w600,
-            color: Colors.black87,
-          ),
-        ),
-      );
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+    ),
+  );
+
+  bool _submitted = false;
+
+  // بعد أول محاولة حفظ: الكتابة في أحد الحقلين تزيل الخطأ من الآخر فورًا
+  void _revalidateContact() {
+    if (_submitted) _formKey.currentState?.validate();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -686,55 +910,62 @@ class _AddBusinessDialogState extends State<_AddBusinessDialog> {
               const SizedBox(height: 20),
 
               _label('Name'),
-              TextFormField(
-                controller: _nameController,
-                textInputAction: TextInputAction.next,
-                decoration: _decoration('Business name', Icons.business_outlined),
-                validator: (v) =>
-                    (v == null || v.trim().isEmpty) ? 'Name is required' : null,
-              ),
-              const SizedBox(height: 14),
+TextFormField(
+  controller: _nameController,
+  textInputAction: TextInputAction.next,
+  decoration: _decoration('Business name', Icons.business_outlined),
+  validator: (v) =>
+      (v == null || v.trim().isEmpty) ? 'Name is required' : null,
+),
+const SizedBox(height: 14),
 
-              _label('Email'),
-              TextFormField(
-                controller: _emailController,
-                keyboardType: TextInputType.emailAddress,
-                textInputAction: TextInputAction.next,
-                decoration: _decoration('example@mail.com', Icons.email_outlined),
-                validator: (v) {
-                  final value = v?.trim() ?? '';
-                  if (value.isEmpty) return 'Email is required';
-                  if (!RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value)) {
-                    return 'Invalid email';
-                  }
-                  return null;
-                },
-              ),
-              const SizedBox(height: 14),
+_label('Email'),
+TextFormField(
+  controller: _emailController,
+  keyboardType: TextInputType.emailAddress,
+  textInputAction: TextInputAction.next,
+  decoration: _decoration('example@mail.com', Icons.email_outlined),
+  onChanged: (_) => _revalidateContact(),
+  validator: (v) {
+    final email = v?.trim() ?? '';
+    final phone = _phoneController.text.trim();
+    if (email.isEmpty && phone.isEmpty) return 'Enter email or phone';
+    if (email.isNotEmpty &&
+        !RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(email)) {
+      return 'Invalid email';
+    }
+    return null;
+  },
+),
+const SizedBox(height: 14),
 
-              _label('Phone number'),
-              TextFormField(
-                controller: _phoneController,
-                keyboardType: TextInputType.phone,
-                textInputAction: TextInputAction.done,
-                onFieldSubmitted: (_) => _save(),
-                decoration: _decoration('07xxxxxxxxx', Icons.phone_outlined),
-                validator: (v) {
-                  final value = v?.trim() ?? '';
-                  if (value.isEmpty) return 'Phone number is required';
-                  if (!RegExp(r'^\+?[0-9]{7,15}$').hasMatch(value)) {
-                    return 'Invalid phone number';
-                  }
-                  return null;
-                },
-              ),
+_label('Phone number'),
+TextFormField(
+  controller: _phoneController,
+  keyboardType: TextInputType.phone,
+  textInputAction: TextInputAction.done,
+  onFieldSubmitted: (_) => _save(),
+  decoration: _decoration('07xxxxxxxxx', Icons.phone_outlined),
+  onChanged: (_) => _revalidateContact(),
+  validator: (v) {
+    final phone = (v ?? '').replaceAll(' ', '').trim();
+    final email = _emailController.text.trim();
+    if (phone.isEmpty && email.isEmpty) return 'Enter phone or email';
+    if (phone.isNotEmpty && !RegExp(r'^\+?[0-9]{7,15}$').hasMatch(phone)) {
+      return 'Invalid phone number';
+    }
+    return null;
+  },
+),
               const SizedBox(height: 24),
 
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(false),
                       style: OutlinedButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         side: BorderSide(color: Colors.grey.shade300),
@@ -790,5 +1021,3 @@ class _AddBusinessDialogState extends State<_AddBusinessDialog> {
     );
   }
 }
-
-

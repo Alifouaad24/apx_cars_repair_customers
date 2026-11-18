@@ -811,7 +811,7 @@ class OrderListItem extends StatelessWidget {
                                             .where((e) => e.isNotEmpty)
                                             .join(' ')
                                       : (order.customer?.customerName ??
-                                            "بدون اسم"),
+                                            "بدون سيارة"),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w600,
                                   ),
@@ -835,34 +835,45 @@ class OrderListItem extends StatelessWidget {
                             ),
                           ],
                           const SizedBox(height: 6),
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.calendar_today_outlined,
-                                size: 14,
-                                color: colors.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "${order.scheduleDt}",
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Icon(
-                                Icons.access_time_outlined,
-                                size: 14,
-                                color: colors.onSurfaceVariant,
-                              ),
-                              const SizedBox(width: 4),
-                              Text(
-                                "${order.scheduleTime}",
-                                style: theme.textTheme.bodySmall?.copyWith(
-                                  color: colors.onSurfaceVariant,
-                                ),
-                              ),
-                            ],
+                          order.scheduleDt.isNotEmpty
+                              ? Row(
+                                  children: [
+                                    Icon(
+                                      Icons.calendar_today_outlined,
+                                      size: 14,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${order.scheduleDt}",
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Icon(
+                                      Icons.access_time_outlined,
+                                      size: 14,
+                                      color: colors.onSurfaceVariant,
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      "${order.scheduleTime}",
+                                      style: theme.textTheme.bodySmall
+                                          ?.copyWith(
+                                            color: colors.onSurfaceVariant,
+                                          ),
+                                    ),
+                                  ],
+                                )
+                              : SizedBox.shrink(),
+
+                          Text(
+                            "Created At: ${order.createdDate}",
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colors.onSurfaceVariant,
+                            ),
                           ),
                         ],
                       ),

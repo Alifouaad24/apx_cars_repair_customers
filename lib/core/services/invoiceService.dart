@@ -8,11 +8,13 @@ import 'package:mailer/smtp_server.dart';
 
 class InvoiceItem {
   final String description;
+  final String notes;
   final int qty;
   final double rate;
 
   InvoiceItem({
     required this.description,
+    this.notes = '',
     required this.qty,
     required this.rate,
   });
@@ -372,6 +374,7 @@ pw.Widget _buildServicesTable(InvoiceData data) {
       children: [
         _tableCell('#', headerStyle, isHeader: true),
         _tableCell('SERVICE PERFORMED', headerStyle, isHeader: true),
+        _tableCell('NOTES', headerStyle, isHeader: true),
         _tableCell(
           'QTY',
           headerStyle,
@@ -402,6 +405,7 @@ pw.Widget _buildServicesTable(InvoiceData data) {
         children: [
           _tableCell((i + 1).toString().padLeft(2, '0'), rowStyle),
           _tableCell(s?.description ?? '', rowStyle),
+          _tableCell(s?.notes ?? '', rowStyle),
           _tableCell(
             hasData ? s!.qty.toString() : '',
             rowStyle,
@@ -426,10 +430,11 @@ pw.Widget _buildServicesTable(InvoiceData data) {
     border: pw.TableBorder.all(color: _InvoiceColors.border, width: 0.6),
     columnWidths: {
       0: const pw.FixedColumnWidth(28),
-      1: const pw.FlexColumnWidth(4),
-      2: const pw.FixedColumnWidth(40),
-      3: const pw.FixedColumnWidth(60),
-      4: const pw.FixedColumnWidth(70),
+      1: const pw.FlexColumnWidth(3), // SERVICE
+      2: const pw.FlexColumnWidth(3), // NOTES
+      3: const pw.FixedColumnWidth(40),
+      4: const pw.FixedColumnWidth(60),
+      5: const pw.FixedColumnWidth(70),
     },
     children: rows,
   );

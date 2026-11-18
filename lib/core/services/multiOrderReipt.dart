@@ -342,6 +342,7 @@ pw.Widget _buildOrdersTable(MultiOrderReceiptData data) {
           isHeader: true,
           align: pw.Alignment.center,
         ),
+        _tableCell('NOTES', headerStyle, isHeader: true),
 
         _tableCell(
           'AMOUNT PAID',
@@ -365,6 +366,7 @@ pw.Widget _buildOrdersTable(MultiOrderReceiptData data) {
 
             _tableCell('${o.vin} ${o.year} ${o.brand} ${o.model}', rowStyle),
 
+            _tableCell('', rowStyle),
             _tableCell('', rowStyle),
 
             _tableCell(
@@ -402,6 +404,7 @@ pw.Widget _buildOrdersTable(MultiOrderReceiptData data) {
             ),
 
             _tableCell(serviceName, rowStyle),
+            _tableCell(detail.notes?.trim() ?? '', rowStyle),
 
             _tableCell(
               '\$${(detail.cost ?? 0).toStringAsFixed(0)}',
@@ -420,7 +423,8 @@ pw.Widget _buildOrdersTable(MultiOrderReceiptData data) {
       0: const pw.FixedColumnWidth(30),
       1: const pw.FlexColumnWidth(3), // VIN
       2: const pw.FlexColumnWidth(2), // SERVICE
-      3: const pw.FixedColumnWidth(65),
+      3: const pw.FlexColumnWidth(2), // NOTES
+      4: const pw.FixedColumnWidth(65),
     },
     children: rows,
   );

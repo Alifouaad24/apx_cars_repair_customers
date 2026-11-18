@@ -639,41 +639,51 @@ class CaseController extends GetxController {
   //   }
   // }
 
-  Future<void> addDetailToOrder(Map<String, dynamic> data) async {
+  // ملاحظة: Get.back() في GetX 4 يسكّر السناك بار المفتوح بدل الديالوغ،
+  // لهيك منسكّر الديالوغ مباشرة عن طريق الـ Navigator.
+  void _closeDialog() {
+    if (Get.isSnackbarOpen) Get.closeAllSnackbars();
+    if ((Get.isDialogOpen ?? false) && Get.overlayContext != null) {
+      Navigator.of(Get.overlayContext!, rootNavigator: true).pop();
+    }
+  }
+
+  // يعيد تحميل الطلبات من السيرفر ويربط currentCase بالنسخة الجديدة
+  Future<void> _refreshCurrentCase() async {
+    final id = currentCase?.globalOrderId;
+    await getCases();
+    final fresh = cases.firstWhereOrNull((c) => c.globalOrderId == id);
+    if (fresh != null) currentCase = fresh;
+    update();
+  }
+
+  Future<bool> addDetailToOrder(Map<String, dynamic> data) async {
     isEditingCaseService = true;
     update();
+    var isSuccess = false;
 
     try {
       final result = await addServiceToCaseUseCase(data);
-
-      await result.fold(
-        (failure) async {
-          Get.snackbar("Error", failure.message);
-        },
-        (data) async {
-          Get.snackbar("Success", "Service added successfully");
-
-          // Reload cases from API
-
-          // Refresh current case from the newly loaded list
-          if (currentCase != null) {
-            currentCase!.orderDetails?.add(data);
-          }
-          isEditingCaseService = false;
-
-          update();
-          Get.back();
-          await getCases();
-          print("Service added successfully");
-          print(data);
-        },
-      );
+      result.fold((failure) => Get.snackbar("Error", failure.message), (
+        added,
+      ) {
+        isSuccess = true;
+        // تحديث فوري للواجهة قبل ما يرجع الريفرش من السيرفر
+        if (currentCase != null) {
+          (currentCase!.orderDetails ??= []).add(added);
+        }
+      });
     } finally {
       isEditingCaseService = false;
       update();
-
-      // Get.offAllNamed(AppRoutes.main);
     }
+
+    if (isSuccess) {
+      _closeDialog();
+      Get.snackbar("Success", "Service added successfully");
+      _refreshCurrentCase();
+    }
+    return isSuccess;
   }
 
   int? editingServiceId;
@@ -719,9 +729,9 @@ class CaseController extends GetxController {
 
     if (isSuccess) {
       // سكّر البوب أب أول، وبعدين اعرض السناك بار
-      if (Get.isDialogOpen ?? false) Get.back();
+      _closeDialog();
       Get.snackbar("Success", "Service edited successfully");
-      getCases(); // تحديث القائمة بالخلفية بدون انتظار
+      _refreshCurrentCase(); // تحديث بالخلفية بدون انتظار
     }
 
     return isSuccess;
@@ -736,25 +746,21 @@ class CaseController extends GetxController {
 
     try {
       final result = await deletecaseserviceUsecase(serviceId);
-
-      await result.fold(
-        (failure) async {
-          Get.snackbar("Error", failure.message);
-        },
-        (data) async {
-          isSuccess = true;
-          currentCase!.orderDetails!.removeWhere(
-            (el) => el.globalOrderDetailId == serviceId,
-          );
-
-          Get.snackbar("Success", "Service deleted successfully");
-
-          await getCases();
-        },
-      );
+      result.fold((failure) => Get.snackbar("Error", failure.message), (_) {
+        isSuccess = true;
+        currentCase?.orderDetails?.removeWhere(
+          (el) => el.globalOrderDetailId == serviceId,
+        );
+      });
     } finally {
       isDeletingCaseService = false;
       update();
+    }
+
+    if (isSuccess) {
+      _closeDialog();
+      Get.snackbar("Success", "Service deleted successfully");
+      _refreshCurrentCase();
     }
 
     return isSuccess;
@@ -765,30 +771,44 @@ class CaseController extends GetxController {
     int serviceId,
     Map<String, dynamic> data,
   ) async {
+    final noteText = serviceNoteController.text.trim();
+    if (noteText.isEmpty) {
+      Get.snackbar("Required", "Please write a note");
+      return;
+    }
+
     addingNoteToService = true;
     update();
-    final result = await addCaseServiceNote(serviceId, data);
-    var detail = currentCase!.orderDetails!.firstWhere(
-      (e) => e.globalOrderDetailId == serviceId,
-    );
+    var isSuccess = false;
 
-    update();
-    result.fold((failure) => Get.snackbar("Error", failure.message), (data) {
-      getCases();
+    try {
+      final result = await addCaseServiceNote(serviceId, data);
+      result.fold((failure) => Get.snackbar("Error", failure.message), (_) {
+        isSuccess = true;
+        final detail = currentCase?.orderDetails?.firstWhereOrNull(
+          (e) => e.globalOrderDetailId == serviceId,
+        );
+        if (detail != null) {
+          detail.caseServiceNotes?.add(
+            CaseServiceNotesModel(
+              caseServiceNotesId: DateTime.now().microsecondsSinceEpoch,
+              notes: noteText,
+              oredesServicesId: serviceId,
+            ),
+          );
+        }
+      });
+    } finally {
       addingNoteToService = false;
-      detail.caseServiceNotes?.add(
-        new CaseServiceNotesModel(
-          caseServiceNotesId: DateTime.now().microsecond,
-          notes: serviceNoteController.text.trim(),
-          oredesServicesId: serviceId,
-        ),
-      );
       update();
-      Get.back();
+    }
+
+    if (isSuccess) {
+      serviceNoteController.clear();
+      _closeDialog();
       Get.snackbar("Success", "Note added successfully");
-    });
-    addingNoteToService = false;
-    update();
+      _refreshCurrentCase();
+    }
   }
 
   Future<void> changeServiceStatus(int serviceId, bool resolved) async {
@@ -840,6 +860,46 @@ class CaseController extends GetxController {
     return isSuccess;
   }
 
+  // يبني نص TECHNICIAN NOTES: ملاحظات خدمات كل سيارة كقائمة تحتها
+  // Car 1 - Toyota Camry (VIN)
+  // - note 1
+  // - note 2
+  String _buildTechnicianNotes(
+    List<GlobalOrderModel> orders, {
+    bool includeOrderNotes = false,
+  }) {
+    final buffer = StringBuffer();
+
+    for (int i = 0; i < orders.length; i++) {
+      final order = orders[i];
+      final notes = <String>[
+        if (includeOrderNotes && (order.notes?.trim().isNotEmpty ?? false))
+          order.notes!.trim(),
+        for (final detail in order.orderDetails ?? <GlobalOrderDetailModel>[])
+          for (final n in detail.caseServiceNotes ?? <CaseServiceNotesModel>[])
+            if (n.notes?.trim().isNotEmpty ?? false) n.notes!.trim(),
+      ];
+      if (notes.isEmpty) continue;
+
+      final car = order.carInfo;
+      final carName =
+          '${car?.carBrand?.carBrandName ?? ''} ${car?.carModel?.carModelName ?? ''}'
+              .trim();
+      final vin = car?.vinNumber?.trim() ?? '';
+
+      if (buffer.isNotEmpty) buffer.writeln();
+      buffer.write('Car ${i + 1}');
+      if (carName.isNotEmpty) buffer.write(' - $carName');
+      if (vin.isNotEmpty) buffer.write(' ($vin)');
+      buffer.writeln();
+      for (final n in notes) {
+        buffer.writeln('- $n');
+      }
+    }
+
+    return buffer.toString().trimRight();
+  }
+
   bool isSendingInvoice = false;
   Future<bool> sendReceiptEmail({
     required String toEmail,
@@ -873,13 +933,16 @@ class CaseController extends GetxController {
             .map(
               (d) => ServiceItem(
                 description: d.service?.description ?? '',
+                notes: d.notes?.trim() ?? '',
                 qty: 1,
                 rate: (d.cost ?? 0).toDouble(),
               ),
             )
             .toList(),
 
-        technicianNotes: order.notes ?? '',
+        technicianNotes: _buildTechnicianNotes([
+          order,
+        ], includeOrderNotes: true),
       );
 
       // 2️⃣ ولّد الـ PDF بالتصميم الجديد
@@ -949,13 +1012,16 @@ class CaseController extends GetxController {
             .map(
               (d) => InvoiceItem(
                 description: d.service?.description ?? '',
+                notes: d.notes?.trim() ?? '',
                 qty: 1,
                 rate: (d.cost ?? 0).toDouble(),
               ),
             )
             .toList(),
 
-        technicianNotes: order.notes ?? '',
+        technicianNotes: _buildTechnicianNotes([
+          order,
+        ], includeOrderNotes: true),
       );
 
       // 2️⃣ ولّد الـ PDF بالتصميم الجديد
@@ -1068,7 +1134,7 @@ class CaseController extends GetxController {
         customerEmail: customerEmail,
         customerAddress: '', // عدّل حسب اسم الحقل الفعلي عندك إن وُجد
         orders: orderRows,
-        technicianNotes: '',
+        technicianNotes: _buildTechnicianNotes(ordersToSendInvoice),
       );
 
       // 6️⃣ ولّد الـ PDF
@@ -1205,7 +1271,7 @@ class CaseController extends GetxController {
         customerEmail: customerEmail,
         customerAddress: '',
         orders: orderRows,
-        technicianNotes: '',
+        technicianNotes: _buildTechnicianNotes(ordersToSendInvoice),
       );
 
       // 6️⃣ ولّد الـ PDF
@@ -1266,36 +1332,57 @@ class CaseController extends GetxController {
   }
 
   void toggleListOrders(GlobalOrderModel model) {
-    final index = ordersToSendInvoice.indexWhere(
-      (o) => o.globalOrderId == model.globalOrderId,
-    );
-
-    if (index != -1) {
-      ordersToSendInvoice.removeAt(index);
-      update();
+    if (model.orderDetails != null && model.orderDetails!.isEmpty) {
+      Get.snackbar(
+        "Empty Order",
+        "No services to this order",
+        backgroundColor: Colors.amber,
+      );
       return;
-    }
+    } else if ((model.orderDetails ?? []).fold<double>(
+          0.0,
+          (double total, GlobalOrderDetailModel o) =>
+              total + (o.cost ?? 0).toDouble(),
+        ) <=
+        0) {
+      Get.snackbar(
+        "Zero total cost Order",
+        "This order has zero cost",
+        backgroundColor: Colors.amber,
+      );
+      return;
+    } else {
+      final index = ordersToSendInvoice.indexWhere(
+        (o) => o.globalOrderId == model.globalOrderId,
+      );
 
-    if (ordersToSendInvoice.isNotEmpty) {
-      final currentCustomerId =
-          ordersToSendInvoice.first.customer?.globalCustomerId;
-      final newCustomerId = model.customer?.globalCustomerId;
-
-      if (currentCustomerId != newCustomerId) {
-        Get.snackbar(
-          'تنبيه',
-          'لا يمكنك اختيار طلبات لأكثر من زبون واحد في نفس الايصال',
-          snackPosition: SnackPosition.BOTTOM,
-          margin: const EdgeInsets.all(16),
-          borderRadius: 12,
-          backgroundColor: const Color.fromARGB(255, 220, 92, 13),
-          colorText: Colors.white,
-        );
+      if (index != -1) {
+        ordersToSendInvoice.removeAt(index);
+        update();
         return;
       }
+
+      if (ordersToSendInvoice.isNotEmpty) {
+        final currentCustomerId =
+            ordersToSendInvoice.first.customer?.globalCustomerId;
+        final newCustomerId = model.customer?.globalCustomerId;
+
+        if (currentCustomerId != newCustomerId) {
+          Get.snackbar(
+            'تنبيه',
+            'لا يمكنك اختيار طلبات لأكثر من زبون واحد في نفس الايصال',
+            snackPosition: SnackPosition.BOTTOM,
+            margin: const EdgeInsets.all(16),
+            borderRadius: 12,
+            backgroundColor: const Color.fromARGB(255, 220, 92, 13),
+            colorText: Colors.white,
+          );
+          return;
+        }
+      }
+      ordersToSendInvoice.add(model);
+      update();
     }
-    ordersToSendInvoice.add(model);
-    update();
   }
 
   bool isDeletingOrder = false;

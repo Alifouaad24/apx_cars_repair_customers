@@ -31,11 +31,15 @@ class BusinessFilterModel {
   final int id;
   final String name;
   final String email;
+  final String phone;
+  final String address;
 
   BusinessFilterModel({
     required this.id,
     required this.name,
     required this.email,
+    this.phone = '',
+    this.address = '',
   });
 
   factory BusinessFilterModel.fromJson(Map<String, dynamic> json) {
@@ -43,6 +47,8 @@ class BusinessFilterModel {
       id: json['business_id'] ?? 0,
       name: json['business_name'] ?? '',
       email: json['business_email'] ?? '',
+      phone: (json['business_phone'] ?? json['phone'] ?? '').toString(),
+      address: (json['business_address'] ?? json['address'] ?? '').toString(),
     );
   }
 }

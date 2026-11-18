@@ -50,7 +50,8 @@ class _CaseDetailViewState extends State<CaseDetailView> {
         final List<OrderImage> carImages =
             controller.currentCase?.orderImages ?? const [];
         final bool hasImages = carImages.isNotEmpty;
-        final bool hasServices = currentCase.orderDetails != null;
+        final bool hasServices =
+            currentCase.orderDetails?.isNotEmpty ?? false;
 
         return Scaffold(
           backgroundColor: surface,
@@ -60,33 +61,86 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                 slivers: [
                   // ─── Sliver App Bar ────────────────────────────────────────────
                   SliverAppBar(
-                    expandedHeight: hasImages ? 260 : 140,
+                    expandedHeight: 260,
                     pinned: true,
                     // stretch:true كان يتعارض مع سحب PageView الأفقي - أزلناه
                     backgroundColor: primary,
                     foregroundColor: Colors.white,
                     flexibleSpace: FlexibleSpaceBar(
                       titlePadding: const EdgeInsets.only(left: 56, bottom: 14),
-                      title: Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _carTitle(primaryCarInfo),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            primaryCarInfo?.carYear?.carYearNumber ?? '',
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.white70,
-                            ),
-                          ),
-                        ],
+                      title: GestureDetector(
+                        behavior: HitTestBehavior.opaque,
+                        onTap: () => primaryCarInfo != null
+                            ? showAddCarDialog(
+                                controller,
+                                currentCase,
+                                existingCar: primaryCarInfo,
+                              )
+                            : showAddCarDialog(controller, currentCase),
+                        child: Builder(
+                          builder: (context) {
+                            // إخفاء الـ VIN عند طي الهيدر حتى لا يزدحم شريط العنوان
+                            final settings = context
+                                .dependOnInheritedWidgetOfExactType<
+                                  FlexibleSpaceBarSettings
+                                >();
+                            final isCollapsed =
+                                settings != null &&
+                                settings.currentExtent <=
+                                    settings.minExtent + 20;
+                            final vin = primaryCarInfo?.vinNumber?.trim() ?? '';
+
+                            return Column(
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Flexible(
+                                      child: Text(
+                                        _carTitle(primaryCarInfo),
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 4),
+                                    Icon(
+                                      primaryCarInfo != null
+                                          ? Icons.edit_rounded
+                                          : Icons.add_circle_outline_rounded,
+                                      size: 12,
+                                      color: Colors.white70,
+                                    ),
+                                  ],
+                                ),
+                                if ((primaryCarInfo?.carYear?.carYearNumber ??
+                                        '')
+                                    .isNotEmpty)
+                                  Text(
+                                    primaryCarInfo!.carYear!.carYearNumber,
+                                    style: const TextStyle(
+                                      fontSize: 11,
+                                      color: Colors.white70,
+                                    ),
+                                  ),
+                                if (!isCollapsed && vin.isNotEmpty)
+                                  Text(
+                                    'VIN: $vin',
+                                    style: const TextStyle(
+                                      fontSize: 9,
+                                      color: Colors.white60,
+                                      letterSpacing: 0.5,
+                                    ),
+                                  ),
+                              ],
+                            );
+                          },
+                        ),
                       ),
                       background: hasImages
                           ? Stack(
@@ -194,21 +248,8 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                                   ),
                               ],
                             )
-                          : Container(
-                              decoration: BoxDecoration(
-                                gradient: LinearGradient(
-                                  begin: Alignment.topLeft,
-                                  end: Alignment.bottomRight,
-                                  colors: [primary, primaryDark],
-                                ),
-                              ),
-                              child: const Center(
-                                child: Icon(
-                                  Icons.directions_car_rounded,
-                                  size: 72,
-                                  color: Colors.white24,
-                                ),
-                              ),
+                          : _BrandLogoBackground(
+                              brandName: primaryCarInfo?.carBrand?.carBrandName,
                             ),
                     ),
                   ),
@@ -219,24 +260,12 @@ class _CaseDetailViewState extends State<CaseDetailView> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         // Car Info: تفاصيل السيارة إذا موجودة، وإلا بطاقة "إضافة سيارة"
-                        primaryCarInfo != null
-                            ? GestureDetector(
-                                behavior: HitTestBehavior.opaque,
-                                onTap: () => showAddCarDialog(
-                                  controller,
-                                  currentCase,
-                                  existingCar: primaryCarInfo,
-                                ),
-                                child: CarInfoCard(
-                                  carInfo: primaryCarInfo,
-                                  customer: currentCase.customer,
-                                  scheduleDate: currentCase.scheduleDt,
-                                ),
-                              )
-                            : EmptyCarCard(
-                                onAddCar: () =>
-                                    showAddCarDialog(controller, currentCase),
-                              ),
+                        // بطاقة "إضافة سيارة" فقط عند عدم وجود سيارة (المعلومات صارت في الهيدر)
+                        if (primaryCarInfo == null)
+                          EmptyCarCard(
+                            onAddCar: () =>
+                                showAddCarDialog(controller, currentCase),
+                          ),
 
                         const SizedBox(height: 16),
 
@@ -878,7 +907,18 @@ void showAddCarDialog(
                             controller: controller.vinController,
                             label: "VIN Number",
                             icon: Icons.pin_outlined,
-                            onChanged: () => setDState(() {}),
+                            onChanged: () {
+                              final value = controller.vinController.value;
+                              final upper = value.text.toUpperCase();
+                              if (upper != value.text) {
+                                controller.vinController.value = value.copyWith(
+                                  text: upper,
+                                  selection:
+                                      value.selection, // يحافظ على مكان المؤشر
+                                );
+                              }
+                              setDState(() {});
+                            },
                           ),
                         ),
                         const SizedBox(width: 8),
@@ -1596,4 +1636,100 @@ InputDecoration modernDropdownDecoration({
       borderSide: const BorderSide(color: Color(0xFF0EA5E9), width: 1.5),
     ),
   );
+}
+
+// شعار البراند داخل دائرة بيضاء، مع رجوع لأيقونة السيارة إن لم يتوفر
+// رابط شعار البراند من مستودع car-logos-dataset
+String? brandLogoUrl(String? brandName) {
+  final name = brandName?.trim().toLowerCase();
+  if (name == null || name.isEmpty) return null;
+  final slug = name
+      .replaceAll(RegExp(r'[^a-z0-9]+'), '-')
+      .replaceAll(RegExp(r'^-+|-+$'), '');
+  if (slug.isEmpty) return null;
+  return 'https://raw.githubusercontent.com/filippofilip95/car-logos-dataset/master/logos/optimized/$slug.png';
+}
+
+// خلفية الهيدر عند عدم وجود صور: شعار البراند على كامل المساحة
+class _BrandLogoBackground extends StatelessWidget {
+  const _BrandLogoBackground({this.brandName});
+  final String? brandName;
+
+  // الخلفية الأصلية (تدرّج + أيقونة سيارة) عند عدم توفر شعار
+  Widget _fallback() => Container(
+    decoration: BoxDecoration(
+      gradient: LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: [primary, primaryDark],
+      ),
+    ),
+    child: const Center(
+      child: Icon(
+        Icons.directions_car_rounded,
+        size: 72,
+        color: Colors.white24,
+      ),
+    ),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final url = brandLogoUrl(brandName);
+    if (url == null) return _fallback();
+
+    final topInset = MediaQuery.of(context).padding.top + kToolbarHeight;
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // خلفية فاتحة ناعمة
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Colors.white, Color(0xFFF1F5F9)],
+            ),
+          ),
+        ),
+
+        // الشعار يملأ المساحة بين شريط الأدوات والعنوان
+        Padding(
+          padding: EdgeInsets.fromLTRB(40, topInset, 40, 64),
+          child: Image.network(
+            url,
+            fit: BoxFit.contain,
+            loadingBuilder: (context, child, progress) => progress == null
+                ? child
+                : Center(
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: primary,
+                    ),
+                  ),
+            // إن فشل التحميل نرجع للخلفية الأصلية بالكامل
+            errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+          ),
+        ),
+
+        // نفس التدرّج الموجود مع الصور حتى يبقى النص الأبيض مقروءًا
+        Container(
+          decoration: BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [
+                primaryDark.withOpacity(0.35),
+                Colors.transparent,
+                Colors.transparent,
+                primaryDark.withOpacity(0.9),
+              ],
+              stops: const [0.0, 0.25, 0.6, 1.0],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
 }

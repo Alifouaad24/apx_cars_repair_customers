@@ -304,6 +304,7 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
           isHeader: true,
           align: pw.Alignment.center,
         ),
+        _tableCell('NOTES', headerStyle, isHeader: true),
         _tableCell(
           'AMOUNT',
           headerStyle,
@@ -323,6 +324,7 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
           children: [
             _tableCell((i + 1).toString().padLeft(2, '0'), rowStyle),
             _tableCell('${o.vin} ${o.year} ${o.brand} ${o.model}', rowStyle),
+            _tableCell('', rowStyle),
             _tableCell('', rowStyle),
             _tableCell(
               '\$${o.amount.toStringAsFixed(0)}',
@@ -351,6 +353,7 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
             _tableCell((i + 1).toString().padLeft(2, '0'), rowStyle),
             _tableCell('${o.vin} ${o.year} ${o.brand} ${o.model}', rowStyle),
             _tableCell(serviceName, rowStyle),
+            _tableCell(detail.notes?.trim() ?? '', rowStyle),
             _tableCell(
               '\$${(detail.cost ?? 0).toStringAsFixed(0)}',
               rowStyle,
@@ -368,7 +371,8 @@ pw.Widget _buildOrdersTable(MultiOrderInvoiceData data) {
       0: const pw.FixedColumnWidth(30),
       1: const pw.FlexColumnWidth(3), // VIN
       2: const pw.FlexColumnWidth(2), // SERVICE
-      3: const pw.FixedColumnWidth(65),
+      3: const pw.FlexColumnWidth(2), // NOTES
+      4: const pw.FixedColumnWidth(65),
     },
     children: rows,
   );

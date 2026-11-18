@@ -238,23 +238,13 @@ class ServiceCard extends StatelessWidget {
                                                           controller
                                                               .isDeletingCaseService
                                                           ? null
-                                                          : () async {
-                                                              final deleted =
-                                                                  await controller
-                                                                      .deleteCaseService(
-                                                                        service
-                                                                            .globalOrderDetailId,
-                                                                      );
-
-                                                              if (deleted &&
-                                                                  Get.overlayContext !=
-                                                                      null) {
-                                                                Navigator.of(
-                                                                  Get.overlayContext!,
-                                                                  rootNavigator:
-                                                                      true,
-                                                                ).pop();
-                                                              }
+                                                          : () {
+                                                              // الكونترولر يسكّر الديالوغ بعد نجاح الحذف
+                                                              controller
+                                                                  .deleteCaseService(
+                                                                    service
+                                                                        .globalOrderDetailId,
+                                                                  );
                                                             },
                                                       child:
                                                           controller
@@ -594,7 +584,10 @@ class ServiceCard extends StatelessWidget {
                                       children: [
                                         Expanded(
                                           child: ElevatedButton(
-                                            onPressed: () {
+                                            onPressed: controller
+                                                    .addingNoteToService
+                                                ? null
+                                                : () {
                                               List<String> note = [];
                                               note.add(
                                                 controller

@@ -1,5 +1,6 @@
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
 import 'package:apx_cars_repair/features/cases/data/models/CaseModel.dart';
+import 'package:apx_cars_repair/features/cases/data/models/OrderDetailModel.dart';
 import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/orderItemView.dart';
@@ -576,7 +577,9 @@ class _ShowCasesState extends State<ShowCases> {
                               return OrderListItem(
                                 order: order,
                                 onLongPress: () {
-                                  controller.toggleListOrders(order);
+  
+                                    controller.toggleListOrders(order);
+                                  
                                 },
                                 onTap: () {
                                   if (controller.ordersToSendInvoice.contains(
