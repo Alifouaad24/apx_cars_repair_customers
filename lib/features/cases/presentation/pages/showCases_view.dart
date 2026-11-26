@@ -5,7 +5,9 @@ import 'package:apx_cars_repair/features/cases/data/models/OrderModel.dart';
 import 'package:apx_cars_repair/features/cases/presentation/controller/CaseController.dart';
 import 'package:apx_cars_repair/features/cases/presentation/pages/orderItemView.dart';
 import 'package:apx_cars_repair/features/customers/presentation/controller/CustomerController.dart';
+import 'package:apx_cars_repair/features/customers/presentation/widgets/voice_business_search_dialog.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:get/get.dart';
 
 class ShowCases extends StatefulWidget {
@@ -691,154 +693,470 @@ class _ShowCasesState extends State<ShowCases> {
     required VoidCallback onAddPressed,
     required VoidCallback onResetPressed,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(6),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [_primary, _secondary],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: _primary.withOpacity(0.22),
-            blurRadius: 24,
-            offset: const Offset(0, 12),
+    return Column(
+      children: [
+        // ---------------- Summary card ----------------
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [_primary, _secondary],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: _primary.withOpacity(0.25),
+                blurRadius: 20,
+                offset: const Offset(0, 10),
+              ),
+            ],
           ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
+          child: Row(
             children: [
               Container(
-                height: 52,
-                width: 52,
+                height: 48,
+                width: 48,
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.16),
-                  borderRadius: BorderRadius.circular(16),
+                  borderRadius: BorderRadius.circular(14),
                 ),
                 child: const Icon(
                   Icons.directions_car_filled_outlined,
                   color: Colors.white,
-                  size: 28,
+                  size: 26,
                 ),
               ),
-              const SizedBox(width: 14),
-              const Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Orders Overview',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          Row(
-            children: [
-              _buildMetricChip(
-                icon: Icons.folder_open_outlined,
-                label: 'Orders',
-                value: totalCases.toString(),
-                onTab: () {},
-              ),
-              const SizedBox(width: 10),
-              _buildMetricChip(
-                icon: Icons.map_outlined,
-                label: 'My today tasks',
-                value: totalTodayTasks.toString(),
-                onTab: () {
-                  if (totalTodayTasks == 0) return;
-
-                  final now = DateTime.now();
-                  final todayTasksList = Get.find<CaseController>().cases.where(
-                    (caseItem) {
-                      final date = DateTime.tryParse(caseItem.scheduleDt ?? '');
-                      return date != null &&
-                          date.year == now.year &&
-                          date.month == now.month &&
-                          date.day == now.day;
-                    },
-                  ).toList();
-
-                  // NEW: حدّث الماركرز فوراً قبل الانتقال، بدل انتظار onInit
-                  final customerController = Get.find<CustomerController>();
-                  customerController.todayTasks = todayTasksList;
-                  customerController.loadTodayTaskMarkers();
-
-                  Get.toNamed(
-                    AppRoutes.map,
-                    arguments: {
-                      "todayTasks": todayTasksList,
-                      "showTodayTasks": true,
-                    },
-                  );
-                },
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMetricChip({
-    required IconData icon,
-    required String label,
-    required String value,
-    required VoidCallback onTab,
-  }) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTab,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 2),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.16),
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: Colors.white.withOpacity(0.12)),
-          ),
-          child: Row(
-            children: [
-              Icon(icon, color: Colors.white, size: 20),
-              const SizedBox(width: 10),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      value,
-                      style: const TextStyle(
+                    const Text(
+                      'Orders Overview',
+                      style: TextStyle(
                         color: Colors.white,
                         fontSize: 18,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      label,
+                      DateFormat('EEEE, MMM d').format(DateTime.now()),
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 12,
+                        fontSize: 12.5,
                       ),
                     ),
+                    if (isFiltered) ...[
+                      const SizedBox(height: 6),
+                      InkWell(
+                        onTap: onResetPressed,
+                        borderRadius: BorderRadius.circular(12),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 3,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.close, size: 13, color: Colors.white),
+                              SizedBox(width: 4),
+                              Text(
+                                'Clear filter',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
+              _buildHeaderStat(value: totalCases, label: 'Open'),
+              Container(
+                width: 1,
+                height: 34,
+                margin: const EdgeInsets.symmetric(horizontal: 12),
+                color: Colors.white24,
+              ),
+              _buildHeaderStat(value: totalTodayTasks, label: 'Today'),
             ],
           ),
         ),
+
+        const SizedBox(height: 14),
+
+        // ---------------- Quick actions ----------------
+        Row(
+          children: [
+            _buildActionTile(
+              icon: Icons.receipt_long_rounded,
+              label: 'All orders',
+              color: _primary,
+              onTap: () => Get.toNamed(AppRoutes.simpleOrdersView),
+            ),
+            const SizedBox(width: 10),
+            _buildActionTile(
+              icon: Icons.map_rounded,
+              label: 'Today map',
+              color: const Color(0xFF4F46E5),
+              badge: totalTodayTasks,
+              onTap: () {
+                if (totalTodayTasks == 0) {
+                  Get.snackbar('No tasks', 'You have no tasks for today.');
+                  return;
+                }
+
+                final todayTasksList = _todayTasks();
+
+                // حدّث الماركرز فوراً قبل الانتقال، بدل انتظار onInit
+                final customerController = Get.find<CustomerController>();
+                customerController.todayTasks = todayTasksList;
+                customerController.loadTodayTaskMarkers();
+
+                Get.toNamed(
+                  AppRoutes.map,
+                  arguments: {
+                    "todayTasks": todayTasksList,
+                    "showTodayTasks": true,
+                  },
+                );
+              },
+            ),
+            const SizedBox(width: 10),
+            _buildActionTile(
+              icon: Icons.near_me_rounded,
+              label: 'Nearest',
+              color: const Color(0xFFEA580C),
+              badge: totalTodayTasks,
+              onTap: () {
+                if (totalTodayTasks == 0) {
+                  Get.snackbar('No tasks', 'You have no tasks for today.');
+                  return;
+                }
+                _showNearestTodayTasksSheet(_todayTasks());
+              },
+            ),
+            const SizedBox(width: 10),
+            _buildActionTile(
+              icon: Icons.mic_rounded,
+              label: 'Voice',
+              color: const Color(0xFFDB2777),
+              onTap: () => showVoiceBusinessSearchDialog(context),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildHeaderStat({required int value, required String label}) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          '$value',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w800,
+            height: 1.1,
+          ),
+        ),
+        Text(
+          label,
+          style: const TextStyle(color: Colors.white70, fontSize: 11.5),
+        ),
+      ],
+    );
+  }
+
+  /// Square quick-action button: tinted icon, label, optional count badge.
+  Widget _buildActionTile({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+    int? badge,
+  }) {
+    return Expanded(
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(18),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.06),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          clipBehavior: Clip.antiAlias,
+          child: InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(6, 14, 6, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      Container(
+                        width: 46,
+                        height: 46,
+                        decoration: BoxDecoration(
+                          color: color.withOpacity(0.12),
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                        child: Icon(icon, color: color, size: 24),
+                      ),
+                      if (badge != null && badge > 0)
+                        Positioned(
+                          top: -6,
+                          right: -8,
+                          child: Container(
+                            constraints: const BoxConstraints(minWidth: 20),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 5,
+                              vertical: 2,
+                            ),
+                            decoration: BoxDecoration(
+                              color: color,
+                              borderRadius: BorderRadius.circular(10),
+                              border: Border.all(color: Colors.white, width: 2),
+                            ),
+                            child: Text(
+                              '$badge',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10.5,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    label,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF1E293B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
+    );
+  }
+
+  /// Today's tasks (same filter used by "My today tasks").
+  List<dynamic> _todayTasks() {
+    final now = DateTime.now();
+    return Get.find<CaseController>().cases.where((caseItem) {
+      final date = DateTime.tryParse(caseItem.scheduleDt ?? '');
+      return date != null &&
+          date.year == now.year &&
+          date.month == now.month &&
+          date.day == now.day;
+    }).toList();
+  }
+
+  String _formatDistance(double? meters) {
+    if (meters == null) return 'Unknown distance';
+    const metersPerMile = 1609.344;
+    final miles = meters / metersPerMile;
+    if (miles < 0.1) return '${(meters * 3.28084).round()} ft';
+    return '${miles.toStringAsFixed(1)} mi';
+  }
+
+  /// Popup listing today's tasks sorted by distance from the device location.
+  void _showNearestTodayTasksSheet(List<dynamic> todayTasks) {
+    final customerController = Get.find<CustomerController>();
+    final caseController = Get.find<CaseController>();
+    final future = customerController.getTasksSortedByDistance(todayTasks);
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.7,
+          minChildSize: 0.4,
+          maxChildSize: 0.95,
+          expand: false,
+          builder: (context, scrollController) {
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              ),
+              child: Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 16, 8, 8),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.near_me, color: _primary),
+                        const SizedBox(width: 8),
+                        const Expanded(
+                          child: Text(
+                            'Today tasks — nearest first',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.close),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(height: 1),
+                  Expanded(
+                    child: FutureBuilder<List<Map<String, dynamic>>>(
+                      future: future,
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState != ConnectionState.done) {
+                          return const Center(
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircularProgressIndicator(color: _primary),
+                                SizedBox(height: 12),
+                                Text('Calculating distances...'),
+                              ],
+                            ),
+                          );
+                        }
+                        if (snapshot.hasError) {
+                          return Center(
+                            child: Padding(
+                              padding: const EdgeInsets.all(24),
+                              child: Text(
+                                snapshot.error.toString().replaceFirst(
+                                  'Exception: ',
+                                  '',
+                                ),
+                                textAlign: TextAlign.center,
+                              ),
+                            ),
+                          );
+                        }
+
+                        final items = snapshot.data ?? [];
+                        return ListView.builder(
+                          controller: scrollController,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: items.length,
+                          itemBuilder: (context, index) {
+                            final order = items[index]['task'];
+                            final distance =
+                                items[index]['distance'] as double?;
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    16,
+                                    8,
+                                    16,
+                                    0,
+                                  ),
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 10,
+                                      vertical: 4,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: distance == null
+                                          ? Colors.grey.shade200
+                                          : _primary.withOpacity(0.12),
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          '#${index + 1}',
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.w800,
+                                            color: _secondary,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Icon(
+                                          Icons.place_outlined,
+                                          size: 14,
+                                          color: distance == null
+                                              ? Colors.grey
+                                              : _primary,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          _formatDistance(distance),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 12,
+                                            color: distance == null
+                                                ? Colors.grey.shade700
+                                                : _primary,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                                OrderListItem(
+                                  order: order,
+                                  onTap: () {
+                                    caseController.currentCase = order;
+                                    Navigator.pop(sheetContext);
+                                    Get.toNamed(AppRoutes.caseDetailView);
+                                  },
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 

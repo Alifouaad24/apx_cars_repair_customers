@@ -141,4 +141,18 @@ class CustomerRepositoryImpl implements CustomerRepository {
       return Left(Failure(e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, void>> bindBusinessWithNewAddress(
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await remoteDataSource.bindBusinessWithNewAddress(data);
+      return const Right(null);
+    } on Failure catch (f) {
+      return Left(f);
+    } catch (e) {
+      return Left(Failure(e.toString()));
+    }
+  }
 }

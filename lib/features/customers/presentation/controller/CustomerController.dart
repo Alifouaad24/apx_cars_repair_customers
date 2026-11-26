@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/features/customers/domain/usecases/bindBusinessWithAddress_usecase.dart';
 import 'dart:convert';
 import 'dart:ui' as ui;
 import 'package:apx_cars_repair/app/routes/app_routes.dart';
@@ -26,6 +27,16 @@ import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
 import 'package:scanbot_sdk/scanbot_sdk.dart' hide ImageSource;
 import 'package:url_launcher/url_launcher.dart';
+
+enum BusinessSearchStatus { found, notFound, noLocation }
+
+class BusinessSearchResult {
+  final BusinessSearchStatus status;
+  final BusinessModel? business;
+  final LatLng? location;
+
+  BusinessSearchResult(this.status, {this.business, this.location});
+}
 
 class CustomerController extends GetxController {
   final AddCustomerUseCase addCustomerUseCase;
@@ -157,6 +168,327 @@ class CustomerController extends GetxController {
     update();
   }
 
+  /// Returns today's tasks sorted by distance (nearest first) from the
+  /// device's current location. Each entry is {"task": task, "distance": meters?}.
+  /// Tasks whose address can't be geocoded are placed at the end (distance = null).
+  Future<List<Map<String, dynamic>>> getTasksSortedByDistance(
+    List<dynamic> tasks,
+  ) async {
+    if (deviceLocation == null) {
+      await getCurrentLocation();
+    }
+    final origin = deviceLocation;
+    if (origin == null) {
+      throw Exception(
+        'Unable to get your current location. Please enable location services.',
+      );
+    }
+
+    final results = await Future.wait(
+      tasks.map((task) async {
+        double? distance;
+        final customer = task.customer;
+        if (customer != null &&
+            customer.address != null &&
+            customer.address!.isNotEmpty) {
+          try {
+            final latLng = await _getLatLngFromAddress(customer);
+            if (latLng != null) {
+              distance = Geolocator.distanceBetween(
+                origin.latitude,
+                origin.longitude,
+                latLng.latitude,
+                latLng.longitude,
+              );
+            }
+          } catch (e) {
+            print('Distance error for order ${task.globalOrderId}: $e');
+          }
+        }
+        return <String, dynamic>{"task": task, "distance": distance};
+      }),
+    );
+
+    results.sort((a, b) {
+      final da = a["distance"] as double?;
+      final db = b["distance"] as double?;
+      if (da == null && db == null) return 0;
+      if (da == null) return 1;
+      if (db == null) return -1;
+      return da.compareTo(db);
+    });
+
+    return results;
+  }
+
+  // ======================= Voice business search =======================
+
+  /// Location the map page should open on (set by the voice business search).
+  LatLng? mapFocusLocation;
+
+  /// Words people add around the name ("show me APX", "find the business ...").
+  static const _fillerWords = {
+    'show', 'me', 'find', 'open', 'go', 'to', 'search', 'for', 'please',
+    'business', 'location', 'map', 'where', 'is', 'a', 'an',
+  };
+
+  /// Minimum score (0..1) for a business to count as a match.
+  static const double _matchThreshold = 0.72;
+
+  /// Lower-case words; "&" → "and", ".io"/"dot" kept as letters only.
+  List<String> _words(String value) => value
+      .toLowerCase()
+      .replaceAll('&', ' and ')
+      .replaceAll(RegExp(r'\bdot\b'), ' ')
+      .replaceAll(RegExp(r'[^a-z0-9؀-ۿ]+'), ' ')
+      .split(' ')
+      .where((w) => w.isNotEmpty)
+      .toList();
+
+  /// Compact forms of a text: with and without "the"/"and", so
+  /// "S and J" ↔ "S&J" and "Geist" ↔ "The Geist" both line up.
+  Set<String> _compactForms(List<String> words) {
+    final noAnd = words.where((w) => w != 'and').toList();
+    final noThe = words.where((w) => w != 'the').toList();
+    final bare = words.where((w) => w != 'and' && w != 'the').toList();
+    return {words.join(), noAnd.join(), noThe.join(), bare.join()}
+      ..removeWhere((s) => s.isEmpty);
+  }
+
+  int _levenshtein(String a, String b) {
+    if (a == b) return 0;
+    if (a.isEmpty) return b.length;
+    if (b.isEmpty) return a.length;
+    var prev = List<int>.generate(b.length + 1, (i) => i);
+    for (var i = 1; i <= a.length; i++) {
+      final cur = List<int>.filled(b.length + 1, 0)..[0] = i;
+      for (var j = 1; j <= b.length; j++) {
+        final cost = a[i - 1] == b[j - 1] ? 0 : 1;
+        cur[j] = [prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + cost]
+            .reduce((x, y) => x < y ? x : y);
+      }
+      prev = cur;
+    }
+    return prev[b.length];
+  }
+
+  double _similarity(String a, String b) {
+    final maxLen = a.length > b.length ? a.length : b.length;
+    if (maxLen == 0) return 0;
+    return 1 - _levenshtein(a, b) / maxLen;
+  }
+
+  /// Scores how well [spoken] matches [name] (0..1):
+  /// exact = 1, one contains the other = 0.9, otherwise spelling similarity
+  /// of the whole name or of the name's words.
+  double _matchScore(String spoken, String name) {
+    final spokenWords =
+        _words(spoken).where((w) => !_fillerWords.contains(w)).toList();
+    final nameWords = _words(name);
+    if (spokenWords.isEmpty || nameWords.isEmpty) return 0;
+
+    var best = 0.0;
+    for (final q in _compactForms(spokenWords)) {
+      for (final n in _compactForms(nameWords)) {
+        if (q == n) return 1;
+        // Short queries ("car") must be a whole word, not part of one.
+        final partOfName = q.length >= 4
+            ? n.contains(q)
+            : q.length >= 2 && nameWords.contains(q);
+        if (partOfName) best = best < 0.9 ? 0.9 : best;
+        if (n.length >= 3 && q.contains(n)) best = best < 0.9 ? 0.9 : best;
+        // Fuzzy on short strings is unreliable ("fhd" vs "apx").
+        if (q.length >= 4 && n.length >= 4) {
+          final s = _similarity(q, n);
+          if (s > best) best = s;
+        }
+      }
+    }
+
+    // Word by word: every meaningful word of the name is (almost) spoken.
+    final keyNameWords =
+        nameWords.where((w) => w != 'the' && w != 'and').toList();
+    if (keyNameWords.isNotEmpty) {
+      var total = 0.0;
+      for (final nw in keyNameWords) {
+        var wBest = 0.0;
+        for (final sw in spokenWords) {
+          final s = nw == sw
+              ? 1.0
+              : (nw.length >= 4 && sw.length >= 4 ? _similarity(nw, sw) : 0.0);
+          if (s > wBest) wBest = s;
+        }
+        total += wBest;
+      }
+      // Capped below 1 so an exact full-name match ("ali rest" → AliRest)
+      // beats a name whose words are merely all present (→ Ali).
+      final avg = total / keyNameWords.length * 0.95;
+      if (avg > best) best = avg;
+    }
+
+    return best;
+  }
+
+  /// Finds the business whose name best matches what was said. Tries the
+  /// recognized text and the speech engine's alternative guesses, and
+  /// tolerates small spelling differences ("the guest" → "The Geist").
+  BusinessModel? _matchBusiness(List<String> candidates) {
+    BusinessModel? bestBusiness;
+    var bestScore = 0.0;
+    String? bestCandidate;
+
+    for (final spoken in candidates) {
+      for (final b in availableBusinesses) {
+        final score = _matchScore(spoken, b.businessName);
+        // Same score → prefer the shorter (closer) name.
+        if (score > bestScore ||
+            (score == bestScore &&
+                bestBusiness != null &&
+                score > 0 &&
+                b.businessName.length < bestBusiness.businessName.length)) {
+          bestScore = score;
+          bestBusiness = b;
+          bestCandidate = spoken;
+        }
+      }
+    }
+
+    final matched = bestScore >= _matchThreshold;
+    debugPrint(
+      '[VoiceSearch] match: candidates=$candidates among '
+      '${availableBusinesses.length} businesses → best="${bestBusiness?.businessName}" '
+      'score=${bestScore.toStringAsFixed(2)} (from "$bestCandidate") '
+      '→ ${matched ? 'MATCH' : 'below threshold $_matchThreshold'}',
+    );
+
+    return matched ? bestBusiness : null;
+  }
+
+  /// Resolves a business location: lat/lng from API → address from API →
+  /// consumer-business address → address of a customer linked to the business.
+  Future<LatLng?> _resolveBusinessLocation(BusinessModel business) async {
+    const tag = '[VoiceSearch] location';
+    debugPrint(
+      '$tag: resolving "${business.businessName}" (id=${business.businessId}) '
+      'lat=${business.latitude}, lng=${business.longitude}, '
+      'address=${business.address}',
+    );
+
+    if (business.latitude != null && business.longitude != null) {
+      debugPrint('$tag: using lat/lng from /Business API');
+      return LatLng(business.latitude!, business.longitude!);
+    }
+
+    if (business.address != null) {
+      final latLng = await _geocodeAddress('${business.address}, USA');
+      debugPrint('$tag: geocoded API address → $latLng');
+      if (latLng != null) return latLng;
+    }
+
+    debugPrint(
+      '$tag: checking ${consumerBusinesses.length} consumer businesses',
+    );
+    for (final s in consumerBusinesses) {
+      final cb = s.consumerBusiness;
+      if (cb.id == business.businessId && cb.address.trim().isNotEmpty) {
+        final latLng = await _geocodeAddress('${cb.address.trim()}, USA');
+        debugPrint('$tag: consumer address "${cb.address}" → $latLng');
+        if (latLng != null) return latLng;
+      }
+    }
+
+    if (allCustomers.isEmpty) {
+      final result = await showCustomersUsecase();
+      result.fold((_) {}, (data) {
+        allCustomers = data;
+        if (customers.isEmpty) customers = data;
+      });
+    }
+
+    final linked = allCustomers
+        .where((c) => c.businessId == business.businessId)
+        .toList();
+    debugPrint(
+      '$tag: ${linked.length} of ${allCustomers.length} customers linked to business',
+    );
+    for (final c in linked) {
+      if (c.address == null || c.address!.isEmpty) continue;
+      final latLng = await _getLatLngFromAddress(c);
+      debugPrint('$tag: customer "${c.customerName}" address → $latLng');
+      if (latLng != null) return latLng;
+    }
+
+    debugPrint('$tag: NO location found');
+    return null;
+  }
+
+  /// Searches the business table by the spoken name and resolves its location.
+  /// [alternatives] are the speech engine's other guesses for the same words.
+  Future<BusinessSearchResult> searchBusinessByVoice(
+    String spoken, {
+    List<String> alternatives = const [],
+  }) async {
+    debugPrint(
+      '[VoiceSearch] searchBusinessByVoice("$spoken", alternatives=$alternatives)',
+    );
+    if (availableBusinesses.isEmpty) {
+      debugPrint('[VoiceSearch] business list empty → fetching /Business');
+      await getAvailableBusinesses();
+      debugPrint(
+        '[VoiceSearch] fetched ${availableBusinesses.length} businesses',
+      );
+    }
+
+    final candidates = <String>{
+      spoken,
+      ...alternatives.map((a) => a.trim()).where((a) => a.isNotEmpty),
+    }.toList();
+    final business = _matchBusiness(candidates);
+    if (business == null) {
+      return BusinessSearchResult(BusinessSearchStatus.notFound);
+    }
+
+    final location = await _resolveBusinessLocation(business);
+    if (location == null) {
+      return BusinessSearchResult(
+        BusinessSearchStatus.noLocation,
+        business: business,
+      );
+    }
+
+    return BusinessSearchResult(
+      BusinessSearchStatus.found,
+      business: business,
+      location: location,
+    );
+  }
+
+  /// Shows only the found business on the map and opens the map focused on it.
+  Future<void> openBusinessOnMap(BusinessModel business, LatLng location) async {
+    BitmapDescriptor icon;
+    try {
+      icon = await _getMarkerIconWithLabel(business.businessName);
+    } catch (_) {
+      icon = BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueRed);
+    }
+
+    markers
+      ..clear()
+      ..add(
+        Marker(
+          markerId: MarkerId('business_${business.businessId}'),
+          position: location,
+          icon: icon,
+          anchor: const Offset(0.5, 1.0),
+          infoWindow: InfoWindow(title: business.businessName),
+        ),
+      );
+    mapFocusLocation = location;
+    update();
+
+    Get.toNamed(AppRoutes.map);
+  }
+
   pickCustomerImage({int? customerId, bool fromCamera = false}) async {
     var picked = await ImagePicker().pickImage(
       source: fromCamera ? ImageSource.camera : ImageSource.gallery,
@@ -252,8 +584,11 @@ class CustomerController extends GetxController {
 
     if (parts.length < 2) return null;
 
-    final address = parts.join(', ');
+    return _geocodeAddress(parts.join(', '));
+  }
 
+  /// Geocodes a free-text address (device geocoder, then Nominatim), with caching.
+  Future<LatLng?> _geocodeAddress(String address) async {
     final cached = _geocodeCache[address];
     if (cached != null) return cached;
 
@@ -773,6 +1108,44 @@ class CustomerController extends GetxController {
       (data) {
         Get.snackbar('نجاح', 'تم إضافة البزنس بنجاح');
         getAvailableBusinesses();
+        return true;
+      },
+    );
+  }
+
+  bool bindingAddress = false;
+
+  /// Links a new (or existing) address to a business via
+  /// POST Business/BindBusinessWithNewAddress.
+  Future<bool> bindBusinessWithNewAddress({
+    required int businessId,
+    required String line1,
+    String? line2,
+    String? postCode,
+    String? usCity,
+  }) async {
+    bindingAddress = true;
+    update();
+
+    final result = await Get.find<BindBusinessWithAddressUsecase>().call({
+      'businessId': businessId,
+      'line1': line1,
+      'line2': line2,
+      'postCode': postCode,
+      'usCity': usCity,
+    });
+
+    bindingAddress = false;
+    update();
+
+    return result.fold(
+      (failure) {
+        Get.snackbar('خطأ', failure.message);
+        return false;
+      },
+      (_) {
+        Get.snackbar('نجاح', 'تم ربط العنوان بالبزنس بنجاح');
+        getConsumerBusinesses();
         return true;
       },
     );

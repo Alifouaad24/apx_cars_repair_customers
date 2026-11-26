@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/features/customers/domain/usecases/bindBusinessWithAddress_usecase.dart';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/core/services/TokenService.dart';
 import 'package:apx_cars_repair/features/cases/data/datasource/api/CaseRemoteDataSource.dart';
@@ -84,6 +85,7 @@ class AppBinding extends Bindings {
     Get.lazyPut<CustomerRepository>(() => CustomerRepositoryImpl(Get.find()));
     Get.lazyPut(() => AddCaseUseCase(Get.find()));
     Get.lazyPut(() => AddnewbusinessUsecase(Get.find()));
+    Get.lazyPut(() => BindBusinessWithAddressUsecase(Get.find()), fenix: true);
     // إذا عندك usecases أخرى للكيس
     // Get.lazyPut(() => ShowCasesUseCase(Get.find()));
 

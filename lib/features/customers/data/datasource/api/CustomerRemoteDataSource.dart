@@ -15,4 +15,5 @@ abstract class CustomerRemoteDataSource {
     Future<List<BusinessModel>> getAvailableBusinesses();
   Future<List<ServiceModel>> getAvailableServices();
   Future<BusinessModel> addNewBusiness(Map<String, dynamic> data);
+  Future<void> bindBusinessWithNewAddress(Map<String, dynamic> data);
 }

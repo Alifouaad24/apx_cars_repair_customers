@@ -1,3 +1,4 @@
+import 'package:apx_cars_repair/features/customers/domain/usecases/bindBusinessWithAddress_usecase.dart';
 import 'package:apx_cars_repair/core/network/dio_client.dart';
 import 'package:apx_cars_repair/core/services/TokenService.dart';
 import 'package:apx_cars_repair/features/customers/domain/CustomerRepositoryImpl.dart';
@@ -38,6 +39,7 @@ class CustomerBinding extends Bindings {
     Get.put(GetAvailableBusinessesUsecase(Get.find()));
     Get.put(GetAvailableServicesUsecase(Get.find()));
     Get.put(AddnewbusinessUsecase(Get.find()));
+    Get.put(BindBusinessWithAddressUsecase(Get.find()));
     Get.lazyPut(
       () => CustomerController(
         Get.find<AddCustomerUseCase>(),

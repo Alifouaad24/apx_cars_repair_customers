@@ -16,6 +16,15 @@ class _MapPageState extends State<MapPage> {
   static const LatLng _indianaCenter = LatLng(39.7684, -86.1581);
 
   @override
+  void dispose() {
+    // Clear voice-search focus so the next map visit starts normally.
+    if (Get.isRegistered<CustomerController>()) {
+      Get.find<CustomerController>().mapFocusLocation = null;
+    }
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return GetBuilder<CustomerController>(
       builder: (controller) {
@@ -46,12 +55,16 @@ class _MapPageState extends State<MapPage> {
                       flex: 10,
                       child: GoogleMap(
                         initialCameraPosition: CameraPosition(
-                          target: _indianaCenter,
-                          zoom: 7.5,
+                          target: controller.mapFocusLocation ?? _indianaCenter,
+                          zoom: controller.mapFocusLocation != null ? 15 : 7.5,
                         ),
 
                         onMapCreated: (GoogleMapController mapController) {
                           controller.mapController = mapController;
+                          final focus = controller.mapFocusLocation;
+                          if (focus != null) {
+                            controller.moveCamera(focus);
+                          }
                         },
 
                         onTap: (LatLng point) async {

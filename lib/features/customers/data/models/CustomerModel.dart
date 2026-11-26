@@ -34,7 +34,7 @@ class CustomerModel {
       customerEmail: json['customerEmail'] ?? "",
       countryId: json['country_id'] ?? 0,
       addressId: json['addressId'] ?? 0,
-      businessId: json['business_id'],
+      businessId: json['business_id'] ?? _firstBusinessId(json['buseness_Customers']),
       address: (json['address'] as List?)
         ?.map((el) => AddressModel.fromJson(el as Map<String, dynamic>))
         .toList() ??
@@ -44,6 +44,16 @@ class CustomerModel {
           : null,
       imageUrl: json['customerImage'],
     );
+  }
+
+  /// The API links a customer to its business through
+  /// `buseness_Customers: [{business_id: ..}]`, not a top-level `business_id`.
+  static int? _firstBusinessId(dynamic links) {
+    if (links is! List) return null;
+    for (final l in links) {
+      if (l is Map && l['business_id'] is int) return l['business_id'] as int;
+    }
+    return null;
   }
 
   Map<String, dynamic> toJson() {

@@ -17,4 +17,5 @@ abstract class CustomerRepository {
   Future<Either<Failure, List<BusinessModel>>> getAvailableBusinesses();
   Future<Either<Failure, List<ServiceModel>>> getAvailableServices();
   Future<Either<Failure, BusinessModel>> addNewBusiness(Map<String, dynamic> data);
+  Future<Either<Failure, void>> bindBusinessWithNewAddress(Map<String, dynamic> data);
 }

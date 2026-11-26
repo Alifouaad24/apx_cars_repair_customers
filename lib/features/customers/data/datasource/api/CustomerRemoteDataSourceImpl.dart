@@ -83,9 +83,53 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
       '/Business',
     ); // TODO: تأكد من الـ endpoint
 
-    return (response.data as List)
+    final businesses = (response.data as List)
         .map((e) => BusinessModel.fromJson(e))
         .toList();
+
+    return _fillBusinessAddresses(businesses);
+  }
+
+  /// /Business only sends `address_id`s in businessAddresses, not the address
+  /// itself. Looks those ids up in /Address and fills address / lat / lng.
+  Future<List<BusinessModel>> _fillBusinessAddresses(
+    List<BusinessModel> businesses,
+  ) async {
+    final needsLookup = businesses.any(
+      (b) => b.address == null && b.latitude == null && b.addressIds.isNotEmpty,
+    );
+    if (!needsLookup) return businesses;
+
+    final Map<int, Map> addressesById;
+    try {
+      final response = await client.dio.get('/Address');
+      addressesById = {
+        for (final a in (response.data as List).whereType<Map>())
+          if (a['address_id'] is int) a['address_id'] as int: a,
+      };
+    } catch (_) {
+      return businesses; // keep the list even if /Address fails
+    }
+
+    return businesses.map((b) {
+      if (b.address != null || b.latitude != null) return b;
+      for (final id in b.addressIds) {
+        final a = addressesById[id];
+        if (a == null) continue;
+        final lat = double.tryParse('${a['latTute']}');
+        final lng = double.tryParse('${a['lognTute']}');
+        final text = BusinessModel.formatAddress(a);
+        final hasCoords = lat != null && lng != null;
+        if (hasCoords || text != null) {
+          return b.copyWith(
+            address: text,
+            latitude: hasCoords ? lat : null,
+            longitude: hasCoords ? lng : null,
+          );
+        }
+      }
+      return b;
+    }).toList();
   }
 
   @override
@@ -105,5 +149,10 @@ class CustomerRemoteDataSourceImpl implements CustomerRemoteDataSource {
 
     final response = await client.dio.post('/Business', data: formData);
     return BusinessModel.fromJson(response.data);
+  }
+
+  @override
+  Future<void> bindBusinessWithNewAddress(Map<String, dynamic> data) async {
+    await client.dio.post('/Business/BindBusinessWithNewAddress', data: data);
   }
 }

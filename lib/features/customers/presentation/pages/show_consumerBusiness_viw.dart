@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:apx_cars_repair/core/services/mapService.dart';
 import 'package:apx_cars_repair/features/cases/data/models/ServiceModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/BusinessModel.dart';
 import 'package:apx_cars_repair/features/customers/data/models/SupplierModel.dart';
@@ -46,7 +49,32 @@ class _ShowConsumerbusinessViwState extends State<ShowConsumerbusinessViw> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (_) => _BusinessDetailsSheet(item: item),
+      builder: (_) => _BusinessDetailsSheet(
+        item: item,
+        onAddAddress: () => _openAddAddressDialog(item),
+      ),
+    );
+  }
+
+  Future<void> _openAddAddressDialog(SupplierFilterModel item) async {
+    final controller = Get.find<CustomerController>();
+    final business = item.consumerBusiness;
+
+    await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => _AddAddressDialog(
+        businessName: business.name,
+        searchService: controller.addressSearchService,
+        onSubmit: (line1, line2, postCode, city) =>
+            controller.bindBusinessWithNewAddress(
+              businessId: business.id,
+              line1: line1,
+              line2: line2,
+              postCode: postCode,
+              usCity: city,
+            ),
+      ),
     );
   }
 
@@ -331,8 +359,9 @@ class _BusinessCard extends StatelessWidget {
 /// Bottom sheet showing the details of a linked consumer business.
 class _BusinessDetailsSheet extends StatelessWidget {
   final SupplierFilterModel item;
+  final VoidCallback onAddAddress;
 
-  const _BusinessDetailsSheet({required this.item});
+  const _BusinessDetailsSheet({required this.item, required this.onAddAddress});
 
   static const _primary = Color(0xFF0F2A47);
   static const _accent = Color(0xFFF5A524);
@@ -436,6 +465,21 @@ class _BusinessDetailsSheet extends StatelessWidget {
               icon: Icons.location_on_outlined,
               label: 'Address',
               value: consumer.address,
+            )
+          else
+            _DetailTile(
+              icon: Icons.location_off_outlined,
+              label: 'Address',
+              value: 'No address',
+              trailing: TextButton.icon(
+                onPressed: () {
+                  Navigator.of(context).pop(); // close the details sheet
+                  onAddAddress();
+                },
+                icon: const Icon(Icons.add_location_alt_outlined, size: 18),
+                label: const Text('Add'),
+                style: TextButton.styleFrom(foregroundColor: _primary),
+              ),
             ),
           _DetailTile(
             icon: Icons.miscellaneous_services_outlined,
@@ -482,11 +526,13 @@ class _DetailTile extends StatelessWidget {
   final IconData icon;
   final String label;
   final String value;
+  final Widget? trailing;
 
   const _DetailTile({
     required this.icon,
     required this.label,
     required this.value,
+    this.trailing,
   });
 
   @override
@@ -523,6 +569,7 @@ class _DetailTile extends StatelessWidget {
               ],
             ),
           ),
+          if (trailing != null) trailing!,
         ],
       ),
     );
@@ -986,6 +1033,390 @@ TextFormField(
                   Expanded(
                     child: ElevatedButton(
                       onPressed: _saving ? null : _save,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: _primary,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _saving
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(
+                                color: Colors.white,
+                                strokeWidth: 2.4,
+                              ),
+                            )
+                          : const Text(
+                              'Save',
+                              style: TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Dialog for linking a new address to a business.
+/// Typing in Line 1 searches Google Places; picking a suggestion
+/// fills Line 1, Line 2, Post code and City.
+class _AddAddressDialog extends StatefulWidget {
+  final String businessName;
+  final AddressSearchService searchService;
+  final Future<bool> Function(
+    String line1,
+    String line2,
+    String postCode,
+    String city,
+  )
+  onSubmit;
+
+  const _AddAddressDialog({
+    required this.businessName,
+    required this.searchService,
+    required this.onSubmit,
+  });
+
+  @override
+  State<_AddAddressDialog> createState() => _AddAddressDialogState();
+}
+
+class _AddAddressDialogState extends State<_AddAddressDialog> {
+  static const _primary = Color(0xFF0F2A47);
+
+  final _formKey = GlobalKey<FormState>();
+  final _line1Controller = TextEditingController();
+  final _line2Controller = TextEditingController();
+  final _postCodeController = TextEditingController();
+  final _cityController = TextEditingController();
+
+  Timer? _debounce;
+  int _searchSeq = 0; // used to ignore out-of-order search responses
+  List<dynamic> _suggestions = [];
+  bool _searching = false;
+  bool _loadingDetails = false;
+  bool _saving = false;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _line1Controller.dispose();
+    _line2Controller.dispose();
+    _postCodeController.dispose();
+    _cityController.dispose();
+    super.dispose();
+  }
+
+  void _onLine1Changed(String value) {
+    _debounce?.cancel();
+    final query = value.trim();
+    if (query.length < 2) {
+      _searchSeq++;
+      setState(() {
+        _suggestions = [];
+        _searching = false;
+      });
+      return;
+    }
+    _debounce = Timer(const Duration(milliseconds: 400), () => _search(query));
+  }
+
+  Future<void> _search(String query) async {
+    final seq = ++_searchSeq;
+    setState(() => _searching = true);
+    try {
+      final data = await widget.searchService.searchAddress(query);
+      if (!mounted || seq != _searchSeq) return;
+      setState(() => _suggestions = List<dynamic>.from(data));
+    } catch (_) {
+      if (!mounted || seq != _searchSeq) return;
+      setState(() => _suggestions = []);
+    } finally {
+      if (mounted && seq == _searchSeq) setState(() => _searching = false);
+    }
+  }
+
+  Future<void> _selectSuggestion(dynamic item) async {
+    final placeId = item['place_id']?.toString();
+    if (placeId == null) return;
+
+    _debounce?.cancel();
+    _searchSeq++; // drop any in-flight search
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _suggestions = [];
+      _searching = false;
+      _loadingDetails = true;
+    });
+
+    try {
+      final details = await widget.searchService.getPlaceDetails(placeId);
+      if (!mounted) return;
+      _line1Controller.text = details['line1']?.toString() ?? '';
+      _line2Controller.text = details['line2']?.toString() ?? '';
+      _postCodeController.text = details['postalCode']?.toString() ?? '';
+      _cityController.text = details['city']?.toString() ?? '';
+    } catch (_) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to load address details')),
+      );
+    } finally {
+      if (mounted) setState(() => _loadingDetails = false);
+    }
+  }
+
+  Future<void> _save() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    setState(() => _saving = true);
+    final success = await widget.onSubmit(
+      _line1Controller.text.trim(),
+      _line2Controller.text.trim(),
+      _postCodeController.text.trim(),
+      _cityController.text.trim(),
+    );
+    if (!mounted) return;
+    setState(() => _saving = false);
+
+    if (success) Navigator.of(context).pop(true);
+  }
+
+  InputDecoration _decoration(String hint, IconData icon, {Widget? suffix}) {
+    return InputDecoration(
+      hintText: hint,
+      prefixIcon: Icon(icon, size: 20, color: Colors.grey.shade600),
+      suffixIcon: suffix,
+      filled: true,
+      fillColor: const Color(0xFFF5F6FA),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: BorderSide(color: Colors.grey.shade200),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(12),
+        borderSide: const BorderSide(color: _primary),
+      ),
+    );
+  }
+
+  Widget _label(String text) => Padding(
+    padding: const EdgeInsets.only(bottom: 6),
+    child: Text(
+      text,
+      style: const TextStyle(
+        fontSize: 13,
+        fontWeight: FontWeight.w600,
+        color: Colors.black87,
+      ),
+    ),
+  );
+
+  Widget? _line1Suffix() {
+    if (!_searching && !_loadingDetails) return null;
+    return const Padding(
+      padding: EdgeInsets.all(14),
+      child: SizedBox(
+        width: 16,
+        height: 16,
+        child: CircularProgressIndicator(strokeWidth: 2, color: _primary),
+      ),
+    );
+  }
+
+  Widget _buildSuggestions() {
+    return Container(
+      constraints: const BoxConstraints(maxHeight: 200),
+      margin: const EdgeInsets.only(top: 6),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade300),
+      ),
+      child: ListView.separated(
+        padding: EdgeInsets.zero,
+        shrinkWrap: true,
+        itemCount: _suggestions.length,
+        separatorBuilder: (_, __) =>
+            Divider(height: 1, color: Colors.grey.shade200),
+        itemBuilder: (context, index) {
+          final item = _suggestions[index];
+          return ListTile(
+            dense: true,
+            leading: Icon(
+              Icons.location_on_outlined,
+              size: 20,
+              color: Colors.grey.shade600,
+            ),
+            title: Text(
+              item['description']?.toString() ?? '',
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13),
+            ),
+            onTap: () => _selectSuggestion(item),
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _field({
+    required String label,
+    required TextEditingController controller,
+    required String hint,
+    required IconData icon,
+    bool required = false,
+    TextInputType? keyboardType,
+    TextInputAction action = TextInputAction.next,
+    ValueChanged<String>? onSubmitted,
+  }) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _label(label),
+        TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textInputAction: action,
+          onFieldSubmitted: onSubmitted,
+          decoration: _decoration(hint, icon),
+          validator: required
+              ? (v) => (v == null || v.trim().isEmpty) ? 'Required' : null
+              : null,
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.white,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+        child: Form(
+          key: _formKey,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text(
+                'Add address',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: _primary,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                widget.businessName.trim().isEmpty
+                    ? 'Search for the address or enter it manually'
+                    : 'Address for ${widget.businessName}',
+                style: const TextStyle(fontSize: 12.5, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+
+              _label('Line 1'),
+              TextFormField(
+                controller: _line1Controller,
+                textInputAction: TextInputAction.next,
+                onChanged: _onLine1Changed,
+                decoration: _decoration(
+                  'Start typing, e.g. 12554 ...',
+                  Icons.search,
+                  suffix: _line1Suffix(),
+                ),
+                validator: (v) => (v == null || v.trim().isEmpty)
+                    ? 'Line 1 is required'
+                    : null,
+              ),
+              if (_suggestions.isNotEmpty) _buildSuggestions(),
+              const SizedBox(height: 14),
+
+              _field(
+                label: 'Line 2',
+                controller: _line2Controller,
+                hint: 'City, State, Country',
+                icon: Icons.home_work_outlined,
+              ),
+              const SizedBox(height: 14),
+
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: _field(
+                      label: 'City',
+                      controller: _cityController,
+                      hint: 'City',
+                      icon: Icons.location_city_outlined,
+                      required: true,
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: _field(
+                      label: 'Post code',
+                      controller: _postCodeController,
+                      hint: 'ZIP',
+                      icon: Icons.markunread_mailbox_outlined,
+                      required: true,
+                      keyboardType: TextInputType.number,
+                      action: TextInputAction.done,
+                      onSubmitted: (_) => _save(),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _saving
+                          ? null
+                          : () => Navigator.of(context).pop(false),
+                      style: OutlinedButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        side: BorderSide(color: Colors.grey.shade300),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      child: const Text(
+                        'Cancel',
+                        style: TextStyle(
+                          color: Colors.black54,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: (_saving || _loadingDetails) ? null : _save,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: _primary,
                         padding: const EdgeInsets.symmetric(vertical: 14),
